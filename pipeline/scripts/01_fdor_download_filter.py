@@ -20,29 +20,40 @@ import pandas as pd
 from pathlib import Path
 from io import BytesIO
 
-# County codes mapping (FL has 67 counties, codes 01-67)
+# County codes mapping — FDOR uses codes 11-77 (alphabetical)
+# County names here must match FDOR file naming (e.g., "Dade" not "Miami-Dade",
+# "Saint Johns" not "St. Johns")
 FL_COUNTIES = {
-    "ALACHUA": "01", "BAKER": "02", "BAY": "03", "BRADFORD": "04",
-    "BREVARD": "05", "BROWARD": "06", "CALHOUN": "07", "CHARLOTTE": "08",
-    "CITRUS": "09", "CLAY": "10", "COLLIER": "11", "COLUMBIA": "12",
-    "DESOTO": "13", "DIXIE": "14", "DUVAL": "16", "ESCAMBIA": "17",
-    "FLAGLER": "18", "FRANKLIN": "19", "GADSDEN": "20", "GILCHRIST": "21",
-    "GLADES": "22", "GULF": "23", "HAMILTON": "24", "HARDEE": "25",
-    "HENDRY": "26", "HERNANDO": "27", "HIGHLANDS": "28", "HILLSBOROUGH": "29",
-    "HOLMES": "30", "INDIAN RIVER": "31", "JACKSON": "32", "JEFFERSON": "33",
-    "LAFAYETTE": "34", "LAKE": "35", "LEE": "36", "LEON": "37",
-    "LEVY": "38", "LIBERTY": "39", "MADISON": "40", "MANATEE": "41",
-    "MARION": "42", "MARTIN": "43", "MIAMI-DADE": "13", "MONROE": "44",
-    "NASSAU": "45", "OKALOOSA": "46", "OKEECHOBEE": "47", "ORANGE": "48",
-    "OSCEOLA": "49", "PALM BEACH": "50", "PASCO": "51", "PINELLAS": "52",
-    "POLK": "53", "PUTNAM": "54", "SANTA ROSA": "57", "SARASOTA": "58",
-    "SEMINOLE": "59", "ST. JOHNS": "55", "ST. LUCIE": "56",
-    "SUMTER": "60", "SUWANNEE": "61", "TAYLOR": "62", "UNION": "63",
-    "VOLUSIA": "64", "WAKULLA": "65", "WALTON": "66", "WASHINGTON": "67"
+    "ALACHUA": "11", "BAKER": "12", "BAY": "13", "BRADFORD": "14",
+    "BREVARD": "15", "BROWARD": "16", "CALHOUN": "17", "CHARLOTTE": "18",
+    "CITRUS": "19", "CLAY": "20", "COLLIER": "21", "COLUMBIA": "22",
+    "DADE": "23", "MIAMI-DADE": "23", "DESOTO": "24", "DIXIE": "25",
+    "DUVAL": "26", "ESCAMBIA": "27", "FLAGLER": "28", "FRANKLIN": "29",
+    "GADSDEN": "30", "GILCHRIST": "31", "GLADES": "32", "GULF": "33",
+    "HAMILTON": "34", "HARDEE": "35", "HENDRY": "36", "HERNANDO": "37",
+    "HIGHLANDS": "38", "HILLSBOROUGH": "39", "HOLMES": "40",
+    "INDIAN RIVER": "41", "JACKSON": "42", "JEFFERSON": "43",
+    "LAFAYETTE": "44", "LAKE": "45", "LEE": "46", "LEON": "47",
+    "LEVY": "48", "LIBERTY": "49", "MADISON": "50", "MANATEE": "51",
+    "MARION": "52", "MARTIN": "53", "MONROE": "54",
+    "NASSAU": "55", "OKALOOSA": "56", "OKEECHOBEE": "57", "ORANGE": "58",
+    "OSCEOLA": "59", "PALM BEACH": "60", "PASCO": "61", "PINELLAS": "62",
+    "POLK": "63", "PUTNAM": "64", "SAINT JOHNS": "65", "ST. JOHNS": "65",
+    "SAINT LUCIE": "66", "ST. LUCIE": "66", "SANTA ROSA": "67",
+    "SARASOTA": "68", "SEMINOLE": "69", "SUMTER": "70", "SUWANNEE": "71",
+    "TAYLOR": "72", "UNION": "73", "VOLUSIA": "74", "WAKULLA": "75",
+    "WALTON": "76", "WASHINGTON": "77"
+}
+
+# Map user-friendly names to FDOR file names (FDOR uses "Dade", "Saint Johns", etc.)
+FDOR_COUNTY_NAMES = {
+    "MIAMI-DADE": "Dade", "ST. JOHNS": "Saint Johns", "ST. LUCIE": "Saint Lucie",
+    "DESOTO": "Desoto",
 }
 
 # Target DOR use codes for residential investment properties
-RESIDENTIAL_USE_CODES = ["01", "02", "03", "04", "08"]
+# FDOR files use 1-3 digit codes; we normalize to int for matching
+RESIDENTIAL_USE_CODES = {1, 2, 3, 4, 8}
 
 # Entity ownership indicators
 ENTITY_KEYWORDS = [
@@ -59,15 +70,16 @@ OUTPUT_DIR = Path("pipeline/output")
 def download_nal_file(county_name: str, county_code: str) -> pd.DataFrame:
     """Download and parse NAL file for a single county."""
 
-    # FDOR URL pattern — may need adjustment based on actual file naming
-    # The exact URL format needs to be verified against the portal
     base_url = "https://floridarevenue.com/property/dataportal/Documents/"
     base_url += "PTO%20Data%20Portal/Tax%20Roll%20Data%20Files/NAL/2025F/"
 
-    # Try common naming patterns
+    # Use FDOR-canonical county name for file naming
+    fdor_name = FDOR_COUNTY_NAMES.get(county_name.upper(), county_name.title())
+
+    # FDOR naming pattern: "{County Name} {Code} Final NAL 2025.zip"
     filename_patterns = [
-        f"{county_name.title()} {county_code} Final NAL 2025.zip",
-        f"{county_name.title()}%20{county_code}%20Final%20NAL%202025.zip",
+        f"{fdor_name} {county_code} Final NAL 2025.zip",
+        f"{fdor_name}%20{county_code}%20Final%20NAL%202025.zip",
     ]
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -80,18 +92,24 @@ def download_nal_file(county_name: str, county_code: str) -> pd.DataFrame:
         return pd.read_csv(local_csv, dtype=str, low_memory=False)
 
     # Download
-    print(f"  Downloading NAL for {county_name} (code {county_code})...")
+    print(f"  Downloading NAL for {county_name} (code {county_code}, file: {fdor_name})...")
     downloaded = False
     for pattern in filename_patterns:
         url = base_url + pattern
         try:
-            resp = requests.get(url, timeout=120)
+            resp = requests.get(url, timeout=120, headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            })
             if resp.status_code == 200:
                 with open(local_zip, 'wb') as f:
                     f.write(resp.content)
                 downloaded = True
+                print(f"  Downloaded ({len(resp.content) / 1024 / 1024:.1f} MB)")
                 break
-        except requests.RequestException:
+            else:
+                print(f"  Tried: {pattern} -> HTTP {resp.status_code}")
+        except requests.RequestException as e:
+            print(f"  Tried: {pattern} -> Error: {e}")
             continue
 
     if not downloaded:
@@ -130,10 +148,12 @@ def download_sdf_file(county_name: str, county_code: str) -> pd.DataFrame:
         print(f"  Loading cached SDF for {county_name}...")
         return pd.read_csv(local_csv, dtype=str, low_memory=False)
 
-    # Download logic same pattern as NAL
+    # Use FDOR-canonical county name for file naming
+    fdor_name = FDOR_COUNTY_NAMES.get(county_name.upper(), county_name.title())
+
     filename_patterns = [
-        f"{county_name.title()} {county_code} Final SDF 2025.zip",
-        f"{county_name.title()}%20{county_code}%20Final%20SDF%202025.zip",
+        f"{fdor_name} {county_code} Final SDF 2025.zip",
+        f"{fdor_name}%20{county_code}%20Final%20SDF%202025.zip",
     ]
 
     local_zip = DATA_DIR / f"SDF_{county_code}_{county_name.replace(' ', '_')}.zip"
@@ -186,17 +206,28 @@ def filter_investment_properties(nal_df: pd.DataFrame) -> pd.DataFrame:
     if nal_df.empty:
         return nal_df
 
-    # Standardize column names (FDOR files may vary in naming)
-    # This mapping may need adjustment based on actual file headers
+    # Standardize column names only if they don't already exist
+    # FDOR 2025 NAL files have: DOR_UC, AV_HMSTD, JV as standard columns
     col_map = {}
-    for col in nal_df.columns:
-        col_upper = col.upper().strip()
-        if 'DOR' in col_upper and 'UC' in col_upper:
-            col_map[col] = 'DOR_UC'
-        elif 'HMSTD' in col_upper or 'HOMESTEAD' in col_upper:
-            col_map[col] = 'AV_HMSTD'
-        elif col_upper in ('JV', 'JUST_VAL', 'JV_HMSTD'):
-            col_map[col] = 'JV'
+    cols_upper = {c.upper().strip() for c in nal_df.columns}
+
+    if 'DOR_UC' not in cols_upper:
+        for col in nal_df.columns:
+            if 'DOR' in col.upper() and 'UC' in col.upper():
+                col_map[col] = 'DOR_UC'
+                break
+
+    if 'AV_HMSTD' not in cols_upper:
+        for col in nal_df.columns:
+            if col.upper().strip() == 'HOMESTEAD_VAL':
+                col_map[col] = 'AV_HMSTD'
+                break
+
+    if 'JV' not in cols_upper:
+        for col in nal_df.columns:
+            if col.upper().strip() in ('JUST_VAL', 'JUST_VALUE'):
+                col_map[col] = 'JV'
+                break
 
     if col_map:
         nal_df = nal_df.rename(columns=col_map)
@@ -205,8 +236,8 @@ def filter_investment_properties(nal_df: pd.DataFrame) -> pd.DataFrame:
 
     # Step 1: Filter to residential use codes
     if 'DOR_UC' in nal_df.columns:
-        nal_df['DOR_UC'] = nal_df['DOR_UC'].astype(str).str.strip().str.zfill(2)
-        residential = nal_df[nal_df['DOR_UC'].isin(RESIDENTIAL_USE_CODES)].copy()
+        nal_df['DOR_UC_INT'] = pd.to_numeric(nal_df['DOR_UC'].astype(str).str.strip(), errors='coerce').fillna(-1).astype(int)
+        residential = nal_df[nal_df['DOR_UC_INT'].isin(RESIDENTIAL_USE_CODES)].copy()
         print(f"  Residential parcels: {len(residential):,}")
     else:
         print("  WARNING: DOR_UC column not found. Using all parcels.")
@@ -238,9 +269,9 @@ def filter_investment_properties(nal_df: pd.DataFrame) -> pd.DataFrame:
         entity_count = non_homestead['is_entity'].sum()
         print(f"  Entity-owned: {entity_count:,}")
 
-    # Step 4: Flag absentee owners (mailing != site address)
+    # Step 4: Flag absentee owners (mailing != site/physical address)
     mail_cols = [c for c in non_homestead.columns if 'MAIL' in c.upper() or ('OWN' in c.upper() and 'ADDR' in c.upper())]
-    site_cols = [c for c in non_homestead.columns if 'SITE' in c.upper() and 'ADDR' in c.upper()]
+    site_cols = [c for c in non_homestead.columns if ('SITE' in c.upper() or 'PHY' in c.upper()) and 'ADDR' in c.upper()]
 
     if mail_cols and site_cols:
         non_homestead['is_absentee'] = (
@@ -251,24 +282,30 @@ def filter_investment_properties(nal_df: pd.DataFrame) -> pd.DataFrame:
         print(f"  Absentee owners: {absentee_count:,}")
 
     # Step 5: Flag out-of-state and foreign owners
+    # Prefer OWN_STATE_DOM (2-letter codes like FL, NY, FC) over OWN_STATE (full names)
     state_col = None
     for col in non_homestead.columns:
-        if ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'STATE' in col.upper():
+        if col.upper().strip() == 'OWN_STATE_DOM':
             state_col = col
             break
+    if not state_col:
+        for col in non_homestead.columns:
+            if ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'STATE' in col.upper():
+                state_col = col
+                break
 
     if state_col:
-        non_homestead['out_of_state'] = (
-            non_homestead[state_col].astype(str).str.strip().str.upper() != 'FL'
-        ) & (non_homestead[state_col].astype(str).str.strip() != '')
+        state_vals = non_homestead[state_col].astype(str).str.strip().str.upper()
 
-        us_states = {
+        us_state_codes = {
             'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN',
             'IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV',
             'NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN',
             'TX','UT','VT','VA','WA','WV','WI','WY','DC','PR','VI','GU','AS','MP'
         }
-        non_homestead['foreign_owner'] = ~non_homestead[state_col].astype(str).str.strip().str.upper().isin(us_states) & (non_homestead[state_col].astype(str).str.strip() != '')
+
+        non_homestead['out_of_state'] = (state_vals != 'FL') & (state_vals != '') & (state_vals != 'NAN')
+        non_homestead['foreign_owner'] = ~state_vals.isin(us_state_codes) & (state_vals != '') & (state_vals != 'NAN')
 
         oos_count = non_homestead['out_of_state'].sum()
         foreign_count = non_homestead['foreign_owner'].sum()
@@ -308,7 +345,7 @@ def aggregate_by_owner(df: pd.DataFrame) -> pd.DataFrame:
     mail_state = [c for c in df.columns if ('OWN' in c.upper() or 'MAIL' in c.upper()) and 'STATE' in c.upper()]
     mail_zip = [c for c in df.columns if ('OWN' in c.upper() or 'MAIL' in c.upper()) and 'ZIP' in c.upper()]
 
-    site_addr = [c for c in df.columns if 'SITE' in c.upper() and 'ADDR' in c.upper()]
+    site_addr = [c for c in df.columns if ('SITE' in c.upper() or 'PHY' in c.upper()) and 'ADDR' in c.upper()]
     county_col = [c for c in df.columns if c.upper() in ('CO_NO', 'COUNTY', 'COUNTY_CODE')]
     parcel_col = [c for c in df.columns if 'PARCEL' in c.upper()]
     dor_col = [c for c in df.columns if 'DOR' in c.upper()]

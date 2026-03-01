@@ -3,11 +3,12 @@ DSCR Lead Generation Pipeline — Master Orchestrator
 
 Runs the full pipeline end-to-end:
 1. Download & filter FDOR property data
-2. Resolve entity owners via SunBiz
-3. Tag STR operators via DBPR
-4. Identify fund managers via SEC EDGAR
-5. Enrich contacts (phone/email)
-6. Score, classify, and output to Excel
+2. Detect refinance & cash-out candidates (equity analysis)
+3. Resolve entity owners via SunBiz
+4. Tag STR operators via DBPR
+5. Identify fund managers via SEC EDGAR
+6. Enrich contacts (phone/email)
+7. Score, classify, and output to Excel
 
 Usage:
     # Test run — single county, minimal enrichment
@@ -127,51 +128,58 @@ def main():
              f"{scripts_dir}/01_fdor_download_filter.py",
              county_args + ['--output', 'pipeline/output/01_investor_properties.csv'])
 
-    # Step 2: SunBiz Entity Resolution
-    run_step(2, "SunBiz Entity Resolution",
-             f"{scripts_dir}/02_sunbiz_resolve.py",
+    # Step 2: Refinance & Cash-Out Candidate Detection
+    run_step(2, "Refinance & Cash-Out Candidate Detection",
+             f"{scripts_dir}/08_refi_candidates.py",
              ['--input', 'pipeline/output/01_investor_properties.csv',
-              '--output', 'pipeline/output/02_resolved_entities.csv',
+              '--sdf-dir', 'pipeline/data/fdor',
+              '--output', 'pipeline/output/02_refi_tagged.csv'])
+
+    # Step 3: SunBiz Entity Resolution
+    run_step(3, "SunBiz Entity Resolution",
+             f"{scripts_dir}/02_sunbiz_resolve.py",
+             ['--input', 'pipeline/output/02_refi_tagged.csv',
+              '--output', 'pipeline/output/03_resolved_entities.csv',
               '--max-lookups', str(args.max_sunbiz)])
 
-    # Step 3: DBPR STR Operator Tagging
-    run_step(3, "DBPR STR Operator Identification",
+    # Step 4: DBPR STR Operator Tagging
+    run_step(4, "DBPR STR Operator Identification",
              f"{scripts_dir}/03_dbpr_str.py",
-             ['--input', 'pipeline/output/02_resolved_entities.csv',
-              '--output', 'pipeline/output/03_str_tagged.csv'])
+             ['--input', 'pipeline/output/03_resolved_entities.csv',
+              '--output', 'pipeline/output/04_str_tagged.csv'])
 
-    # Step 4: SEC EDGAR (optional)
+    # Step 5: SEC EDGAR (optional)
     if not args.skip_edgar:
-        run_step(4, "SEC EDGAR — FL Real Estate Fund Identification",
+        run_step(5, "SEC EDGAR — FL Real Estate Fund Identification",
                  f"{scripts_dir}/04_sec_edgar.py",
-                 ['--output', 'pipeline/output/04_fund_managers.csv',
+                 ['--output', 'pipeline/output/05_fund_managers.csv',
                   '--fetch-details'])
     else:
-        print("\nStep 4: SEC EDGAR — SKIPPED")
+        print("\nStep 5: SEC EDGAR — SKIPPED")
 
-    # Step 5: Contact Enrichment (optional)
+    # Step 6: Contact Enrichment (optional)
     if not args.skip_enrichment:
-        enrich_args = ['--input', 'pipeline/output/03_str_tagged.csv',
-                       '--output', 'pipeline/output/05_enriched.csv',
+        enrich_args = ['--input', 'pipeline/output/04_str_tagged.csv',
+                       '--output', 'pipeline/output/06_enriched.csv',
                        '--max-lookups', str(args.max_enrichment)]
         if args.apollo_key:
             enrich_args += ['--apollo-key', args.apollo_key]
 
-        run_step(5, "Contact Enrichment",
+        run_step(6, "Contact Enrichment",
                  f"{scripts_dir}/05_enrich_contacts.py",
                  enrich_args)
     else:
-        print("\nStep 5: Contact Enrichment — SKIPPED")
+        print("\nStep 6: Contact Enrichment — SKIPPED")
         # Copy input directly to enrichment output
         import shutil
-        shutil.copy('pipeline/output/03_str_tagged.csv',
-                     'pipeline/output/05_enriched.csv')
+        shutil.copy('pipeline/output/04_str_tagged.csv',
+                     'pipeline/output/06_enriched.csv')
 
-    # Step 6: Scoring & Excel Output
-    run_step(6, "ICP Scoring & Excel Output",
+    # Step 7: Scoring & Excel Output
+    run_step(7, "ICP Scoring & Excel Output",
              f"{scripts_dir}/06_score_and_output.py",
-             ['--input', 'pipeline/output/05_enriched.csv',
-              '--edgar-input', 'pipeline/output/04_fund_managers.csv',
+             ['--input', 'pipeline/output/06_enriched.csv',
+              '--edgar-input', 'pipeline/output/05_fund_managers.csv',
               '--output', args.output])
 
     print(f"""

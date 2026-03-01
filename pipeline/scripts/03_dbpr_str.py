@@ -223,33 +223,58 @@ def match_str_to_properties(investor_df: pd.DataFrame, dbpr_df: pd.DataFrame) ->
     print(f"Matching {len(dbpr_df):,} STR licenses against {len(investor_df):,} investor records...")
 
     # Normalize addresses and names in DBPR data
+    # Prefer 'Location Street Address' (200K rows) over 'Location Address' (17K rows)
     addr_col = None
     for col in dbpr_df.columns:
-        if 'FACILITY' in col.upper() and 'ADDR' in col.upper():
+        if col.strip().upper() == 'LOCATION STREET ADDRESS':
             addr_col = col
             break
-        elif 'ADDRESS' in col.upper() and 'MAIL' not in col.upper():
-            addr_col = col
-            break
+    if not addr_col:
+        for col in dbpr_df.columns:
+            if 'FACILITY' in col.upper() and 'ADDR' in col.upper():
+                addr_col = col
+                break
+            elif 'STREET' in col.upper() and 'ADDRESS' in col.upper() and 'MAIL' not in col.upper():
+                addr_col = col
+                break
+            elif 'ADDRESS' in col.upper() and 'MAIL' not in col.upper() and 'LINE' not in col.upper():
+                addr_col = col
+                break
 
+    # Prefer 'Licensee Name' (206K) over other name columns
     name_col = None
     for col in dbpr_df.columns:
-        if 'LICENSEE' in col.upper() or ('NAME' in col.upper() and 'DBA' not in col.upper()):
+        if col.strip().upper() == 'LICENSEE NAME':
             name_col = col
             break
+    if not name_col:
+        for col in dbpr_df.columns:
+            if 'LICENSEE' in col.upper() or ('NAME' in col.upper() and 'DBA' not in col.upper() and 'COUNTY' not in col.upper()):
+                name_col = col
+                break
+
+    print(f"  DBPR addr column: {addr_col} ({dbpr_df[addr_col].notna().sum():,} non-null)" if addr_col else "  DBPR addr column: NOT FOUND")
+    print(f"  DBPR name column: {name_col} ({dbpr_df[name_col].notna().sum():,} non-null)" if name_col else "  DBPR name column: NOT FOUND")
 
     phone_col = None
     for col in dbpr_df.columns:
-        if 'PHONE' in col.upper():
+        if col.strip().upper() == 'PRIMARY PHONE NUMBER':
             phone_col = col
             break
+    if not phone_col:
+        for col in dbpr_df.columns:
+            if 'PHONE' in col.upper():
+                phone_col = col
+                break
 
     email_col = None
     for col in dbpr_df.columns:
-        if 'EMAIL' in col.upper() or 'MAIL' in col.upper():
-            if 'ADDRESS' not in col.upper():
-                email_col = col
-                break
+        if 'EMAIL' in col.upper():
+            email_col = col
+            break
+
+    print(f"  DBPR phone column: {phone_col} ({dbpr_df[phone_col].notna().sum():,} non-null)" if phone_col else "  DBPR phone column: NOT FOUND")
+    print(f"  DBPR email column: {email_col}" if email_col else "  DBPR email column: NOT FOUND")
 
     if addr_col:
         dbpr_df['norm_addr'] = dbpr_df[addr_col].apply(normalize_address)
@@ -257,11 +282,17 @@ def match_str_to_properties(investor_df: pd.DataFrame, dbpr_df: pd.DataFrame) ->
         dbpr_df['norm_name'] = dbpr_df[name_col].apply(normalize_name)
 
     # Normalize in investor data
+    # PHY_ADDR1 may contain pipe-delimited addresses from aggregation
     site_addr_col = None
     for col in investor_df.columns:
-        if 'SITE' in col.upper() and 'ADDR' in col.upper():
+        if col.upper() in ('PHY_ADDR1', 'PHY_ADDR'):
             site_addr_col = col
             break
+    if not site_addr_col:
+        for col in investor_df.columns:
+            if ('SITE' in col.upper() or 'PHY' in col.upper()) and 'ADDR' in col.upper():
+                site_addr_col = col
+                break
 
     owner_name_col = None
     for col in investor_df.columns:
@@ -269,14 +300,25 @@ def match_str_to_properties(investor_df: pd.DataFrame, dbpr_df: pd.DataFrame) ->
             owner_name_col = col
             break
 
+    # For investor data, build a set of normalized addresses per row
+    # PHY_ADDR1 may contain "addr1 | addr2 | addr3" pipe-delimited
     if site_addr_col:
-        investor_df['norm_site_addr'] = investor_df[site_addr_col].apply(normalize_address)
+        def normalize_multi_addr(val):
+            if not val or pd.isna(val):
+                return []
+            addrs = str(val).split(' | ')
+            return [normalize_address(a) for a in addrs if a.strip()]
+        investor_df['_norm_addrs'] = investor_df[site_addr_col].apply(normalize_multi_addr)
+
     if owner_name_col:
         investor_df['norm_owner_name'] = investor_df[owner_name_col].apply(normalize_name)
 
     # Build lookup sets for fast matching
     str_addresses = set(dbpr_df['norm_addr'].dropna().unique()) if 'norm_addr' in dbpr_df.columns else set()
     str_names = set(dbpr_df['norm_name'].dropna().unique()) if 'norm_name' in dbpr_df.columns else set()
+
+    print(f"  DBPR normalized addresses: {len(str_addresses):,}")
+    print(f"  DBPR normalized names: {len(str_names):,}")
 
     # Build name-to-contact lookup
     name_to_phone = {}
@@ -301,20 +343,27 @@ def match_str_to_properties(investor_df: pd.DataFrame, dbpr_df: pd.DataFrame) ->
     investor_df['str_email'] = ''
 
     match_count = 0
+    addr_matches = 0
+    name_matches = 0
     for idx, row in investor_df.iterrows():
         matched = False
 
-        # Try address match
-        if 'norm_site_addr' in investor_df.columns:
-            site = row.get('norm_site_addr', '')
-            if site and site in str_addresses:
-                matched = True
+        # Try address match (check each property address in pipe-delimited list)
+        if '_norm_addrs' in investor_df.columns:
+            addrs = row.get('_norm_addrs', [])
+            if isinstance(addrs, list):
+                for addr in addrs:
+                    if addr and addr in str_addresses:
+                        matched = True
+                        addr_matches += 1
+                        break
 
         # Try name match
         if not matched and 'norm_owner_name' in investor_df.columns:
             name = row.get('norm_owner_name', '')
             if name and name in str_names:
                 matched = True
+                name_matches += 1
 
         if matched:
             investor_df.at[idx, 'str_licensed'] = True
@@ -327,6 +376,9 @@ def match_str_to_properties(investor_df: pd.DataFrame, dbpr_df: pd.DataFrame) ->
             if name in name_to_email:
                 investor_df.at[idx, 'str_email'] = name_to_email[name]
 
+    print(f"  Address matches: {addr_matches:,}")
+    print(f"  Name matches: {name_matches:,}")
+
     # Count licenses per owner
     if name_col:
         license_counts = dbpr_df.groupby('norm_name').size().to_dict()
@@ -336,7 +388,7 @@ def match_str_to_properties(investor_df: pd.DataFrame, dbpr_df: pd.DataFrame) ->
                 investor_df.at[idx, 'str_license_count'] = license_counts[name]
 
     # Clean up temp columns
-    for col in ['norm_site_addr', 'norm_owner_name']:
+    for col in ['norm_site_addr', 'norm_owner_name', '_norm_addrs']:
         if col in investor_df.columns:
             investor_df.drop(columns=[col], inplace=True)
 

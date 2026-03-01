@@ -25,6 +25,28 @@ OUTPUT_DIR = Path("pipeline/output")
 # Rate limiting for web scraping
 SCRAPE_DELAY = 2.0  # seconds between requests
 
+# Shared session for SunBiz (needs cookies for Cloudflare)
+_sunbiz_session = None
+
+def _get_sunbiz_session():
+    """Get or create a requests session with SunBiz cookies."""
+    global _sunbiz_session
+    if _sunbiz_session is None:
+        _sunbiz_session = requests.Session()
+        _sunbiz_session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        })
+        # Visit the search page to establish session cookies
+        try:
+            _sunbiz_session.get(
+                'https://search.sunbiz.org/Inquiry/CorporationSearch/ByName',
+                timeout=30
+            )
+        except Exception:
+            pass
+    return _sunbiz_session
+
 
 def download_sunbiz_bulk():
     """
@@ -57,6 +79,8 @@ def search_sunbiz_entity(entity_name: str) -> dict:
     """
     Search sunbiz.org for a specific entity and extract officer/agent info.
 
+    Uses POST to the ByName endpoint and parses detailSection divs.
+
     Returns dict with:
     - registered_agent_name
     - registered_agent_address
@@ -80,114 +104,165 @@ def search_sunbiz_entity(entity_name: str) -> dict:
 
     # Clean entity name for search
     search_name = entity_name.strip()
-    # Remove common suffixes for broader search
     for suffix in [' LLC', ' L.L.C.', ' INC', ' INC.', ' CORP', ' CORP.', ' LP', ' LTD']:
         if search_name.upper().endswith(suffix):
             search_name = search_name[:len(search_name) - len(suffix)].strip()
 
-    # Search URL
-    search_url = "https://search.sunbiz.org/Inquiry/CorporationSearch/SearchByName"
-    params = {
-        'searchNameOrder': search_name,
-        'searchTerm': search_name,
-        'listPage': 1,
-        'listPageSize': 10,
-    }
-
-    headers = {
-        'User-Agent': 'DSCR-Lead-Gen-Research contact@example.com'
-    }
+    session = _get_sunbiz_session()
 
     try:
-        resp = requests.get(search_url, params=params, headers=headers, timeout=30)
+        # POST search to ByName endpoint
+        search_url = "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName"
+        search_data = {
+            'SearchTerm': search_name,
+            'InquiryType': 'EntityName',
+            'SearchNameOrder': '',
+        }
+
+        resp = session.post(search_url, data=search_data, timeout=30)
         if resp.status_code != 200:
             return result
 
         soup = BeautifulSoup(resp.text, 'html.parser')
 
-        # Find the first matching entity link
-        results_table = soup.find('table', {'id': 'searchResultsTable'})
-        if not results_table:
-            # Try alternative selector
-            links = soup.find_all('a', href=re.compile(r'/Inquiry/CorporationSearch/SearchResultDetail'))
-            if not links:
-                return result
+        # Find detail page links in results
+        links = soup.find_all('a', href=re.compile(r'SearchResultDetail'))
+        if not links:
+            return result
+
+        # Pick the best match — prefer exact entity name match
+        detail_url = None
+        entity_upper = entity_name.upper().strip()
+        for link in links:
+            link_text = link.get_text(strip=True).upper()
+            if link_text == entity_upper:
+                detail_url = 'https://search.sunbiz.org' + link['href']
+                break
+        if not detail_url:
+            # Fall back to first result
             detail_url = 'https://search.sunbiz.org' + links[0]['href']
-        else:
-            rows = results_table.find_all('tr')
-            if len(rows) < 2:  # header + at least one result
-                return result
-            first_link = rows[1].find('a')
-            if not first_link:
-                return result
-            detail_url = 'https://search.sunbiz.org' + first_link['href']
 
         time.sleep(SCRAPE_DELAY)
 
         # Fetch detail page
-        detail_resp = requests.get(detail_url, headers=headers, timeout=30)
+        detail_resp = session.get(detail_url, timeout=30)
         if detail_resp.status_code != 200:
             return result
 
         detail_soup = BeautifulSoup(detail_resp.text, 'html.parser')
-        page_text = detail_soup.get_text()
 
-        # Extract registered agent
-        agent_section = detail_soup.find(string=re.compile(r'Registered Agent', re.I))
-        if agent_section:
-            # Navigate to the agent info - structure varies
-            parent = agent_section.find_parent()
-            if parent:
-                siblings = parent.find_next_siblings()
-                for sib in siblings[:3]:
-                    text = sib.get_text(strip=True)
-                    if text and not text.startswith('Officer') and not text.startswith('Annual'):
-                        if not result['registered_agent_name']:
-                            result['registered_agent_name'] = text
-                        elif not result['registered_agent_address']:
-                            result['registered_agent_address'] = text
+        # Parse detailSection divs
+        sections = detail_soup.find_all('div', class_='detailSection')
+        for section in sections:
+            section_text = section.get_text(separator='\n', strip=True)
+            lines = [l.strip() for l in section_text.split('\n') if l.strip()]
 
-        # Extract officers/directors
-        officer_section = detail_soup.find(string=re.compile(r'Officer/Director', re.I))
-        if officer_section:
-            parent = officer_section.find_parent()
-            if parent:
-                # Officers are typically in a structured list after the header
-                next_elements = parent.find_next_siblings()
-                current_officer = {}
-                for elem in next_elements:
-                    text = elem.get_text(strip=True)
-                    if not text:
-                        continue
-                    if text.startswith('Annual Report') or text.startswith('Document'):
-                        break
-                    # Heuristic: titles are short (Manager, President, etc.)
-                    if len(text) < 30 and any(t in text.upper() for t in
-                        ['MANAGER', 'MEMBER', 'PRESIDENT', 'DIRECTOR', 'SECRETARY',
-                         'TREASURER', 'VP', 'CEO', 'CFO', 'OFFICER', 'AGENT']):
-                        if current_officer:
-                            result['officers'].append(current_officer)
-                        current_officer = {'title': text}
-                    elif 'name' not in current_officer:
-                        current_officer['name'] = text
-                    elif 'address' not in current_officer:
-                        current_officer['address'] = text
+            if not lines:
+                continue
 
-                if current_officer and 'name' in current_officer:
-                    result['officers'].append(current_officer)
+            header = lines[0]
+
+            # Filing Information section
+            if 'Filing Information' in header:
+                for i, line in enumerate(lines):
+                    if 'Document Number' in line and i + 1 < len(lines):
+                        result['entity_number'] = lines[i + 1]
+                    elif 'Status' in line and 'PDA' not in line and i + 1 < len(lines):
+                        result['status'] = lines[i + 1]
+                    elif 'Date Filed' in line and i + 1 < len(lines):
+                        result['filing_date'] = lines[i + 1]
+
+            # Principal Address section
+            elif 'Principal Address' in header:
+                addr_lines = [l for l in lines[1:] if not l.startswith('Changed:')]
+                if addr_lines:
+                    result['principal_address'] = ', '.join(addr_lines)
+
+            # Mailing Address section
+            elif 'Mailing Address' in header:
+                addr_lines = [l for l in lines[1:] if not l.startswith('Changed:')]
+                if addr_lines:
+                    result['mailing_address'] = ', '.join(addr_lines)
+
+            # Registered Agent section
+            elif 'Registered Agent' in header:
+                # First non-header, non-"Changed:" line is the agent name
+                agent_lines = [l for l in lines[1:] if not l.startswith('Name Changed:') and not l.startswith('Address Changed:')]
+                if agent_lines:
+                    result['registered_agent_name'] = agent_lines[0]
+                if len(agent_lines) > 1:
+                    result['registered_agent_address'] = ', '.join(agent_lines[1:])
+
+            # Officers/Directors or Authorized Persons section
+            elif 'Officer/Director' in header or 'Authorized Person' in header:
+                # Parse title/name pairs from spans
+                title_spans = section.find_all('span', string=re.compile(r'^Title\s'))
+                for title_span in title_spans:
+                    title_text = title_span.get_text(strip=True)
+                    # Extract title value (e.g., "Title MGR" -> "MGR")
+                    title_val = title_text.replace('Title', '').strip()
+
+                    # The name and address follow the title span as text nodes
+                    # Navigate to next sibling text content
+                    officer = {'title': title_val}
+                    next_node = title_span
+                    collected = []
+                    while True:
+                        next_node = next_node.next_sibling
+                        if next_node is None:
+                            break
+                        if hasattr(next_node, 'name') and next_node.name == 'span':
+                            break  # Hit next title span
+                        text = next_node.get_text(strip=True) if hasattr(next_node, 'get_text') else str(next_node).strip()
+                        if text:
+                            collected.append(text)
+
+                    if collected:
+                        officer['name'] = collected[0]
+                        if len(collected) > 1:
+                            officer['address'] = ', '.join(collected[1:])
+                        result['officers'].append(officer)
+
+                # Fallback: if no title spans found, parse from text
+                if not result['officers']:
+                    name_addr_lines = [l for l in lines if l != header and l != 'Name & Address'
+                                       and not l.startswith('Title')]
+                    # Try to extract from "Title XXX\nNAME\nADDRESS" pattern
+                    i = 1  # skip header
+                    while i < len(lines):
+                        line = lines[i]
+                        if line == 'Name & Address':
+                            i += 1
+                            continue
+                        if line.startswith('Title '):
+                            title_val = line.replace('Title ', '').strip()
+                            officer = {'title': title_val}
+                            if i + 1 < len(lines) and not lines[i + 1].startswith('Title '):
+                                officer['name'] = lines[i + 1]
+                                i += 1
+                                # Collect address lines until next Title or section
+                                addr_parts = []
+                                while i + 1 < len(lines) and not lines[i + 1].startswith('Title ') and not lines[i + 1].startswith('Annual') and not lines[i + 1].startswith('Document'):
+                                    i += 1
+                                    addr_parts.append(lines[i])
+                                if addr_parts:
+                                    officer['address'] = ', '.join(addr_parts)
+                            result['officers'].append(officer)
+                        i += 1
 
         # Determine resolved person (best guess at human owner)
         if result['officers']:
-            # Prefer Manager or Member for LLCs, President for Corps
+            # Prefer Manager/Member for LLCs, President for Corps
+            priority_titles = ['MGR', 'MGRM', 'MANAGER', 'MANAGING MEMBER', 'MEMBER',
+                               'PRESIDENT', 'PRES', 'CEO']
             for officer in result['officers']:
-                if officer.get('title', '').upper() in ('MANAGER', 'MANAGING MEMBER', 'MEMBER', 'PRESIDENT'):
+                if officer.get('title', '').upper() in priority_titles:
                     result['resolved_person'] = officer.get('name', '')
                     break
-            if not result['resolved_person']:
+            if not result['resolved_person'] and result['officers']:
                 result['resolved_person'] = result['officers'][0].get('name', '')
         elif result['registered_agent_name']:
-            # Use registered agent if no officers found
-            # But only if it's a person name (not another entity)
+            # Use registered agent if no officers found (only if it's a person)
             if not any(kw in result['registered_agent_name'].upper() for kw in
                       [' LLC', ' INC', ' CORP', ' SERVICE', ' AGENT', ' REGISTERED']):
                 result['resolved_person'] = result['registered_agent_name']
@@ -221,7 +296,7 @@ def resolve_entities(input_file: str, output_file: str, max_lookups: int = 500):
                 lambda x: any(kw in str(x).upper() for kw in entity_keywords)
             )
 
-    entities = df[df['is_entity'] == True].copy() if 'is_entity' in df.columns else pd.DataFrame()
+    entities = df[df['is_entity'].astype(str).str.lower().isin(['true', '1', 'yes'])].copy() if 'is_entity' in df.columns else pd.DataFrame()
 
     if entities.empty:
         print("No entity-owned properties found.")

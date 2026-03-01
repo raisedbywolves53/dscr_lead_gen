@@ -380,17 +380,14 @@ def enrich_leads(input_file: str, output_file: str, max_lookups: int = 500,
             print(f"  Progress: {i}/{lookup_count} ({enriched_count} enriched)")
             save_cache(cache)
 
-        # Try TruePeopleSearch first
-        result = search_truepeoplesearch(name, city, state)
-        time.sleep(SEARCH_DELAY)
+        result = {'phone': '', 'email': '', 'source': ''}
 
-        # If no result, try FastPeopleSearch
-        if not result['phone'] and not result['email']:
-            result = search_fastpeoplesearch(name, city, state)
-            time.sleep(SEARCH_DELAY)
+        # People search sites (TruePeopleSearch, FastPeopleSearch) block
+        # automated requests with 403s. Skip them to avoid wasting time.
+        # To use them, run manual lookups or use a proxy-based service.
 
-        # If still no email and Apollo key available, try Apollo
-        if not result['email'] and apollo_key:
+        # If Apollo key available, try Apollo for business email
+        if apollo_key:
             apollo_result = search_apollo(name, api_key=apollo_key)
             if apollo_result['email']:
                 result['email'] = apollo_result['email']

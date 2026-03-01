@@ -44,6 +44,12 @@ def classify_icp(row: pd.Series) -> tuple:
     prop_types = str(row.get('property_types', '') or row.get('DOR_UC', '')).upper()
     is_multifamily = any(code in prop_types for code in ['03', '08', 'MULTI', 'DUPLEX', 'TRIPLEX', 'FOURPLEX'])
 
+    # Get refinance signals
+    probable_cash = str(row.get('probable_cash_buyer', '')).lower() in ('true', '1', 'yes')
+    brrrr_exit = str(row.get('brrrr_exit_candidate', '')).lower() in ('true', '1', 'yes')
+    equity_harvest = str(row.get('equity_harvest_candidate', '')).lower() in ('true', '1', 'yes')
+    rate_refi = str(row.get('rate_refi_candidate', '')).lower() in ('true', '1', 'yes')
+
     # Get recent purchase info for BRRRR detection
     recent_price = float(row.get('most_recent_price', 0) or 0)
     portfolio_value = float(row.get('total_portfolio_value', 0) or 0)
@@ -104,6 +110,23 @@ def classify_icp(row: pd.Series) -> tuple:
     else:
         icp_primary = 'Single Investment Property'
         tier = 3
+
+    # Refinance-based secondary tagging (overlay on any primary ICP)
+    if not icp_secondary:
+        if probable_cash:
+            icp_secondary = 'Cash-Out Refi Candidate'
+        elif brrrr_exit:
+            icp_secondary = 'BRRRR Exit Candidate'
+        elif equity_harvest:
+            icp_secondary = 'Equity Harvest Candidate'
+        elif rate_refi:
+            icp_secondary = 'Rate Refi Candidate'
+
+    # Upgrade tier if strong refi signal on otherwise lower-tier lead
+    if tier == 3 and (probable_cash or brrrr_exit):
+        tier = 2
+    if tier == 2 and probable_cash and property_count >= 2:
+        tier = 1
 
     return icp_primary, icp_secondary, tier
 
@@ -191,6 +214,10 @@ def score_lead(row: pd.Series) -> int:
         score += 5
     else:
         score += 2
+
+    # Refinance opportunity boost (0-40, from Module 8)
+    refi_boost = int(float(row.get('refi_score_boost', 0) or 0))
+    score += refi_boost
 
     return min(score, 100)
 
@@ -286,6 +313,11 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
             'mailing_address', 'mailing_city', 'mailing_state', 'mailing_zip',
             'phone', 'email', 'enrichment_source',
             'property_count', 'total_portfolio_value',
+            'estimated_equity', 'equity_ratio',
+            'max_cashout_75', 'max_cashout_80',
+            'refi_signals', 'refi_priority',
+            'probable_cash_buyer', 'brrrr_exit_candidate',
+            'rate_refi_candidate', 'equity_harvest_candidate',
             'most_recent_purchase', 'most_recent_price',
             'county', 'property_types',
             'str_licensed', 'str_license_count',
@@ -325,19 +357,24 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
         summary_data.append({'Metric': '---', 'Value': '---'})
         summary_data.append({'Metric': 'CONTACT COVERAGE', 'Value': ''})
         total = len(df)
-        has_phone = (df['phone'].fillna('') != '').sum()
-        has_email = (df['email'].fillna('') != '').sum()
-        has_either = ((df['phone'].fillna('') != '') | (df['email'].fillna('') != '')).sum()
+        has_phone = (df['phone'].fillna('') != '').sum() if 'phone' in df.columns else 0
+        has_email = (df['email'].fillna('') != '').sum() if 'email' in df.columns else 0
+        has_either = has_phone + has_email - ((df.get('phone', pd.Series(dtype=str)).fillna('') != '') & (df.get('email', pd.Series(dtype=str)).fillna('') != '')).sum() if ('phone' in df.columns or 'email' in df.columns) else 0
         summary_data.append({'Metric': '  Has Phone', 'Value': f'{has_phone:,} ({has_phone/total*100:.1f}%)'})
         summary_data.append({'Metric': '  Has Email', 'Value': f'{has_email:,} ({has_email/total*100:.1f}%)'})
         summary_data.append({'Metric': '  Has Either', 'Value': f'{has_either:,} ({has_either/total*100:.1f}%)'})
 
         summary_data.append({'Metric': '---', 'Value': '---'})
         summary_data.append({'Metric': 'INVESTOR PROFILE', 'Value': ''})
-        entity_count = (df['is_entity'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes'])).sum()
-        str_count = (df['str_licensed'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes'])).sum()
-        foreign_count = (df['foreign_owner'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes'])).sum()
-        oos_count = (df['out_of_state'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes'])).sum()
+        def _safe_bool_count(col_name):
+            if col_name not in df.columns:
+                return 0
+            return (df[col_name].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes'])).sum()
+
+        entity_count = _safe_bool_count('is_entity')
+        str_count = _safe_bool_count('str_licensed')
+        foreign_count = _safe_bool_count('foreign_owner')
+        oos_count = _safe_bool_count('out_of_state')
         summary_data.append({'Metric': '  Entity-Owned', 'Value': f'{entity_count:,} ({entity_count/total*100:.1f}%)'})
         summary_data.append({'Metric': '  STR Licensed', 'Value': f'{str_count:,} ({str_count/total*100:.1f}%)'})
         summary_data.append({'Metric': '  Foreign Owner', 'Value': f'{foreign_count:,} ({foreign_count/total*100:.1f}%)'})
@@ -406,10 +443,14 @@ def main():
 
     # Add metadata
     df['data_sources'] = 'FDOR'
-    df.loc[df['str_licensed'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes']), 'data_sources'] += ',DBPR'
-    df.loc[df['resolved_person'].fillna('') != '', 'data_sources'] += ',SunBiz'
-    df.loc[df['sec_fund_filing'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes']), 'data_sources'] += ',EDGAR'
-    df.loc[df['enrichment_source'].fillna('') != '', 'data_sources'] += ',Enrichment'
+    if 'str_licensed' in df.columns:
+        df.loc[df['str_licensed'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes']), 'data_sources'] += ',DBPR'
+    if 'resolved_person' in df.columns:
+        df.loc[df['resolved_person'].fillna('') != '', 'data_sources'] += ',SunBiz'
+    if 'sec_fund_filing' in df.columns:
+        df.loc[df['sec_fund_filing'].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes']), 'data_sources'] += ',EDGAR'
+    if 'enrichment_source' in df.columns:
+        df.loc[df['enrichment_source'].fillna('') != '', 'data_sources'] += ',Enrichment'
     df['last_updated'] = date.today().isoformat()
 
     # Standardize column names for output
