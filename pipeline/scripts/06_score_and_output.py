@@ -52,13 +52,20 @@ def classify_icp(row: pd.Series) -> tuple:
     Returns (icp_primary, icp_secondary, tier)
     """
 
-    property_count = int(float(row.get('property_count', 0) or 0))
+    def _safe_int(val, default=0):
+        try:
+            f = float(val)
+            return default if pd.isna(f) else int(f)
+        except (ValueError, TypeError):
+            return default
+
+    property_count = _safe_int(row.get('property_count', 0))
     str_licensed = str(row.get('str_licensed', '')).lower() in ('true', '1', 'yes')
-    str_count = int(float(row.get('str_license_count', 0) or 0))
+    str_count = _safe_int(row.get('str_license_count', 0))
     foreign_owner = str(row.get('foreign_owner', '')).lower() in ('true', '1', 'yes')
     out_of_state = str(row.get('out_of_state', '')).lower() in ('true', '1', 'yes')
     is_entity = str(row.get('is_entity', '')).lower() in ('true', '1', 'yes')
-    entity_count = int(float(row.get('entity_count', 0) or 0))
+    entity_count = _safe_int(row.get('entity_count', 0))
     sec_fund = str(row.get('sec_fund_filing', '')).lower() in ('true', '1', 'yes')
 
     # Get property type info
@@ -72,8 +79,14 @@ def classify_icp(row: pd.Series) -> tuple:
     rate_refi = str(row.get('rate_refi_candidate', '')).lower() in ('true', '1', 'yes')
 
     # Get recent purchase info for BRRRR detection
-    recent_price = float(row.get('most_recent_price', 0) or 0)
-    portfolio_value = float(row.get('total_portfolio_value', 0) or 0)
+    def _safe_float(val, default=0.0):
+        try:
+            f = float(val)
+            return default if pd.isna(f) else f
+        except (ValueError, TypeError):
+            return default
+    recent_price = _safe_float(row.get('most_recent_price', 0))
+    portfolio_value = _safe_float(row.get('total_portfolio_value', 0))
 
     # Classification logic (priority order)
     icp_primary = 'Single Investment Property'
@@ -159,8 +172,15 @@ def score_lead(row: pd.Series) -> int:
 
     score = 0
 
+    def _safe_int(val, default=0):
+        try:
+            f = float(val)
+            return default if pd.isna(f) else int(f)
+        except (ValueError, TypeError):
+            return default
+
     # Property count (0-25)
-    pc = int(float(row.get('property_count', 0) or 0))
+    pc = _safe_int(row.get('property_count', 0))
     if pc >= 20:
         score += 25
     elif pc >= 10:
@@ -190,7 +210,13 @@ def score_lead(row: pd.Series) -> int:
             pass
 
     # Portfolio value (0-15)
-    pv = float(row.get('total_portfolio_value', 0) or 0)
+    def _safe_float(val, default=0.0):
+        try:
+            f = float(val)
+            return default if pd.isna(f) else f
+        except (ValueError, TypeError):
+            return default
+    pv = _safe_float(row.get('total_portfolio_value', 0))
     if pv >= 3000000:
         score += 15
     elif pv >= 1000000:
@@ -204,7 +230,7 @@ def score_lead(row: pd.Series) -> int:
 
     # Entity sophistication (0-10)
     is_entity = str(row.get('is_entity', '')).lower() in ('true', '1', 'yes')
-    entity_count = int(float(row.get('entity_count', 0) or 0))
+    entity_count = _safe_int(row.get('entity_count', 0))
     if entity_count >= 2:
         score += 10
     elif is_entity:
@@ -239,7 +265,7 @@ def score_lead(row: pd.Series) -> int:
         score += 2
 
     # Refinance opportunity boost (0-40, from Module 8)
-    refi_boost = int(float(row.get('refi_score_boost', 0) or 0))
+    refi_boost = _safe_int(row.get('refi_score_boost', 0))
     score += refi_boost
 
     return min(score, 100)
@@ -357,8 +383,8 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
         # Tab 2: By ICP Segment
         icp_segments = df_sorted['icp_primary'].unique()
         for segment in sorted(icp_segments):
-            # Excel sheet name max 31 chars
-            sheet_name = segment[:31]
+            # Excel sheet name max 31 chars, no invalid chars
+            sheet_name = segment.replace('/', '-')[:31]
             segment_df = df_sorted[df_sorted['icp_primary'] == segment]
             segment_df[available_cols].to_excel(writer, sheet_name=sheet_name, index=False)
 
