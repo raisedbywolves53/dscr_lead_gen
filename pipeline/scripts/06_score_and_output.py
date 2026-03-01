@@ -24,6 +24,27 @@ MAJOR_METRO_COUNTIES = [
     'VOLUSIA', 'BREVARD', 'PASCO', 'POLK', 'ST. LUCIE', 'MARTIN'
 ]
 
+# FDOR county code -> name mapping (reverse of codes in 01_fdor_download_filter.py)
+CO_NO_TO_COUNTY = {
+    "11": "ALACHUA", "12": "BAKER", "13": "BAY", "14": "BRADFORD",
+    "15": "BREVARD", "16": "BROWARD", "17": "CALHOUN", "18": "CHARLOTTE",
+    "19": "CITRUS", "20": "CLAY", "21": "COLLIER", "22": "COLUMBIA",
+    "23": "MIAMI-DADE", "24": "DESOTO", "25": "DIXIE", "26": "DUVAL",
+    "27": "ESCAMBIA", "28": "FLAGLER", "29": "FRANKLIN", "30": "GADSDEN",
+    "31": "GILCHRIST", "32": "GLADES", "33": "GULF", "34": "HAMILTON",
+    "35": "HARDEE", "36": "HENDRY", "37": "HERNANDO", "38": "HIGHLANDS",
+    "39": "HILLSBOROUGH", "40": "HOLMES", "41": "INDIAN RIVER", "42": "JACKSON",
+    "43": "JEFFERSON", "44": "LAFAYETTE", "45": "LAKE", "46": "LEE",
+    "47": "LEON", "48": "LEVY", "49": "LIBERTY", "50": "MADISON",
+    "51": "MANATEE", "52": "MARION", "53": "MARTIN", "54": "MONROE",
+    "55": "NASSAU", "56": "OKALOOSA", "57": "OKEECHOBEE", "58": "ORANGE",
+    "59": "OSCEOLA", "60": "PALM BEACH", "61": "PASCO", "62": "PINELLAS",
+    "63": "POLK", "64": "PUTNAM", "65": "SAINT JOHNS", "66": "SAINT LUCIE",
+    "67": "SANTA ROSA", "68": "SARASOTA", "69": "SEMINOLE", "70": "SUMTER",
+    "71": "SUWANNEE", "72": "TAYLOR", "73": "UNION", "74": "VOLUSIA",
+    "75": "WAKULLA", "76": "WALTON", "77": "WASHINGTON",
+}
+
 
 def classify_icp(row: pd.Series) -> tuple:
     """
@@ -204,8 +225,10 @@ def score_lead(row: pd.Series) -> int:
         score += 3
 
     # Contact availability (0-10)
-    has_phone = bool(str(row.get('phone', '')).strip())
-    has_email = bool(str(row.get('email', '')).strip())
+    phone_val = str(row.get('phone', '')).strip()
+    email_val = str(row.get('email', '')).strip()
+    has_phone = bool(phone_val) and phone_val.lower() != 'nan'
+    has_email = bool(email_val) and email_val.lower() != 'nan'
     if has_phone and has_email:
         score += 10
     elif has_phone:
@@ -409,6 +432,11 @@ def main():
     # Merge EDGAR data
     print("\nMerging SEC EDGAR fund data...")
     df = merge_edgar_data(df, args.edgar_input)
+
+    # Map CO_NO to county name if needed
+    if 'county' not in df.columns and 'CO_NO' in df.columns:
+        df['county'] = df['CO_NO'].map(CO_NO_TO_COUNTY).fillna('')
+        print(f"Mapped {(df['county'] != '').sum():,} leads to county names")
 
     # Classify ICP
     print("\nClassifying ICP segments...")
