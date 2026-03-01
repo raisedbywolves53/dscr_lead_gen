@@ -154,7 +154,7 @@ def main():
         'JV_mean': 'avg_property_value',
         'SALE_PRC1_max': 'most_recent_price',
         'SALE_PRC1_mean': 'avg_sale_price',
-        '_sale_date_max': 'most_recent_purchase',
+        'sale_date_max': 'most_recent_purchase',
         'DOR_UC_<lambda>': 'property_types',
         'CO_NO_<lambda>': 'CO_NO',
         'PHY_ADDR1_<lambda>': 'PHY_ADDR1',
@@ -168,6 +168,40 @@ def main():
     # Sort by property count descending
     grouped = grouped.sort_values('property_count', ascending=False)
 
+    # Qualification gate: require at least one active investor signal
+    pre_filter = len(grouped)
+
+    _is_foreign = grouped['foreign_owner'].astype(str).str.lower().isin(['true', '1', 'yes'])
+    _is_entity = grouped['is_entity'].astype(str).str.lower().isin(['true', '1', 'yes'])
+    _is_oos = grouped['out_of_state'].astype(str).str.lower().isin(['true', '1', 'yes'])
+
+    # Single-property OOS must show active behavior:
+    # purchased within 3 years AND property value >= $150K (not vacant land/nominal)
+    _recent_purchase = pd.to_datetime(grouped['most_recent_purchase'], errors='coerce')
+    _days_ago = (pd.Timestamp.now() - _recent_purchase).dt.days.fillna(99999)
+    _avg_val = pd.to_numeric(grouped['avg_property_value'], errors='coerce').fillna(0)
+    _single_oos_qualified = (
+        _is_oos &
+        (grouped['property_count'] == 1) &
+        (_days_ago <= 1095) &           # purchased within 3 years
+        (_avg_val >= 150000)            # real investment property, not vacant lot
+    )
+
+    qualified = grouped[
+        (grouped['property_count'] >= 2) |                    # multi-property investor
+        (_is_foreign) |                                       # foreign nationals need DSCR
+        (_is_entity & _is_oos) |                              # deliberate OOS investment structure
+        (_single_oos_qualified)                               # active single-property OOS investor
+    ].copy()
+
+    # Remove institutional owners (50+ properties) — Invitation Homes, etc.
+    # These will never take a retail DSCR loan from an individual LO
+    inst_mask = qualified['property_count'] >= 50
+    inst_count = inst_mask.sum()
+    qualified = qualified[~inst_mask].copy()
+
+    grouped = qualified
+
     # Save
     grouped.to_csv(OUTPUT_FILE, index=False)
 
@@ -177,12 +211,16 @@ def main():
     print(f"{'='*60}")
     print(f"Total parcels scanned:     {total_parcels:,}")
     print(f"Investor properties:       {total_non_homestead:,}")
-    print(f"Unique owner leads:        {len(grouped):,}")
-    print(f"Entity-owned:              {grouped['is_entity'].sum():,}")
-    print(f"Out-of-state:              {grouped['out_of_state'].sum():,}")
-    print(f"Foreign owners:            {grouped['foreign_owner'].sum():,}")
-    print(f"Multi-property (2+):       {(grouped['property_count'] >= 2).sum():,}")
-    print(f"Serial (10+):              {(grouped['property_count'] >= 10).sum():,}")
+    print(f"Unique owners (pre-gate):  {pre_filter:,}")
+    print(f"Qualified leads (post):    {len(grouped):,}")
+    print(f"  Institutional removed:   {inst_count:,} (50+ properties)")
+    print(f"  Multi-property (2+):     {(grouped['property_count'] >= 2).sum():,}")
+    print(f"  Foreign owners:          {grouped['foreign_owner'].astype(str).str.lower().isin(['true','1','yes']).sum():,}")
+    _oos_single_post = ((grouped['out_of_state'].astype(str).str.lower().isin(['true','1','yes'])) & (grouped['property_count'] == 1))
+    print(f"  OOS single (active):     {_oos_single_post.sum():,} (purchased <3yr, value >=$150K)")
+    print(f"  Entity + out-of-state:   {((grouped['is_entity'].astype(str).str.lower().isin(['true','1','yes'])) & (grouped['out_of_state'].astype(str).str.lower().isin(['true','1','yes']))).sum():,}")
+    print(f"  Serial (10-49):          {((grouped['property_count'] >= 10) & (grouped['property_count'] < 50)).sum():,}")
+    print(f"Filter rate:               {len(grouped)/pre_filter*100:.1f}% of owners passed")
     print(f"Output: {OUTPUT_FILE}")
 
 

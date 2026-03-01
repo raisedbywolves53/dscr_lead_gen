@@ -13,8 +13,8 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime, date
 import re
-from openpyxl.styles import Font, PatternFill, Alignment, numbers
-from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, numbers
+from openpyxl.utils import get_column_letter, column_index_from_string
 
 OUTPUT_DIR = Path("pipeline/output")
 
@@ -169,7 +169,20 @@ def classify_icp(row: pd.Series) -> tuple:
 
 def score_lead(row: pd.Series) -> int:
     """
-    Score a lead 0-100 based on multiple factors.
+    Score a lead 0-100 based on DSCR qualification factors.
+
+    Scoring philosophy: measures how likely this person is a genuine DSCR
+    borrower, NOT how easy they are to reach. Contact availability is tracked
+    separately via reachability_score().
+
+    Components (max 100):
+      Property count:       0-25  (portfolio scale)
+      Recency:              0-15  (active vs dormant investor)
+      Portfolio value:       0-15  (deal size / sophistication)
+      Entity sophistication: 0-10  (tax planning = repeat borrower)
+      STR indicator:        0-15  (strongest DSCR product fit signal)
+      Geographic fit:        0-5   (market demand, not lead quality)
+      Refi signals:          0-15  (inline, from Module 8)
     """
 
     score = 0
@@ -178,6 +191,13 @@ def score_lead(row: pd.Series) -> int:
         try:
             f = float(val)
             return default if pd.isna(f) else int(f)
+        except (ValueError, TypeError):
+            return default
+
+    def _safe_float(val, default=0.0):
+        try:
+            f = float(val)
+            return default if pd.isna(f) else f
         except (ValueError, TypeError):
             return default
 
@@ -194,30 +214,24 @@ def score_lead(row: pd.Series) -> int:
     elif pc >= 1:
         score += 5
 
-    # Recency of last purchase (0-20)
+    # Recency of last purchase (0-15)
     recent = str(row.get('most_recent_purchase', ''))
     if recent and recent != 'nan':
         try:
             purchase_date = pd.to_datetime(recent)
             days_ago = (datetime.now() - purchase_date).days
             if days_ago < 180:
-                score += 20
-            elif days_ago < 365:
                 score += 15
+            elif days_ago < 365:
+                score += 12
             elif days_ago < 730:
-                score += 10
+                score += 8
             elif days_ago < 1095:
-                score += 5
+                score += 4
         except:
             pass
 
     # Portfolio value (0-15)
-    def _safe_float(val, default=0.0):
-        try:
-            f = float(val)
-            return default if pd.isna(f) else f
-        except (ValueError, TypeError):
-            return default
     pv = _safe_float(row.get('total_portfolio_value', 0))
     if pv >= 3000000:
         score += 15
@@ -238,39 +252,49 @@ def score_lead(row: pd.Series) -> int:
     elif is_entity:
         score += 5
 
-    # STR indicator (0-10)
+    # STR indicator (0-15) — scaled by license count
     str_licensed = str(row.get('str_licensed', '')).lower() in ('true', '1', 'yes')
+    str_count = _safe_int(row.get('str_license_count', 0))
     if str_licensed:
-        score += 10
+        if str_count >= 3:
+            score += 15
+        elif str_count >= 2:
+            score += 12
+        else:
+            score += 10
 
-    # Geographic fit (0-10)
+    # Geographic fit (0-5) — market demand signal, not lead quality
     county = str(row.get('county', '')).upper()
     if any(c in county for c in SOUTH_FL_COUNTIES):
-        score += 10
+        score += 5
     elif any(c in county for c in MAJOR_METRO_COUNTIES):
-        score += 7
-    elif county:
         score += 3
+    elif county:
+        score += 1
 
-    # Contact availability (0-10)
+    # Refi signals inline (0-15) — from Module 8, capped and weighted
+    refi_boost = _safe_int(row.get('refi_score_boost', 0))
+    score += min(refi_boost, 15)
+
+    return min(score, 100)
+
+
+def reachability_score(row: pd.Series) -> int:
+    """
+    Separate score (0-10) for how actionable a lead is based on contact data.
+    This is NOT a quality signal — it measures outreach readiness.
+    """
     phone_val = str(row.get('phone', '')).strip()
     email_val = str(row.get('email', '')).strip()
     has_phone = bool(phone_val) and phone_val.lower() != 'nan'
     has_email = bool(email_val) and email_val.lower() != 'nan'
     if has_phone and has_email:
-        score += 10
+        return 10
     elif has_phone:
-        score += 7
+        return 7
     elif has_email:
-        score += 5
-    else:
-        score += 2
-
-    # Refinance opportunity boost (0-40, from Module 8)
-    refi_boost = _safe_int(row.get('refi_score_boost', 0))
-    score += refi_boost
-
-    return min(score, 100)
+        return 5
+    return 2
 
 
 def merge_edgar_data(investor_df: pd.DataFrame, edgar_file: str) -> pd.DataFrame:
@@ -347,6 +371,499 @@ def merge_edgar_data(investor_df: pd.DataFrame, edgar_file: str) -> pd.DataFrame
     return investor_df
 
 
+# ---------------------------------------------------------------------------
+# Dashboard helpers
+# ---------------------------------------------------------------------------
+
+# Color palette
+_NAVY = '1B2A4A'
+_ACCENT_BLUE = '4472C4'
+_HOT_RED = 'C00000'
+_WARM_ORANGE = 'ED7D31'
+_MONEY_GREEN = '548235'
+_LIGHT_BG = 'F2F2F2'
+_WHITE = 'FFFFFF'
+
+
+def _fmt_dollars_short(value):
+    """Format a dollar amount as $1.2M / $4.2B for KPI tiles."""
+    try:
+        v = float(value)
+    except (ValueError, TypeError):
+        return '$0'
+    if pd.isna(v) or v == 0:
+        return '$0'
+    if abs(v) >= 1_000_000_000:
+        return f'${v / 1_000_000_000:,.1f}B'
+    if abs(v) >= 1_000_000:
+        return f'${v / 1_000_000:,.1f}M'
+    if abs(v) >= 1_000:
+        return f'${v / 1_000:,.0f}K'
+    return f'${v:,.0f}'
+
+
+def _write_merged(ws, start_col, end_col, row, value,
+                  font=None, fill=None, alignment=None, number_format=None):
+    """Write a value into a merged cell range, applying fill to every cell."""
+    if start_col != end_col:
+        ws.merge_cells(start_row=row, start_column=start_col,
+                       end_row=row, end_column=end_col)
+    cell = ws.cell(row=row, column=start_col, value=value)
+    if font:
+        cell.font = font
+    if fill:
+        cell.fill = fill
+    if alignment:
+        cell.alignment = alignment
+    if number_format:
+        cell.number_format = number_format
+    # Apply fill to every cell in the range so there are no white gaps
+    if fill:
+        for c in range(start_col, end_col + 1):
+            ws.cell(row=row, column=c).fill = fill
+
+
+def _build_summary_dashboard(ws, df):
+    """Build the executive Summary dashboard onto *ws*."""
+
+    # Pre-compute metrics
+    total = len(df)
+    scores = df['score'].astype(float)
+    avg_score = scores.mean()
+
+    hot_mask = scores >= 60
+    warm_mask = (scores >= 40) & (scores < 60)
+    cold_mask = scores < 40
+    hot_count = int(hot_mask.sum())
+    warm_count = int(warm_mask.sum())
+    cold_count = int(cold_mask.sum())
+
+    def _safe_float_col(col):
+        if col not in df.columns:
+            return pd.Series([0.0] * len(df))
+        return pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    portfolio_vals = _safe_float_col('total_portfolio_value')
+    total_portfolio = portfolio_vals.sum()
+
+    def _has(col):
+        if col not in df.columns:
+            return pd.Series([False] * len(df))
+        return df[col].fillna('').astype(str).str.strip().ne('') & df[col].astype(str).str.lower().ne('nan')
+
+    has_phone = _has('phone')
+    has_email = _has('email')
+    phone_count = int(has_phone.sum())
+    email_count = int(has_email.sum())
+    both_count = int((has_phone & has_email).sum())
+    either_count = int((has_phone | has_email).sum())
+    none_count = total - either_count
+
+    def _bool_col(col):
+        if col not in df.columns:
+            return pd.Series([False] * len(df))
+        return df[col].fillna('').astype(str).str.lower().isin(['true', '1', 'yes'])
+
+    # Fills
+    navy_fill = PatternFill(start_color=_NAVY, end_color=_NAVY, fill_type='solid')
+    blue_fill = PatternFill(start_color=_ACCENT_BLUE, end_color=_ACCENT_BLUE, fill_type='solid')
+    red_fill = PatternFill(start_color=_HOT_RED, end_color=_HOT_RED, fill_type='solid')
+    orange_fill = PatternFill(start_color=_WARM_ORANGE, end_color=_WARM_ORANGE, fill_type='solid')
+    green_fill = PatternFill(start_color=_MONEY_GREEN, end_color=_MONEY_GREEN, fill_type='solid')
+    light_fill = PatternFill(start_color=_LIGHT_BG, end_color=_LIGHT_BG, fill_type='solid')
+    white_fill = PatternFill(start_color=_WHITE, end_color=_WHITE, fill_type='solid')
+
+    # Fonts
+    banner_font = Font(size=18, bold=True, color=_WHITE)
+    subtitle_font = Font(size=10, color=_WHITE)
+    section_font = Font(size=13, bold=True, color=_WHITE)
+    kpi_value_font = Font(size=20, bold=True, color=_WHITE)
+    kpi_label_font = Font(size=9, color=_WHITE)
+    table_header_font = Font(size=10, bold=True, color=_WHITE)
+    table_cell_font = Font(size=10, color='333333')
+    table_cell_bold = Font(size=10, bold=True, color='333333')
+    footer_font = Font(size=8, italic=True, color='999999')
+
+    center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    left = Alignment(horizontal='left', vertical='center', wrap_text=True)
+    right_align = Alignment(horizontal='right', vertical='center')
+
+    thin_border = Border(
+        bottom=Side(style='thin', color='D9D9D9'),
+    )
+
+    # Hide gridlines
+    ws.sheet_view.showGridLines = False
+
+    # Column widths: A=gutter(2), B-G=content(~20 each), H=gutter(2)
+    ws.column_dimensions['A'].width = 2
+    for col_letter in ['B', 'C', 'D', 'E', 'F', 'G']:
+        ws.column_dimensions[col_letter].width = 22
+    ws.column_dimensions['H'].width = 2
+
+    row = 1  # row cursor
+
+    # ===== SECTION 1: Banner =====
+    _write_merged(ws, 2, 7, row, 'DSCR LEAD GENERATION DASHBOARD',
+                  font=banner_font, fill=navy_fill, alignment=center)
+    ws.row_dimensions[row].height = 40
+    # Gutter fills
+    ws.cell(row=row, column=1).fill = navy_fill
+    ws.cell(row=row, column=8).fill = navy_fill
+    row += 1
+
+    subtitle = f'Generated {date.today().strftime("%B %d, %Y")}  |  CrossCountry Mortgage  |  Florida Investment Properties'
+    _write_merged(ws, 2, 7, row, subtitle,
+                  font=subtitle_font, fill=navy_fill, alignment=center)
+    ws.row_dimensions[row].height = 22
+    ws.cell(row=row, column=1).fill = navy_fill
+    ws.cell(row=row, column=8).fill = navy_fill
+    row += 1
+
+    # Spacer
+    row += 1
+
+    # ===== SECTION 2: Pipeline at a Glance — 6 KPI tiles =====
+    _write_merged(ws, 2, 7, row, 'PIPELINE AT A GLANCE',
+                  font=section_font, fill=blue_fill, alignment=left)
+    ws.row_dimensions[row].height = 28
+    row += 1
+
+    # Row of 3 KPI tiles: Total Leads | Hot Leads | Warm Leads
+    kpi_tiles_row1 = [
+        (f'{total:,}', 'Total Leads', navy_fill),
+        (f'{hot_count:,}', 'Hot Leads (60+)', red_fill),
+        (f'{warm_count:,}', 'Warm Leads (40-59)', orange_fill),
+    ]
+    for i, (val, label, fill) in enumerate(kpi_tiles_row1):
+        col_start = 2 + i * 2
+        col_end = col_start + 1
+        _write_merged(ws, col_start, col_end, row, val,
+                      font=kpi_value_font, fill=fill, alignment=center)
+    ws.row_dimensions[row].height = 45
+    row += 1
+
+    for i, (val, label, fill) in enumerate(kpi_tiles_row1):
+        col_start = 2 + i * 2
+        col_end = col_start + 1
+        _write_merged(ws, col_start, col_end, row, label,
+                      font=kpi_label_font, fill=fill, alignment=center)
+    ws.row_dimensions[row].height = 20
+    row += 1
+
+    # Row of 3 KPI tiles: Avg Score | Contactable | Total Portfolio
+    kpi_tiles_row2 = [
+        (f'{avg_score:.0f}', 'Avg Lead Score', blue_fill),
+        (f'{phone_count:,}', 'Contactable (Phone)', green_fill),
+        (_fmt_dollars_short(total_portfolio), 'Total Portfolio Value', green_fill),
+    ]
+    for i, (val, label, fill) in enumerate(kpi_tiles_row2):
+        col_start = 2 + i * 2
+        col_end = col_start + 1
+        _write_merged(ws, col_start, col_end, row, val,
+                      font=kpi_value_font, fill=fill, alignment=center)
+    ws.row_dimensions[row].height = 45
+    row += 1
+
+    for i, (val, label, fill) in enumerate(kpi_tiles_row2):
+        col_start = 2 + i * 2
+        col_end = col_start + 1
+        _write_merged(ws, col_start, col_end, row, label,
+                      font=kpi_label_font, fill=fill, alignment=center)
+    ws.row_dimensions[row].height = 20
+    row += 1
+
+    # Spacer
+    row += 1
+
+    # ===== SECTION 3: Score Distribution =====
+    _write_merged(ws, 2, 7, row, 'SCORE DISTRIBUTION',
+                  font=section_font, fill=blue_fill, alignment=left)
+    ws.row_dimensions[row].height = 28
+    row += 1
+
+    # Header row
+    score_headers = ['Band', '# Leads', '% of Total', 'Avg Properties', 'Avg Portfolio $', 'Phone %']
+    for i, hdr in enumerate(score_headers):
+        ws.cell(row=row, column=2 + i, value=hdr).font = table_header_font
+        ws.cell(row=row, column=2 + i).fill = navy_fill
+        ws.cell(row=row, column=2 + i).alignment = center
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    prop_counts = _safe_float_col('property_count')
+    # Data rows: Hot, Warm, Cold
+    bands = [
+        ('Hot (60+)', hot_mask, red_fill),
+        ('Warm (40-59)', warm_mask, orange_fill),
+        ('Cold (<40)', cold_mask, light_fill),
+    ]
+    for band_label, mask, band_fill in bands:
+        n = int(mask.sum())
+        pct = f'{n / total * 100:.1f}%' if total > 0 else '0%'
+        avg_props = f'{prop_counts[mask].mean():.1f}' if n > 0 else '0'
+        avg_port = _fmt_dollars_short(portfolio_vals[mask].mean()) if n > 0 else '$0'
+        phone_pct = f'{has_phone[mask].sum() / n * 100:.0f}%' if n > 0 else '0%'
+        vals = [band_label, f'{n:,}', pct, avg_props, avg_port, phone_pct]
+        for i, v in enumerate(vals):
+            cell = ws.cell(row=row, column=2 + i, value=v)
+            cell.font = table_cell_bold if i == 0 else table_cell_font
+            cell.alignment = center if i > 0 else left
+            cell.border = thin_border
+            if band_label.startswith('Cold'):
+                cell.fill = light_fill
+        ws.row_dimensions[row].height = 22
+        row += 1
+
+    # Spacer
+    row += 1
+
+    # ===== SECTION 4: Investor Segments =====
+    _write_merged(ws, 2, 7, row, 'INVESTOR SEGMENTS',
+                  font=section_font, fill=blue_fill, alignment=left)
+    ws.row_dimensions[row].height = 28
+    row += 1
+
+    seg_headers = ['Segment', '# Leads', 'Avg Score', 'Tier 1 %', 'Avg Portfolio $', 'Phone %']
+    for i, hdr in enumerate(seg_headers):
+        ws.cell(row=row, column=2 + i, value=hdr).font = table_header_font
+        ws.cell(row=row, column=2 + i).fill = navy_fill
+        ws.cell(row=row, column=2 + i).alignment = center
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    seg_stats = df.groupby('icp_primary').agg(
+        count=('score', 'size'),
+        avg_score=('score', lambda s: s.astype(float).mean()),
+    ).sort_values('avg_score', ascending=False)
+
+    for idx_num, (seg_name, seg_row) in enumerate(seg_stats.iterrows()):
+        seg_mask = df['icp_primary'] == seg_name
+        n = int(seg_row['count'])
+        tier1_pct = f"{(df.loc[seg_mask, 'tier'].astype(int) == 1).sum() / n * 100:.0f}%" if n > 0 else '0%'
+        avg_port = _fmt_dollars_short(portfolio_vals[seg_mask].mean())
+        phone_pct = f'{has_phone[seg_mask].sum() / n * 100:.0f}%' if n > 0 else '0%'
+        vals = [seg_name, f'{n:,}', f'{seg_row["avg_score"]:.0f}', tier1_pct, avg_port, phone_pct]
+        for i, v in enumerate(vals):
+            cell = ws.cell(row=row, column=2 + i, value=v)
+            cell.font = table_cell_bold if i == 0 else table_cell_font
+            cell.alignment = center if i > 0 else left
+            cell.border = thin_border
+            if idx_num % 2 == 1:
+                cell.fill = light_fill
+        ws.row_dimensions[row].height = 22
+        row += 1
+
+    # Spacer
+    row += 1
+
+    # ===== SECTION 5: Refinance Opportunities =====
+    _write_merged(ws, 2, 7, row, 'REFINANCE OPPORTUNITIES',
+                  font=section_font, fill=green_fill, alignment=left)
+    ws.row_dimensions[row].height = 28
+    row += 1
+
+    # Refi KPI tiles (3 across)
+    cash_buyer = _bool_col('probable_cash_buyer')
+    equity_harv = _bool_col('equity_harvest_candidate')
+    brrrr = _bool_col('brrrr_exit_candidate')
+    rate_refi = _bool_col('rate_refi_candidate')
+    any_refi = cash_buyer | equity_harv | brrrr | rate_refi
+    refi_total = int(any_refi.sum())
+
+    cashout_75 = _safe_float_col('max_cashout_75')
+    est_cashout = cashout_75[any_refi].sum()
+
+    high_refi = int((any_refi & hot_mask).sum())
+
+    refi_kpis = [
+        (f'{refi_total:,}', 'Refi Candidates', green_fill),
+        (_fmt_dollars_short(est_cashout), 'Est. Cash-Out Potential', green_fill),
+        (f'{high_refi:,}', 'High-Priority Refi', red_fill),
+    ]
+    for i, (val, label, fill) in enumerate(refi_kpis):
+        col_start = 2 + i * 2
+        col_end = col_start + 1
+        _write_merged(ws, col_start, col_end, row, val,
+                      font=kpi_value_font, fill=fill, alignment=center)
+    ws.row_dimensions[row].height = 45
+    row += 1
+
+    for i, (val, label, fill) in enumerate(refi_kpis):
+        col_start = 2 + i * 2
+        col_end = col_start + 1
+        _write_merged(ws, col_start, col_end, row, label,
+                      font=kpi_label_font, fill=fill, alignment=center)
+    ws.row_dimensions[row].height = 20
+    row += 1
+
+    # Spacer row
+    row += 1
+
+    # Refi breakdown table
+    refi_headers = ['Refi Type', '# Leads', 'Avg Score', 'Avg Portfolio $']
+    for i, hdr in enumerate(refi_headers):
+        ws.cell(row=row, column=2 + i, value=hdr).font = table_header_font
+        ws.cell(row=row, column=2 + i).fill = navy_fill
+        ws.cell(row=row, column=2 + i).alignment = center
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    refi_types = [
+        ('Cash Buyer (Leverage Up)', cash_buyer),
+        ('Equity Harvest (30%+ Equity)', equity_harv),
+        ('BRRRR Exit (Hard Money Out)', brrrr),
+        ('Rate Refi (2022-23 Vintage)', rate_refi),
+    ]
+    for idx_num, (rtype, rmask) in enumerate(refi_types):
+        n = int(rmask.sum())
+        avg_sc = f'{scores[rmask].mean():.0f}' if n > 0 else '-'
+        avg_port = _fmt_dollars_short(portfolio_vals[rmask].mean()) if n > 0 else '$0'
+        vals = [rtype, f'{n:,}', avg_sc, avg_port]
+        for i, v in enumerate(vals):
+            cell = ws.cell(row=row, column=2 + i, value=v)
+            cell.font = table_cell_bold if i == 0 else table_cell_font
+            cell.alignment = center if i > 0 else left
+            cell.border = thin_border
+            if idx_num % 2 == 1:
+                cell.fill = light_fill
+        ws.row_dimensions[row].height = 22
+        row += 1
+
+    # Spacer
+    row += 1
+
+    # ===== SECTION 6: Contact & Outreach Readiness =====
+    _write_merged(ws, 2, 7, row, 'CONTACT & OUTREACH READINESS',
+                  font=section_font, fill=blue_fill, alignment=left)
+    ws.row_dimensions[row].height = 28
+    row += 1
+
+    # Left block (B-D): contact coverage
+    contact_hdr = ['Contact Type', '# Leads', '% of Total']
+    for i, hdr in enumerate(contact_hdr):
+        ws.cell(row=row, column=2 + i, value=hdr).font = table_header_font
+        ws.cell(row=row, column=2 + i).fill = navy_fill
+        ws.cell(row=row, column=2 + i).alignment = center
+    # Right block (E-G): actionable combos
+    action_hdr = ['Actionable Segment', '# Leads', '']
+    for i, hdr in enumerate(action_hdr):
+        ws.cell(row=row, column=5 + i, value=hdr).font = table_header_font
+        ws.cell(row=row, column=5 + i).fill = navy_fill
+        ws.cell(row=row, column=5 + i).alignment = center
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    # Actionable combos
+    str_licensed = _bool_col('str_licensed')
+    hot_w_phone = int((hot_mask & has_phone).sum())
+    warm_w_phone = int((warm_mask & has_phone).sum())
+    str_w_phone = int((str_licensed & has_phone).sum())
+    refi_w_phone = int((any_refi & has_phone).sum())
+
+    contact_rows = [
+        ('Has Phone', phone_count, f'{phone_count / total * 100:.1f}%' if total > 0 else '0%'),
+        ('Has Email', email_count, f'{email_count / total * 100:.1f}%' if total > 0 else '0%'),
+        ('Has Both', both_count, f'{both_count / total * 100:.1f}%' if total > 0 else '0%'),
+        ('Has Either', either_count, f'{either_count / total * 100:.1f}%' if total > 0 else '0%'),
+        ('No Contact Info', none_count, f'{none_count / total * 100:.1f}%' if total > 0 else '0%'),
+    ]
+    action_rows = [
+        ('Score 60+ w/ Phone', hot_w_phone),
+        ('Score 40+ w/ Phone', warm_w_phone + hot_w_phone),
+        ('STR Operator w/ Phone', str_w_phone),
+        ('Refi Candidate w/ Phone', refi_w_phone),
+        ('', ''),  # pad to match left
+    ]
+
+    for idx_num, ((ct_label, ct_n, ct_pct), (act_label, act_n)) in enumerate(zip(contact_rows, action_rows)):
+        # Left block
+        ws.cell(row=row, column=2, value=ct_label).font = table_cell_bold
+        ws.cell(row=row, column=2).alignment = left
+        ws.cell(row=row, column=3, value=f'{ct_n:,}' if isinstance(ct_n, int) else ct_n).font = table_cell_font
+        ws.cell(row=row, column=3).alignment = center
+        ws.cell(row=row, column=4, value=ct_pct).font = table_cell_font
+        ws.cell(row=row, column=4).alignment = center
+        # Right block
+        ws.cell(row=row, column=5, value=act_label).font = table_cell_bold
+        ws.cell(row=row, column=5).alignment = left
+        ws.cell(row=row, column=6, value=f'{act_n:,}' if isinstance(act_n, int) and act_label else '').font = table_cell_font
+        ws.cell(row=row, column=6).alignment = center
+        # Alternating fill
+        for c in range(2, 8):
+            ws.cell(row=row, column=c).border = thin_border
+            if idx_num % 2 == 1:
+                ws.cell(row=row, column=c).fill = light_fill
+        ws.row_dimensions[row].height = 22
+        row += 1
+
+    # Spacer
+    row += 1
+
+    # ===== SECTION 7: Top 10 Leads Preview =====
+    _write_merged(ws, 2, 7, row, 'TOP 10 LEADS PREVIEW',
+                  font=section_font, fill=navy_fill, alignment=left)
+    ws.row_dimensions[row].height = 28
+    row += 1
+
+    top10_headers = ['Score', 'Owner', 'Investor Type', '# Props', 'Portfolio Value', 'Refi Signal']
+    for i, hdr in enumerate(top10_headers):
+        ws.cell(row=row, column=2 + i, value=hdr).font = table_header_font
+        ws.cell(row=row, column=2 + i).fill = navy_fill
+        ws.cell(row=row, column=2 + i).alignment = center
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    top10 = df.nlargest(10, 'score')
+    for idx_num, (_, lead) in enumerate(top10.iterrows()):
+        owner = str(lead.get('owner_name', '') or lead.get('resolved_person', '')).strip()
+        if not owner or owner.lower() == 'nan':
+            owner = str(lead.get('resolved_person', '')).strip()
+        if owner.lower() == 'nan':
+            owner = '(Unknown)'
+
+        refi_signals = []
+        if str(lead.get('probable_cash_buyer', '')).lower() in ('true', '1', 'yes'):
+            refi_signals.append('Cash Buyer')
+        if str(lead.get('equity_harvest_candidate', '')).lower() in ('true', '1', 'yes'):
+            refi_signals.append('Equity Harvest')
+        if str(lead.get('brrrr_exit_candidate', '')).lower() in ('true', '1', 'yes'):
+            refi_signals.append('BRRRR Exit')
+        if str(lead.get('rate_refi_candidate', '')).lower() in ('true', '1', 'yes'):
+            refi_signals.append('Rate Refi')
+        refi_str = ', '.join(refi_signals) if refi_signals else '-'
+
+        prop_ct = 0
+        try:
+            prop_ct = int(float(lead.get('property_count', 0)))
+        except (ValueError, TypeError):
+            pass
+
+        vals = [
+            int(float(lead.get('score', 0))),
+            owner[:30],
+            str(lead.get('icp_primary', '')),
+            prop_ct,
+            _fmt_dollars_short(lead.get('total_portfolio_value', 0)),
+            refi_str,
+        ]
+        for i, v in enumerate(vals):
+            cell = ws.cell(row=row, column=2 + i, value=v)
+            cell.font = table_cell_bold if i <= 1 else table_cell_font
+            cell.alignment = center if i != 1 and i != 2 and i != 5 else left
+            cell.border = thin_border
+            if idx_num % 2 == 1:
+                cell.fill = light_fill
+        ws.row_dimensions[row].height = 22
+        row += 1
+
+    # Spacer + Footer
+    row += 1
+    footer = 'Data sources: FDOR (FL Dept of Revenue) | SunBiz | DBPR | SEC EDGAR | Contact Enrichment'
+    _write_merged(ws, 2, 7, row, footer,
+                  font=footer_font, fill=None, alignment=center)
+
+
 def create_excel_output(df: pd.DataFrame, output_file: str):
     """Create multi-tab Excel workbook with formatted, human-readable output."""
 
@@ -358,7 +875,8 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
         'score': 'Lead Score',
         'icp_primary': 'Investor Type',
         'icp_secondary': 'Opportunity Type',
-        'tier': 'Priority (1=Hot, 2=Warm, 3=Cold)',
+        'tier': 'Priority Tier',
+        'reachability': 'Reachability (0-10)',
         'owner_name': 'Owner Name',
         'owner_type': 'Owner Structure',
         'resolved_person': 'Contact Person',
@@ -400,7 +918,7 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
 
     # Column ordering (internal names)
     output_cols = [
-        'lead_id', 'score', 'icp_primary', 'icp_secondary', 'tier',
+        'lead_id', 'score', 'reachability', 'icp_primary', 'icp_secondary', 'tier',
         'owner_name', 'owner_type', 'resolved_person',
         'mailing_address', 'mailing_city', 'mailing_state', 'mailing_zip',
         'phone', 'email', 'enrichment_source',
@@ -522,9 +1040,9 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
                     val = float(cell.value) if cell.value is not None else 0
                 except (ValueError, TypeError):
                     val = 0
-                if val >= 70:
+                if val >= 60:
                     cell.fill = GREEN_FILL
-                elif val >= 50:
+                elif val >= 40:
                     cell.fill = YELLOW_FILL
 
         # Auto-fit column widths (based on header, with min/max)
@@ -536,68 +1054,7 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
     # --- Build workbook ---
     with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
 
-        # Build Summary tab first
-        total = len(df)
-        summary_data = []
-        summary_data.append({'Metric': 'Total Leads', 'Value': f'{total:,}'})
-        summary_data.append({'Metric': '', 'Value': ''})
-        summary_data.append({'Metric': 'BY INVESTOR TYPE', 'Value': ''})
-        for seg in sorted(df['icp_primary'].unique()):
-            count = len(df[df['icp_primary'] == seg])
-            avg = df.loc[df['icp_primary'] == seg, 'score'].astype(float).mean()
-            summary_data.append({'Metric': f'  {seg}', 'Value': f'{count:,} leads (avg score {avg:.0f})'})
-
-        summary_data.append({'Metric': '', 'Value': ''})
-        summary_data.append({'Metric': 'BY PRIORITY', 'Value': ''})
-        tier_labels = {1: 'Hot', 2: 'Warm', 3: 'Cold'}
-        for tier in sorted(df['tier'].unique()):
-            count = len(df[df['tier'] == tier])
-            label = tier_labels.get(int(tier), f'Tier {tier}')
-            summary_data.append({'Metric': f'  {label}', 'Value': f'{count:,}'})
-
-        summary_data.append({'Metric': '', 'Value': ''})
-        summary_data.append({'Metric': 'CONTACT COVERAGE', 'Value': ''})
-        has_phone = (df['phone'].fillna('') != '').sum() if 'phone' in df.columns else 0
-        has_email = (df['email'].fillna('') != '').sum() if 'email' in df.columns else 0
-        has_both = 0
-        if 'phone' in df.columns and 'email' in df.columns:
-            has_both = ((df['phone'].fillna('') != '') & (df['email'].fillna('') != '')).sum()
-        has_either = has_phone + has_email - has_both
-        summary_data.append({'Metric': '  Has Phone', 'Value': f'{has_phone:,} ({has_phone/total*100:.1f}%)'})
-        summary_data.append({'Metric': '  Has Email', 'Value': f'{has_email:,} ({has_email/total*100:.1f}%)'})
-        summary_data.append({'Metric': '  Has Either', 'Value': f'{has_either:,} ({has_either/total*100:.1f}%)'})
-
-        summary_data.append({'Metric': '', 'Value': ''})
-        summary_data.append({'Metric': 'INVESTOR PROFILE', 'Value': ''})
-        def _safe_bool_count(col_name):
-            if col_name not in df.columns:
-                return 0
-            return (df[col_name].fillna(False).astype(str).str.lower().isin(['true', '1', 'yes'])).sum()
-
-        entity_count = _safe_bool_count('is_entity')
-        str_count = _safe_bool_count('str_licensed')
-        foreign_count = _safe_bool_count('foreign_owner')
-        oos_count = _safe_bool_count('out_of_state')
-        summary_data.append({'Metric': '  Entity-Owned', 'Value': f'{entity_count:,} ({entity_count/total*100:.1f}%)'})
-        summary_data.append({'Metric': '  STR Licensed', 'Value': f'{str_count:,} ({str_count/total*100:.1f}%)'})
-        summary_data.append({'Metric': '  Foreign Owner', 'Value': f'{foreign_count:,} ({foreign_count/total*100:.1f}%)'})
-        summary_data.append({'Metric': '  Out-of-State', 'Value': f'{oos_count:,} ({oos_count/total*100:.1f}%)'})
-
-        summary_data.append({'Metric': '', 'Value': ''})
-        summary_data.append({'Metric': 'SCORE STATS', 'Value': ''})
-        summary_data.append({'Metric': '  Average Score', 'Value': f"{df['score'].astype(float).mean():.1f}"})
-        summary_data.append({'Metric': '  Median Score', 'Value': f"{df['score'].astype(float).median():.1f}"})
-        score_70 = (df['score'].astype(float) >= 70).sum()
-        score_50 = ((df['score'].astype(float) >= 50) & (df['score'].astype(float) < 70)).sum()
-        score_lt50 = (df['score'].astype(float) < 50).sum()
-        summary_data.append({'Metric': '  Score 70+ (Hot)', 'Value': f'{score_70:,}'})
-        summary_data.append({'Metric': '  Score 50-69 (Warm)', 'Value': f'{score_50:,}'})
-        summary_data.append({'Metric': '  Score <50', 'Value': f'{score_lt50:,}'})
-
-        summary_df = pd.DataFrame(summary_data)
-        summary_df.to_excel(writer, sheet_name='Summary', index=False)
-
-        # Segment tabs sorted by average score descending — NO "All Leads" tab
+        # Segment tabs sorted by average score descending
         segment_avgs = df.groupby('icp_primary')['score'].apply(
             lambda s: s.astype(float).mean()
         ).sort_values(ascending=False)
@@ -610,18 +1067,11 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
             prepared.to_excel(writer, sheet_name=sheet_name, index=False)
             segment_sheets.append(sheet_name)
 
-        # Apply formatting to all sheets
         wb = writer.book
 
-        # Format Summary sheet
-        ws_summary = wb['Summary']
-        for cell in ws_summary[1]:
-            cell.font = HEADER_FONT
-            cell.fill = HEADER_FILL
-            cell.alignment = Alignment(horizontal='center')
-        ws_summary.freeze_panes = 'A2'
-        ws_summary.column_dimensions['A'].width = 30
-        ws_summary.column_dimensions['B'].width = 35
+        # Build Summary dashboard as first tab
+        ws_summary = wb.create_sheet('Summary', 0)
+        _build_summary_dashboard(ws_summary, df)
 
         # Format segment sheets
         for sheet_name in segment_sheets:
@@ -665,6 +1115,7 @@ def main():
     # Score leads
     print("Scoring leads...")
     df['score'] = df.apply(score_lead, axis=1)
+    df['reachability'] = df.apply(reachability_score, axis=1)
 
     # Generate lead IDs
     df['lead_id'] = [f"DSCR-{i:06d}" for i in range(1, len(df) + 1)]
@@ -735,9 +1186,15 @@ def main():
     print(f"\nScore Distribution:")
     print(f"  Mean: {df['score'].astype(float).mean():.1f}")
     print(f"  Median: {df['score'].astype(float).median():.1f}")
-    print(f"  Score 70+: {(df['score'].astype(float) >= 70).sum():,}")
-    print(f"  Score 50-69: {((df['score'].astype(float) >= 50) & (df['score'].astype(float) < 70)).sum():,}")
-    print(f"  Score <50: {(df['score'].astype(float) < 50).sum():,}")
+    print(f"  Hot (60+):   {(df['score'].astype(float) >= 60).sum():,}")
+    print(f"  Warm (40-59): {((df['score'].astype(float) >= 40) & (df['score'].astype(float) < 60)).sum():,}")
+    print(f"  Cold (<40):  {(df['score'].astype(float) < 40).sum():,}")
+    print(f"\nReachability:")
+    reach = df['reachability'].astype(int)
+    print(f"  Phone+Email (10): {(reach == 10).sum():,}")
+    print(f"  Phone only (7):   {(reach == 7).sum():,}")
+    print(f"  Email only (5):   {(reach == 5).sum():,}")
+    print(f"  Address only (2): {(reach == 2).sum():,}")
 
     # Create Excel output
     create_excel_output(df, args.output)

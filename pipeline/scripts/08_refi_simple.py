@@ -46,7 +46,7 @@ def detect_refi_signals(df: pd.DataFrame) -> pd.DataFrame:
     # For owner-level data, estimate equity per property:
     # avg_property_value (current JV/property) vs most_recent_price
     # This is a rough proxy — the most recent price is just one property
-    mask = (df['_avg_val'] > 0) & (df['_price'] > 0)
+    mask = (df['_avg_val'] > 0) & (df['_price'] > 10000)
     df.loc[mask, 'estimated_equity'] = df.loc[mask, '_avg_val'] - df.loc[mask, '_price']
     df.loc[mask, 'equity_ratio'] = df.loc[mask, 'estimated_equity'] / df.loc[mask, '_avg_val']
 
@@ -68,33 +68,41 @@ def detect_refi_signals(df: pd.DataFrame) -> pd.DataFrame:
         price = row['_price']
         pc = row['_pc']
 
-        # Signal 1: High equity
-        if er >= 0.50:
+        # Signal 1: High equity (only meaningful for recent-ish purchases)
+        # For long-hold properties, high equity is just appreciation — not actionable
+        if er >= 0.50 and days < 1825:
             signals.append("Very High Equity (50%+)")
             boost += 20
             df.at[idx, 'equity_harvest_candidate'] = True
-        elif er >= 0.30:
+        elif er >= 0.30 and days < 2555:
             signals.append("High Equity (30%+)")
             boost += 15
             df.at[idx, 'equity_harvest_candidate'] = True
+        elif er >= 0.50 and days >= 1825:
+            # Long hold — equity is real but likely just appreciation
+            signals.append("Long-Hold Equity (5yr+)")
+            boost += 8
+            df.at[idx, 'equity_harvest_candidate'] = True
 
-        # Signal 2: Probable cash buyer (very high equity ratio)
-        if er >= 0.90 and price > 100000:
+        # Signal 2: Probable cash buyer — require recency
+        # equity_ratio >= 0.90 on a recent purchase = strong cash signal
+        # equity_ratio >= 0.90 on a 10-year hold = just appreciation, unreliable
+        if er >= 0.90 and price > 100000 and days < 730:
             signals.append("Probable All-Cash Buyer")
             boost += 20
             df.at[idx, 'probable_cash_buyer'] = True
-        elif er >= 0.80 and days > 365 and price > 100000:
+        elif er >= 0.80 and price > 100000 and 365 < days < 1095:
             signals.append("Likely Minimal/No Mortgage")
             boost += 15
             df.at[idx, 'probable_cash_buyer'] = True
 
-        # Signal 3: Long hold period
+        # Signal 3: Long hold period with equity harvesting opportunity
         if days > 1825 and er > 0.40:
             signals.append("Prime Equity Harvest (5yr+ hold)")
-            boost += 15
+            boost += 10
         elif days > 730 and er > 0.25:
             signals.append("Equity Harvesting Opportunity (2yr+ hold)")
-            boost += 10
+            boost += 8
 
         # Signal 4: Rate refi candidate (2022-2023 vintage)
         if pd.notna(row['_sale_date']):
