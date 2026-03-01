@@ -13,6 +13,8 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime, date
 import re
+from openpyxl.styles import Font, PatternFill, Alignment, numbers
+from openpyxl.utils import get_column_letter
 
 OUTPUT_DIR = Path("pipeline/output")
 
@@ -346,74 +348,226 @@ def merge_edgar_data(investor_df: pd.DataFrame, edgar_file: str) -> pd.DataFrame
 
 
 def create_excel_output(df: pd.DataFrame, output_file: str):
-    """Create multi-tab Excel workbook."""
+    """Create multi-tab Excel workbook with formatted, human-readable output."""
 
     print(f"Creating Excel output: {output_file}")
 
+    # --- Column rename map (internal -> plain English) ---
+    COLUMN_RENAME = {
+        'lead_id': 'Lead ID',
+        'score': 'Lead Score',
+        'icp_primary': 'Investor Type',
+        'icp_secondary': 'Opportunity Type',
+        'tier': 'Priority (1=Hot, 2=Warm, 3=Cold)',
+        'owner_name': 'Owner Name',
+        'owner_type': 'Owner Structure',
+        'resolved_person': 'Contact Person',
+        'mailing_address': 'Mailing Address',
+        'mailing_city': 'City',
+        'mailing_state': 'State',
+        'mailing_zip': 'Zip',
+        'phone': 'Phone',
+        'email': 'Email',
+        'enrichment_source': 'Contact Source',
+        'property_count': '# Properties',
+        'total_portfolio_value': 'Portfolio Value',
+        'estimated_equity': 'Est. Equity Per Property',
+        'equity_ratio': 'Equity %',
+        'max_cashout_75': 'Cash-Out Available (75% LTV)',
+        'max_cashout_80': 'Cash-Out Available (80% LTV)',
+        'refi_signals': 'Refinance Signals',
+        'refi_priority': 'Refi Priority',
+        'probable_cash_buyer': 'Paid All Cash?',
+        'brrrr_exit_candidate': 'Needs Refi After Rehab?',
+        'rate_refi_candidate': 'Overpaying on Rate?',
+        'equity_harvest_candidate': 'Has Equity to Tap?',
+        'most_recent_purchase': 'Last Purchase Date',
+        'most_recent_price': 'Last Purchase Price',
+        'county': 'County',
+        'property_types': 'Property Types',
+        'str_licensed': 'Vacation Rental Licensed?',
+        'str_license_count': '# Vacation Rental Licenses',
+        'out_of_state': 'Out of State?',
+        'foreign_owner': 'Foreign Owner?',
+        'entity_count': '# LLCs/Entities Controlled',
+        'entity_names': 'Entity Names',
+        'sec_fund_filing': 'SEC Fund Filing?',
+        'fund_name': 'Fund Name',
+        'fund_offering_amount': 'Fund Size',
+        'data_sources': 'Data Sources',
+        'last_updated': 'Last Updated',
+    }
+
+    # Column ordering (internal names)
+    output_cols = [
+        'lead_id', 'score', 'icp_primary', 'icp_secondary', 'tier',
+        'owner_name', 'owner_type', 'resolved_person',
+        'mailing_address', 'mailing_city', 'mailing_state', 'mailing_zip',
+        'phone', 'email', 'enrichment_source',
+        'property_count', 'total_portfolio_value',
+        'estimated_equity', 'equity_ratio',
+        'max_cashout_75', 'max_cashout_80',
+        'refi_signals', 'refi_priority',
+        'probable_cash_buyer', 'brrrr_exit_candidate',
+        'rate_refi_candidate', 'equity_harvest_candidate',
+        'most_recent_purchase', 'most_recent_price',
+        'county', 'property_types',
+        'str_licensed', 'str_license_count',
+        'out_of_state', 'foreign_owner',
+        'entity_count', 'entity_names',
+        'sec_fund_filing', 'fund_name', 'fund_offering_amount',
+        'data_sources', 'last_updated',
+    ]
+
+    # Sets of renamed column headers by format type
+    DOLLAR_COLS = {
+        'Portfolio Value', 'Est. Equity Per Property',
+        'Cash-Out Available (75% LTV)', 'Cash-Out Available (80% LTV)',
+        'Last Purchase Price', 'Fund Size',
+    }
+    PCT_COLS = {'Equity %'}
+    BOOL_COLS = {
+        'Paid All Cash?', 'Needs Refi After Rehab?', 'Overpaying on Rate?',
+        'Has Equity to Tap?', 'Vacation Rental Licensed?', 'Out of State?',
+        'Foreign Owner?', 'SEC Fund Filing?',
+    }
+    DATE_COLS = {'Last Purchase Date', 'Last Updated'}
+
+    HEADER_FONT = Font(bold=True, color='FFFFFF')
+    HEADER_FILL = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+    GREEN_FILL = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+    YELLOW_FILL = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
+
+    # --- Prepare data ---
+    df_sorted = df.sort_values('score', ascending=False)
+    available_cols = [c for c in output_cols if c in df_sorted.columns]
+
+    def _to_bool_yesno(val):
+        if str(val).strip().lower() in ('true', '1', 'yes'):
+            return 'Yes'
+        return 'No'
+
+    def _tier_label(val):
+        mapping = {1: 'Hot', 2: 'Warm', 3: 'Cold'}
+        try:
+            return mapping.get(int(float(val)), str(val))
+        except (ValueError, TypeError):
+            return str(val)
+
+    def _to_numeric(val):
+        try:
+            f = float(val)
+            return None if pd.isna(f) else f
+        except (ValueError, TypeError):
+            return None
+
+    def _prepare_sheet_df(sheet_df):
+        """Prepare a DataFrame for writing: rename cols, convert types."""
+        out = sheet_df[available_cols].copy()
+
+        # Convert booleans to Yes/No before rename
+        for col in available_cols:
+            renamed = COLUMN_RENAME.get(col, col)
+            if renamed in BOOL_COLS:
+                out[col] = out[col].apply(_to_bool_yesno)
+
+        # Convert tier to Hot/Warm/Cold
+        if 'tier' in out.columns:
+            out['tier'] = out['tier'].apply(_tier_label)
+
+        # Convert dollar/pct columns to numeric
+        for col in available_cols:
+            renamed = COLUMN_RENAME.get(col, col)
+            if renamed in DOLLAR_COLS or renamed in PCT_COLS:
+                out[col] = out[col].apply(_to_numeric)
+
+        # Rename columns
+        out = out.rename(columns=COLUMN_RENAME)
+        return out
+
+    def _format_sheet(ws):
+        """Apply formatting to an openpyxl worksheet."""
+        # Header formatting + freeze
+        for cell in ws[1]:
+            cell.font = HEADER_FONT
+            cell.fill = HEADER_FILL
+            cell.alignment = Alignment(horizontal='center', wrap_text=True)
+        ws.freeze_panes = 'A2'
+
+        # Build column name -> letter mapping
+        col_map = {}
+        for idx, cell in enumerate(ws[1], 1):
+            col_map[cell.value] = idx
+
+        # Number formats
+        for col_name, col_idx in col_map.items():
+            col_letter = get_column_letter(col_idx)
+            if col_name in DOLLAR_COLS:
+                for row in range(2, ws.max_row + 1):
+                    ws[f'{col_letter}{row}'].number_format = '$#,##0'
+            elif col_name in PCT_COLS:
+                for row in range(2, ws.max_row + 1):
+                    ws[f'{col_letter}{row}'].number_format = '0%'
+            elif col_name in DATE_COLS:
+                for row in range(2, ws.max_row + 1):
+                    ws[f'{col_letter}{row}'].number_format = 'YYYY-MM-DD'
+
+        # Score column: conditional fill
+        if 'Lead Score' in col_map:
+            score_idx = col_map['Lead Score']
+            score_letter = get_column_letter(score_idx)
+            for row in range(2, ws.max_row + 1):
+                cell = ws[f'{score_letter}{row}']
+                try:
+                    val = float(cell.value) if cell.value is not None else 0
+                except (ValueError, TypeError):
+                    val = 0
+                if val >= 70:
+                    cell.fill = GREEN_FILL
+                elif val >= 50:
+                    cell.fill = YELLOW_FILL
+
+        # Auto-fit column widths (based on header, with min/max)
+        for idx, cell in enumerate(ws[1], 1):
+            header_len = len(str(cell.value)) if cell.value else 8
+            width = max(10, min(header_len + 4, 35))
+            ws.column_dimensions[get_column_letter(idx)].width = width
+
+    # --- Build workbook ---
     with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
 
-        # Tab 1: All Leads (sorted by score)
-        df_sorted = df.sort_values('score', ascending=False)
-
-        # Select and order columns for output
-        output_cols = [
-            'lead_id', 'score', 'icp_primary', 'icp_secondary', 'tier',
-            'owner_name', 'owner_type', 'resolved_person',
-            'mailing_address', 'mailing_city', 'mailing_state', 'mailing_zip',
-            'phone', 'email', 'enrichment_source',
-            'property_count', 'total_portfolio_value',
-            'estimated_equity', 'equity_ratio',
-            'max_cashout_75', 'max_cashout_80',
-            'refi_signals', 'refi_priority',
-            'probable_cash_buyer', 'brrrr_exit_candidate',
-            'rate_refi_candidate', 'equity_harvest_candidate',
-            'most_recent_purchase', 'most_recent_price',
-            'county', 'property_types',
-            'str_licensed', 'str_license_count',
-            'out_of_state', 'foreign_owner',
-            'entity_count', 'entity_names',
-            'sec_fund_filing', 'fund_name', 'fund_offering_amount',
-            'data_sources', 'last_updated',
-        ]
-
-        # Only include columns that exist
-        available_cols = [c for c in output_cols if c in df_sorted.columns]
-        df_sorted[available_cols].to_excel(writer, sheet_name='All Leads', index=False)
-
-        # Tab 2: By ICP Segment
-        icp_segments = df_sorted['icp_primary'].unique()
-        for segment in sorted(icp_segments):
-            # Excel sheet name max 31 chars, no invalid chars
-            sheet_name = segment.replace('/', '-')[:31]
-            segment_df = df_sorted[df_sorted['icp_primary'] == segment]
-            segment_df[available_cols].to_excel(writer, sheet_name=sheet_name, index=False)
-
-        # Tab 3: Summary Statistics
+        # Build Summary tab first
+        total = len(df)
         summary_data = []
-        summary_data.append({'Metric': 'Total Leads', 'Value': len(df)})
-        summary_data.append({'Metric': '---', 'Value': '---'})
-        summary_data.append({'Metric': 'BY ICP SEGMENT', 'Value': ''})
+        summary_data.append({'Metric': 'Total Leads', 'Value': f'{total:,}'})
+        summary_data.append({'Metric': '', 'Value': ''})
+        summary_data.append({'Metric': 'BY INVESTOR TYPE', 'Value': ''})
         for seg in sorted(df['icp_primary'].unique()):
             count = len(df[df['icp_primary'] == seg])
-            summary_data.append({'Metric': f'  {seg}', 'Value': count})
+            avg = df.loc[df['icp_primary'] == seg, 'score'].astype(float).mean()
+            summary_data.append({'Metric': f'  {seg}', 'Value': f'{count:,} leads (avg score {avg:.0f})'})
 
-        summary_data.append({'Metric': '---', 'Value': '---'})
-        summary_data.append({'Metric': 'BY TIER', 'Value': ''})
+        summary_data.append({'Metric': '', 'Value': ''})
+        summary_data.append({'Metric': 'BY PRIORITY', 'Value': ''})
+        tier_labels = {1: 'Hot', 2: 'Warm', 3: 'Cold'}
         for tier in sorted(df['tier'].unique()):
             count = len(df[df['tier'] == tier])
-            summary_data.append({'Metric': f'  Tier {tier}', 'Value': count})
+            label = tier_labels.get(int(tier), f'Tier {tier}')
+            summary_data.append({'Metric': f'  {label}', 'Value': f'{count:,}'})
 
-        summary_data.append({'Metric': '---', 'Value': '---'})
+        summary_data.append({'Metric': '', 'Value': ''})
         summary_data.append({'Metric': 'CONTACT COVERAGE', 'Value': ''})
-        total = len(df)
         has_phone = (df['phone'].fillna('') != '').sum() if 'phone' in df.columns else 0
         has_email = (df['email'].fillna('') != '').sum() if 'email' in df.columns else 0
-        has_either = has_phone + has_email - ((df.get('phone', pd.Series(dtype=str)).fillna('') != '') & (df.get('email', pd.Series(dtype=str)).fillna('') != '')).sum() if ('phone' in df.columns or 'email' in df.columns) else 0
+        has_both = 0
+        if 'phone' in df.columns and 'email' in df.columns:
+            has_both = ((df['phone'].fillna('') != '') & (df['email'].fillna('') != '')).sum()
+        has_either = has_phone + has_email - has_both
         summary_data.append({'Metric': '  Has Phone', 'Value': f'{has_phone:,} ({has_phone/total*100:.1f}%)'})
         summary_data.append({'Metric': '  Has Email', 'Value': f'{has_email:,} ({has_email/total*100:.1f}%)'})
         summary_data.append({'Metric': '  Has Either', 'Value': f'{has_either:,} ({has_either/total*100:.1f}%)'})
 
-        summary_data.append({'Metric': '---', 'Value': '---'})
+        summary_data.append({'Metric': '', 'Value': ''})
         summary_data.append({'Metric': 'INVESTOR PROFILE', 'Value': ''})
         def _safe_bool_count(col_name):
             if col_name not in df.columns:
@@ -429,15 +583,52 @@ def create_excel_output(df: pd.DataFrame, output_file: str):
         summary_data.append({'Metric': '  Foreign Owner', 'Value': f'{foreign_count:,} ({foreign_count/total*100:.1f}%)'})
         summary_data.append({'Metric': '  Out-of-State', 'Value': f'{oos_count:,} ({oos_count/total*100:.1f}%)'})
 
-        summary_data.append({'Metric': '---', 'Value': '---'})
-        summary_data.append({'Metric': 'AVERAGE SCORE', 'Value': f"{df['score'].mean():.1f}"})
-        summary_data.append({'Metric': 'MEDIAN SCORE', 'Value': f"{df['score'].median():.1f}"})
+        summary_data.append({'Metric': '', 'Value': ''})
+        summary_data.append({'Metric': 'SCORE STATS', 'Value': ''})
+        summary_data.append({'Metric': '  Average Score', 'Value': f"{df['score'].astype(float).mean():.1f}"})
+        summary_data.append({'Metric': '  Median Score', 'Value': f"{df['score'].astype(float).median():.1f}"})
+        score_70 = (df['score'].astype(float) >= 70).sum()
+        score_50 = ((df['score'].astype(float) >= 50) & (df['score'].astype(float) < 70)).sum()
+        score_lt50 = (df['score'].astype(float) < 50).sum()
+        summary_data.append({'Metric': '  Score 70+ (Hot)', 'Value': f'{score_70:,}'})
+        summary_data.append({'Metric': '  Score 50-69 (Warm)', 'Value': f'{score_50:,}'})
+        summary_data.append({'Metric': '  Score <50', 'Value': f'{score_lt50:,}'})
 
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name='Summary', index=False)
 
+        # Segment tabs sorted by average score descending — NO "All Leads" tab
+        segment_avgs = df.groupby('icp_primary')['score'].apply(
+            lambda s: s.astype(float).mean()
+        ).sort_values(ascending=False)
+
+        segment_sheets = []
+        for segment in segment_avgs.index:
+            sheet_name = segment.replace('/', '-')[:31]
+            segment_df = df_sorted[df_sorted['icp_primary'] == segment]
+            prepared = _prepare_sheet_df(segment_df)
+            prepared.to_excel(writer, sheet_name=sheet_name, index=False)
+            segment_sheets.append(sheet_name)
+
+        # Apply formatting to all sheets
+        wb = writer.book
+
+        # Format Summary sheet
+        ws_summary = wb['Summary']
+        for cell in ws_summary[1]:
+            cell.font = HEADER_FONT
+            cell.fill = HEADER_FILL
+            cell.alignment = Alignment(horizontal='center')
+        ws_summary.freeze_panes = 'A2'
+        ws_summary.column_dimensions['A'].width = 30
+        ws_summary.column_dimensions['B'].width = 35
+
+        # Format segment sheets
+        for sheet_name in segment_sheets:
+            _format_sheet(wb[sheet_name])
+
     print(f"Excel workbook created: {output_file}")
-    print(f"  Tabs: All Leads + {len(icp_segments)} ICP segments + Summary")
+    print(f"  Tabs: Summary + {len(segment_sheets)} segment tabs (no 'All Leads' tab)")
 
 
 def main():
@@ -508,15 +699,20 @@ def main():
     df['last_updated'] = date.today().isoformat()
 
     # Standardize column names for output
+    # Prefer OWN_STATE_DOM (2-letter code) over OWN_STATE (full name) for mailing_state
     rename_map = {}
+    if 'OWN_STATE_DOM' in df.columns and 'mailing_state' not in df.columns:
+        rename_map['OWN_STATE_DOM'] = 'mailing_state'
     for col in df.columns:
+        if col in rename_map:
+            continue
         if 'OWN' in col.upper() and 'NAME' in col.upper() and col != 'owner_name':
             rename_map[col] = 'owner_name'
         elif ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'ADDR' in col.upper() and 'mailing' not in col.lower():
             rename_map[col] = 'mailing_address'
         elif ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'CITY' in col.upper() and 'mailing' not in col.lower():
             rename_map[col] = 'mailing_city'
-        elif ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'STATE' in col.upper() and 'mailing' not in col.lower():
+        elif ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'STATE' in col.upper() and 'mailing' not in col.lower() and 'mailing_state' not in rename_map.values():
             rename_map[col] = 'mailing_state'
         elif ('OWN' in col.upper() or 'MAIL' in col.upper()) and 'ZIP' in col.upper() and 'mailing' not in col.lower():
             rename_map[col] = 'mailing_zip'
