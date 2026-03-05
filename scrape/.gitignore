@@ -1,0 +1,30 @@
+# Secrets
+.env
+
+# Data files (too large for git, keep structure only)
+data/**/*.csv
+data/**/*.xlsx
+data/**/*.xls
+data/**/*.json
+data/**/*.zip
+data/**/*.txt
+
+# Keep directory structure
+!data/**/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/*.log

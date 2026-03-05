@@ -1,0 +1,111 @@
+{
+  "apollo": {
+    "name": "Apollo.io",
+    "api_base": "https://api.apollo.io/v1",
+    "endpoints": {
+      "people_enrichment": "/people/match",
+      "people_search": "/mixed_people/search",
+      "company_enrichment": "/organizations/enrich",
+      "company_search": "/mixed_companies/search"
+    },
+    "rate_limit": "100 requests/minute",
+    "cost": "$100/month plan",
+    "returns": [
+      "email", "phone", "mobile_phone", "linkedin_url",
+      "title", "employer", "company_name", "company_domain",
+      "twitter_url", "facebook_url", "city", "state"
+    ]
+  },
+  "county_clerks": {
+    "palm_beach": {
+      "name": "Palm Beach County Clerk",
+      "url": "https://www.mypalmbeachclerk.com",
+      "search_url": "https://applications.mypalmbeachclerk.com/ORIPublicAccess/",
+      "record_types": ["mortgage", "deed", "lien", "lis_pendens", "satisfaction", "assignment"],
+      "rate_limit": "1 request per 2 seconds",
+      "cost": "free"
+    },
+    "broward": {
+      "name": "Broward County Clerk",
+      "url": "https://www.browardclerk.org",
+      "search_url": "https://www.browardclerk.org/Web2/OfficialRecordsSearch/",
+      "record_types": ["mortgage", "deed", "lien", "lis_pendens", "satisfaction", "assignment"],
+      "rate_limit": "1 request per 2 seconds",
+      "cost": "free"
+    }
+  },
+  "fec": {
+    "name": "FEC.gov Political Donations",
+    "api_base": "https://api.open.fec.gov/v1",
+    "endpoints": {
+      "individual_contributions": "/schedules/schedule_a/",
+      "candidate_search": "/candidates/search/"
+    },
+    "rate_limit": "1,000 requests/hour",
+    "cost": "free",
+    "api_key_env": "FEC_API_KEY",
+    "default_key": "DEMO_KEY"
+  },
+  "propublica_990": {
+    "name": "ProPublica Nonprofit Explorer (IRS 990)",
+    "api_base": "https://projects.propublica.org/nonprofits/api/v2",
+    "endpoints": {
+      "search": "/search.json",
+      "organization": "/organizations/{ein}.json"
+    },
+    "rate_limit": "reasonable",
+    "cost": "free"
+  },
+  "hud_fmr": {
+    "name": "HUD Fair Market Rents",
+    "download_url": "https://www.huduser.gov/portal/datasets/fmr.html",
+    "data_format": "Excel bulk download by county/zip",
+    "cost": "free",
+    "notes": "Updated annually. Download the county-level or zip-level FMR data."
+  },
+  "sunbiz": {
+    "name": "FL Division of Corporations",
+    "search_url": "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName",
+    "base_url": "https://search.sunbiz.org",
+    "method": "POST to ByName endpoint, then GET detail page",
+    "rate_limit": "1 request per 3 seconds",
+    "cost": "free"
+  },
+  "datazapp": {
+    "name": "Datazapp Batch Skip Trace",
+    "url": "https://www.datazapp.com",
+    "method": "Upload CSV, download results",
+    "cost": "$0.03 per record",
+    "returns": ["cell_phone", "landline", "email"]
+  },
+  "millionverifier": {
+    "name": "MillionVerifier Email Validation",
+    "api_base": "https://api.millionverifier.com/api/v3/",
+    "cost": "$0.50 per 1,000 emails",
+    "returns": ["ok", "catch_all", "invalid", "disposable", "unknown"]
+  },
+  "twilio": {
+    "name": "Twilio Lookup",
+    "api_base": "https://lookups.twilio.com/v1/PhoneNumbers/",
+    "cost": "$0.005 per lookup",
+    "returns": ["carrier_name", "phone_type", "validity"]
+  },
+  "hard_money_lenders": {
+    "_comment": "Pattern matching for lender classification in county clerk data",
+    "hard_money_keywords": [
+      "HARD MONEY", "BRIDGE", "FIX AND FLIP", "REHAB",
+      "KIAVI", "LIMA ONE", "CIVIC", "ANCHOR LOANS", "GENESIS",
+      "RCLENDING", "GROUNDFLOOR", "FUND THAT FLIP",
+      "LENDING HOME", "VISIO", "NEW SILVER", "EASY STREET",
+      "PATCH OF LAND", "COREVEST", "RENOVO", "TEMPLE VIEW",
+      "AMERICAN HERITAGE", "VELOCITY", "TOORAK"
+    ],
+    "private_lender_keywords": [
+      "PRIVATE", "INDIVIDUAL", "TRUST", "FAMILY",
+      "INVESTMENTS LLC", "CAPITAL LLC", "FUND LLC"
+    ],
+    "credit_union_keywords": [
+      "CREDIT UNION", "FCU", "CU ", "FEDERAL CREDIT"
+    ]
+  }
+}

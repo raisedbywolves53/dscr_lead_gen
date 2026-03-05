@@ -1,105 +1,254 @@
-# DSCR Lead Gen — Property Owner Contact Pipeline
+# DSCR Lead Gen — Investor Intelligence Pipeline
 
 ## Project Overview
 
-This project builds a low-cost lead generation pipeline for a mortgage loan originator (MLO) specializing in DSCR (Debt Service Coverage Ratio) loans in Florida. The pipeline scrapes, parses, enriches, and exports property owner contact data from free/cheap public sources — replacing $700+/mo platforms like BatchData, PropStream, and PopStream.
+This project builds a comprehensive investor intelligence platform for a mortgage loan originator (MLO) specializing in DSCR (Debt Service Coverage Ratio) loans in Florida. The pipeline aggregates public data sources to build deep investor profiles — replacing $700+/mo platforms like BatchData, PropStream, and Reonomy.
+
+This is NOT just contact enrichment. We build full investor dossiers: entity structure, portfolio analysis, financing intelligence, purchase behavior, wealth signals, network mapping, and opportunity scoring.
 
 ## Tech Stack
 
 - **Language:** Python 3.10+
-- **Key Libraries:** requests, beautifulsoup4, pandas, openpyxl, selenium (if needed for JS-rendered county sites)
+- **Key Libraries:** requests, beautifulsoup4, pandas, openpyxl, selenium
+- **APIs:** Apollo.io ($100/mo), MillionVerifier, Twilio Lookup
 - **Data Storage:** CSV files in `data/` subdirectories
-- **IDE:** VS Code with Claude CLI (user is non-technical — code must be clean, well-commented, and runnable with simple terminal commands)
+- **IDE:** VS Code with Claude CLI
 
 ## Architecture
 
 ```
-dscr_lead_gen/
+scrape/
 ├── CLAUDE.md                          # This file — project spec
 ├── PIPELINE.md                        # Detailed pipeline execution spec
+├── DATA_SOURCES.md                    # Every data source mapped to every field
 ├── ICP_CRITERIA.md                    # ICP definitions and scoring logic
 ├── requirements.txt
 ├── .env.example
 ├── scripts/
-│   ├── 01_download_nal.py             # Download FL Dept of Revenue NAL files
-│   ├── 02_parse_nal.py                # Parse fixed-width NAL into clean CSV
-│   ├── 03_filter_icp.py              # Filter properties matching ICP criteria
-│   ├── 04_sunbiz_llc_resolver.py     # Resolve LLC owners via FL Sunbiz
-│   ├── 05_enrich_contacts.py         # Enrich with phone/email (voter file + APIs)
+│   ├── 01_download_nal.py             # Download FDOR NAL + SDF files
+│   ├── 02_parse_nal.py                # Parse & standardize property data
+│   ├── 03_filter_icp.py              # Score and filter by ICP criteria
+│   ├── 04_sunbiz_resolver.py         # Resolve LLCs → people via SunBiz
+│   ├── 05_enrich_contacts.py         # Multi-source contact enrichment
+│   ├── 05b_merge_enrichment.py       # Merge manual + automated enrichment
 │   ├── 06_validate_contacts.py       # Validate emails and phone numbers
-│   └── 07_export_campaign_ready.py   # Export final lists for outreach
+│   ├── 07_export_campaign_ready.py   # Export final lists for outreach
+│   ├── 10_apollo_enrich.py           # Apollo.io API enrichment
+│   ├── 11_county_clerk.py            # County clerk mortgage/lien scraping
+│   ├── 12_sdf_purchase_history.py    # FDOR SDF purchase history analysis
+│   ├── 13_rental_estimates.py        # HUD FMR + Zillow rent estimates
+│   ├── 14_wealth_signals.py          # FEC donations, IRS 990s, board seats
+│   ├── 15_network_mapping.py         # Co-investors, shared PMs, agents
+│   ├── 16_life_events.py             # Divorce, liens, lis pendens, probate
+│   └── 20_build_dossier.py           # Assemble full investor profile
 ├── data/
-│   ├── raw/                           # Downloaded NAL files, voter files
-│   ├── parsed/                        # Clean CSVs from NAL parsing
+│   ├── raw/                           # Downloaded source files
+│   ├── parsed/                        # Standardized CSVs
 │   ├── filtered/                      # ICP-matched properties
-│   ├── enriched/                      # With contact info appended
-│   ├── validated/                     # After email/phone validation
-│   └── campaign_ready/               # Final export for outreach tools
+│   ├── enriched/                      # Contact + entity enrichment
+│   ├── financing/                     # Mortgage & lien data
+│   ├── history/                       # Purchase history & SDF data
+│   ├── signals/                       # Wealth, life events, network
+│   ├── dossiers/                      # Complete investor profiles
+│   ├── validated/                     # After contact validation
+│   └── campaign_ready/               # Final export for outreach
 ├── config/
 │   ├── counties.json                  # Target county URLs and data formats
-│   └── scoring_weights.json           # ICP scoring weights
+│   ├── scoring_weights.json           # ICP scoring weights
+│   └── enrichment_sources.json        # API endpoints and rate limits
 └── logs/
 ```
 
-## Execution Model
+## Target Counties (Phase 1)
 
-Each script is numbered and runs sequentially. The user runs them one at a time:
+- **Palm Beach County** — primary market
+- **Broward County** — secondary market
+- Leads with mailing addresses in these counties only
+- Properties in Miami-Dade acceptable if <25% of portfolio
 
-```bash
-python scripts/01_download_nal.py --county broward
-python scripts/02_parse_nal.py --county broward
-python scripts/03_filter_icp.py --county broward
-# ... etc
+## Investor Profile — What We Capture
+
+### Non-Negotiable (must capture accurately)
+
+```
+CONTACT
+├── Investor name (decision maker)
+├── Primary entity / LLC
+├── Phone (cell preferred)
+├── Email (validated)
+└── LinkedIn profile URL
+
+PORTFOLIO
+├── Property count
+├── Total portfolio value
+├── Total debt (mortgage balances)
+├── Total equity
+└── Portfolio DSCR estimate
+
+FINANCING
+├── Number of loans
+├── Lender names
+├── Average interest rate
+├── Loans maturing within 24 months
+└── Hard money exposure
+
+ACQUISITION BEHAVIOR
+├── Purchases last 12 months
+├── Purchases last 36 months
+└── Average purchase price
+
+MARKETS
+├── Primary markets
+└── Secondary markets
+
+OPPORTUNITY SIGNALS
+├── Refinance opportunities
+├── Recent cash purchases
+├── Distressed loans
+└── Balloon maturities
+
+NETWORK
+├── Property managers
+├── Real estate agents
+└── Co-investors
+
+OPPORTUNITY SCORE (0-100)
 ```
 
-Or run the full pipeline:
+### Full Intelligence (build toward)
 
-```bash
-python scripts/01_download_nal.py --county broward && python scripts/02_parse_nal.py --county broward && python scripts/03_filter_icp.py --county broward
 ```
+CONTACT (expanded)
+├── 3+ decision makers for investment firms
+├── Age / approximate age
+├── Employer (if not full-time investor)
+├── Social media pages
+├── Company website / business page
+
+ENTITY DETAILS
+├── LLC/entity name
+├── Registered agent
+├── State of incorporation
+├── Year formed
+├── All officers / directors
+
+PORTFOLIO (per property)
+├── Address
+├── Estimated value
+├── Estimated debt / mortgage balance
+├── Estimated equity
+├── Property type (SFR, MF, condo, etc.)
+├── Ownership structure
+
+FINANCING (per property)
+├── Current lender
+├── Loan origination date
+├── Interest rate (estimated)
+├── Loan type (conventional, hard money, etc.)
+├── Maturity date
+├── Estimated balance remaining
+├── LTV estimate
+├── Fixed vs adjustable rate
+├── Lender type (bank, credit union, hard money, etc.)
+
+PURCHASE HISTORY
+├── Full purchase timeline (including sold properties)
+├── Average purchase price
+├── Flip vs hold behavior
+├── Time between purchases
+├── Cash vs financed percentage
+├── Off-market vs MLS indicator
+
+RENTAL / STR
+├── Estimated rent per property
+├── Portfolio occupancy estimate
+├── Airbnb revenue estimate
+├── Property management company
+├── Listing presence (Airbnb/VRBO/Zillow)
+
+MARKET POSITIONING
+├── Investment geography (counties, cities, states)
+├── Distance from primary residence
+├── Appreciation / ROI on properties
+
+WEALTH SIGNALS
+├── Estimated net worth
+├── Estimated income
+├── Other businesses / LLCs
+├── Political donation records (FEC)
+├── Foundation donations (IRS 990)
+├── Board seats
+├── Professional licenses
+
+NETWORK
+├── Property managers used
+├── Real estate agents (buy-side and sell-side)
+├── Agent brokerage
+├── Co-investors / syndication partners
+├── Shared lenders across portfolio
+
+LIFE EVENTS
+├── Divorce filings
+├── Estate transitions / probate
+├── Business sales
+├── Liens / judgments
+├── Lis pendens (pre-foreclosure)
+
+RELATIONSHIP MAPPING
+├── Co-owners across entities
+├── Shared business partners
+├── Shared property managers
+├── Shared lenders
+├── Same realtors / brokerages
+├── Investment group membership
+```
+
+## Data Sources
+
+| Source | Cost | What It Provides |
+|--------|------|-----------------|
+| FDOR NAL files | Free | Property ownership, values, addresses, use codes, homestead |
+| FDOR SDF files | Free | Full purchase/sale history across all counties |
+| FL SunBiz | Free | LLC officers, registered agents, filing dates |
+| FL DBPR | Free | Vacation rental licenses, PM licenses, phone numbers |
+| County Clerk (PB) | Free | Mortgages, liens, lis pendens, divorce, probate |
+| County Clerk (Broward) | Free | Same as above |
+| Apollo.io | $100/mo | Email, phone, LinkedIn URL, employer, social profiles |
+| FL Voter File | ~$5 | Phone, DOB/age, address verification |
+| FEC.gov | Free | Political donation records |
+| IRS 990 (ProPublica) | Free | Foundation/nonprofit donations |
+| SEC EDGAR | Free | Fund managers, board seats |
+| HUD Fair Market Rents | Free | Rent estimates by zip code |
+| MillionVerifier | ~$0.50/1K | Email validation |
+| Twilio Lookup | $0.005/ea | Phone validation + carrier/type |
+| Datazapp | $0.03/ea | Batch skip trace (phone + email) |
+
+See `DATA_SOURCES.md` for detailed field-level mapping.
 
 ## Critical Design Principles
 
 1. **Each script is self-contained** — reads from one `data/` subfolder, writes to the next
 2. **CSV is the interchange format** — no databases, no complex setup
-3. **Fail gracefully** — if a county site is down, log it and skip, don't crash
-4. **Progress logging** — print clear status messages so the user knows what's happening
-5. **Respect rate limits** — add delays between requests, honor robots.txt
-6. **Comments everywhere** — the user is a non-technical marketer who needs to understand what each section does
+3. **Fail gracefully** — if a source is down, log it and skip, don't crash
+4. **Progress logging** — print clear status messages
+5. **Respect rate limits** — add delays between requests
+6. **Cache everything** — save raw API responses so we never pay twice for the same lookup
+7. **Comments everywhere** — code must be readable by a non-developer
+8. **"Impossible" is not accepted** — if a company sells this data, the source exists. Find it.
 
 ## Environment Variables (.env)
 
 ```
-# Optional — only needed for enrichment/validation steps
+# Apollo.io — primary enrichment ($100/mo plan)
+APOLLO_API_KEY=
+
+# Twilio — phone validation
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
-NUMVERIFY_API_KEY=
+
+# MillionVerifier — email validation
 MILLIONVERIFIER_API_KEY=
+
+# Numverify — phone type detection (free tier: 100/month)
+NUMVERIFY_API_KEY=
 ```
-
-## County Data Sources (Florida)
-
-Priority counties for DSCR leads (high investor activity):
-1. Miami-Dade (bulk download: $50/file from bbs.miamidade.gov)
-2. Broward (bcpa.net — free search, may need scraping)
-3. Palm Beach (pbcgov.org — GIS data downloads available)
-4. Orange (ocpafl.org — data downloads available)
-5. Hillsborough (hcpafl.org — GIS search portal)
-6. Duval/Jacksonville (coj.net — property appraiser downloads)
-7. Pinellas (pcpao.gov — data extracts available)
-8. Lee (leepa.org — data downloads)
-9. Sarasota (sc-pa.com — free CSV downloads)
-10. Seminole (scpafl.org — free Excel/Access downloads updated daily)
-
-The FL Department of Revenue also publishes statewide NAL (Name-Address-Legal) files that cover ALL 67 counties. This is the primary data source. Request via: PTOTechnology@floridarevenue.com
-
-## ICP Targets (see ICP_CRITERIA.md for full definitions)
-
-1. Portfolio Landlords (5+ properties, same owner/LLC)
-2. Self-Employed Investors (LLC owners buying investment properties)
-3. Short-Term Rental Investors (Airbnb/VRBO markets)
-4. Out-of-State Investors (mailing address ≠ property address)
-5. Fix-and-Flip / BRRRR Investors (recent cash purchases)
-6. Cash Buyers Seeking Leverage (no mortgage on record)
-7. Foreign National Investors
-8. Section 8 Landlords
