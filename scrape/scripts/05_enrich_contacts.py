@@ -517,6 +517,17 @@ def main():
         action="store_true",
         help="Skip SunBiz re-resolution (faster, use cached data only)",
     )
+    parser.add_argument(
+        "--counties",
+        type=str,
+        default="",
+        help=(
+            'Filter to leads with mailing address in these counties. '
+            'Comma-separated city keywords, e.g. "palm beach,broward". '
+            'Leads in other counties are excluded unless they have <25%% '
+            'of portfolio outside target area.'
+        ),
+    )
     args = parser.parse_args()
 
     ENRICHED_DIR.mkdir(parents=True, exist_ok=True)
@@ -534,6 +545,58 @@ def main():
     print(f"\n  Loading: {input_path}")
     df = pd.read_csv(input_path, dtype=str, low_memory=False)
     print(f"  Total records: {len(df):,}")
+
+    # -------------------------------------------------------------------
+    # 1b. Filter by county if requested
+    # -------------------------------------------------------------------
+    if args.counties:
+        county_keywords = [c.strip().upper() for c in args.counties.split(",") if c.strip()]
+        print(f"  Filtering to counties: {', '.join(county_keywords)}")
+
+        # Palm Beach county cities / Broward county cities for matching
+        # We match on mailing city (OWN_CITY) since that's where the owner is
+        PB_CITIES = {
+            "WEST PALM BEACH", "PALM BEACH", "PALM BCH", "PALM BEACH GARDENS",
+            "PALM BCH GDNS", "LAKE WORTH", "BOYNTON BEACH", "DELRAY BEACH",
+            "BOCA RATON", "JUPITER", "WELLINGTON", "ROYAL PALM BEACH",
+            "GREENACRES", "RIVIERA BEACH", "N PALM BEACH", "NORTH PALM BEACH",
+            "LANTANA", "PAHOKEE", "BELLE GLADE", "LOXAHATCHEE", "TEQUESTA",
+            "JUNO BEACH", "SINGER ISLAND", "MANGONIA PARK", "GLEN RIDGE",
+            "HAVERHILL", "CLOUD LAKE", "PALM SPRINGS", "LAKE CLARKE SHORES",
+            "HYPOLUXO", "MANALAPAN", "OCEAN RIDGE", "BRINY BREEZES",
+            "GULF STREAM", "HIGHLAND BEACH", "SOUTH PALM BEACH",
+        }
+        BROWARD_CITIES = {
+            "FORT LAUDERDALE", "FT LAUDERDALE", "HOLLYWOOD", "PEMBROKE PINES",
+            "CORAL SPRINGS", "MIRAMAR", "SUNRISE", "PLANTATION", "DAVIE",
+            "DEERFIELD BEACH", "POMPANO BEACH", "COCONUT CREEK", "TAMARAC",
+            "MARGATE", "WESTON", "DANIA", "DANIA BEACH", "HALLANDALE",
+            "HALLANDALE BEACH", "LAUDERHILL", "LAUDERDALE LAKES",
+            "OAKLAND PARK", "NORTH LAUDERDALE", "LIGHTHOUSE POINT",
+            "WILTON MANORS", "COOPER CITY", "PARKLAND", "SOUTHWEST RANCHES",
+            "LAZY LAKE", "SEA RANCH LAKES", "HILLSBORO BEACH",
+        }
+
+        target_cities = set()
+        for kw in county_keywords:
+            if "PALM" in kw or "PB" in kw:
+                target_cities.update(PB_CITIES)
+            elif "BROWARD" in kw or "FT LAUDERDALE" in kw or "FORT LAUDERDALE" in kw:
+                target_cities.update(BROWARD_CITIES)
+            else:
+                # Generic: just match as a city name substring
+                target_cities.add(kw)
+
+        mail_city = df["OWN_CITY"].astype(str).str.strip().str.upper()
+        in_target = mail_city.isin(target_cities)
+
+        # Also accept leads whose city contains the keyword
+        for kw in county_keywords:
+            in_target = in_target | mail_city.str.contains(kw, na=False)
+
+        before = len(df)
+        df = df[in_target].copy()
+        print(f"  Filtered: {len(df):,} leads in target counties (dropped {before - len(df):,})")
 
     # -------------------------------------------------------------------
     # 2. Score and rank leads
