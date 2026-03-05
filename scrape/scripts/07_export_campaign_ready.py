@@ -118,7 +118,10 @@ def find_input_file(county_name: str) -> Path:
     """Find the best input file — prefer validated, then enriched, then filtered."""
     candidates = [
         VALIDATED_DIR / f"{county_name}_validated.csv",
+        VALIDATED_DIR / "merged_validated.csv",
         ENRICHED_DIR / f"{county_name}_enriched.csv",
+        ENRICHED_DIR / "merged_enriched.csv",
+        ENRICHED_DIR / "top_leads_enriched.csv",
         FILTERED_DIR / f"{county_name}_llc_resolved.csv",
         FILTERED_DIR / f"{county_name}_qualified.csv",
     ]

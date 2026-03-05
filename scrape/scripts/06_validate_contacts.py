@@ -207,10 +207,12 @@ def validate_phone_twilio(phone: str) -> dict:
 def find_input_file(county_name: str) -> Path:
     """
     Find the best input file — prefer enriched, fall back to LLC-resolved
-    or qualified.
+    or qualified. Also checks for the merged enrichment file from 05b.
     """
     candidates = [
         ENRICHED_DIR / f"{county_name}_enriched.csv",
+        ENRICHED_DIR / "merged_enriched.csv",       # from 05b_merge_enrichment
+        ENRICHED_DIR / "top_leads_enriched.csv",     # from 05_enrich_contacts
         FILTERED_DIR / f"{county_name}_llc_resolved.csv",
         FILTERED_DIR / f"{county_name}_qualified.csv",
     ]
