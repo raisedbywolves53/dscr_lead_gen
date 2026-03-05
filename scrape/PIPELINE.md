@@ -281,18 +281,26 @@ python scripts/07_export_campaign_ready.py --county palm_beach
 
 ---
 
-## Cost Estimate Per 1,000 Leads
+## Cost Estimate Per 1,000 Leads (Verified March 2026)
 
-| Step | Cost |
-|------|------|
-| FDOR NAL/SDF download | $0 |
-| SunBiz LLC resolution | $0 (time only) |
-| County clerk scraping | $0 (time only) |
-| Apollo enrichment | Included in $100/mo plan |
-| Datazapp skip trace (unmatched) | ~$15 |
-| MillionVerifier email validation | ~$0.50 |
-| Twilio phone validation | ~$5 |
-| FEC / IRS 990 / HUD FMR | $0 |
-| **TOTAL** | **~$20 + $100/mo Apollo** |
+| Step | Cost | Notes |
+|------|------|-------|
+| FDOR NAL/SDF download | $0 | Free public data |
+| SunBiz LLC resolution | $0 | Free (time only) |
+| County clerk scraping | $0 | Free (time only) |
+| Apollo.io | $99/mo subscription | Weak for private RE investors; best for B2B leads |
+| Datazapp phone+email append | $30-60 | $0.03/match, $75 min balance, $125 min order |
+| Datazapp DNC phone scrub | $5 | $0.005/number, NO minimum |
+| Tracerfy skip trace (alt) | $20 | $0.02/lead, 500 min on web |
+| MillionVerifier email validation | $4.90 | Min purchase 2,000 credits, never expire |
+| Twilio phone validation | $8 | $0.008/lookup, free $15 trial |
+| DNC Federal Registry | $0 | First 5 area codes free |
+| FEC / IRS 990 / HUD FMR | $0 | Free public APIs |
+| **TOTAL** | **~$70-100 + $99/mo Apollo** | |
+
+**DNC COMPLIANCE IS MANDATORY.** All phone numbers must be scrubbed against
+federal + Florida state DNC lists before any outreach. Fines up to $51,744/call.
+
+See `VERIFIED_PRICING.md` for detailed fact-checked pricing on every service.
 
 Compare to: PropStream ($99/mo) + Reonomy ($249/mo) + BatchData ($299/mo) = **$647/mo minimum**, and none of them give you the financing intelligence or network mapping we build.

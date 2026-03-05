@@ -9,9 +9,10 @@ BEFORE you start outreach. This prevents:
   - Calling DNC numbers (can result in $43,000+ fines per violation)
 
 Services used:
-  - MillionVerifier API — email validation (~$0.50 per 1,000 emails)
-  - Twilio Lookup API — phone validation ($0.005 per lookup)
-  - FTC DNC list — Do Not Call check (free download from donotcall.gov)
+  - MillionVerifier API — email validation ($4.90 min purchase for 2,000 credits)
+  - Twilio Lookup API — phone type detection ($0.008/lookup, free $15 trial)
+  - FTC DNC list — Do Not Call check (free for first 5 area codes)
+  - Datazapp Phone Scrub — DNC scrub ($0.005/number, no minimum)
 
 If no API keys are configured in .env, the script skips validation
 and passes data through with a warning. You can validate later.
@@ -74,10 +75,32 @@ def load_dnc_set() -> set:
     """
     Load the FTC Do Not Call list into a set for fast lookup.
     The DNC list is a flat file of phone numbers (one per line).
-    Download from: https://www.donotcall.gov/
-    Place in: data/raw/dnc_list.csv
+
+    HOW TO GET THE DNC FILE:
+      Option A (free online scrub):
+        1. Go to https://www.freednclist.com
+        2. Upload your phone list CSV
+        3. Download the flagged results
+        4. Save DNC-flagged numbers to data/raw/dnc_list.csv
+
+      Option B (free from FTC — first 5 area codes):
+        1. Register at https://telemarketing.donotcall.gov
+        2. Request area codes 561, 954, 305, 786 (all free)
+        3. Download the number files
+        4. Combine into data/raw/dnc_list.csv
+
+      Option C (Datazapp phone scrub — $0.005/number, no minimum):
+        1. Upload phones to Datazapp, select "Phone Scrub"
+        2. Download results with DNC flags
+        3. Extract DNC numbers into data/raw/dnc_list.csv
+
+    IMPORTANT: DNC compliance is legally required before any outreach.
+    Fines are up to $51,744 per call to a DNC-registered number.
     """
     if not DNC_FILE.exists():
+        print("  WARNING: No DNC list found at data/raw/dnc_list.csv")
+        print("  You MUST scrub against DNC before any outreach.")
+        print("  See instructions in this script or VERIFIED_PRICING.md")
         return set()
 
     print("  Loading DNC list...")
