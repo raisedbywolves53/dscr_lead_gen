@@ -1,0 +1,108 @@
+{
+  "property_signals": {
+    "no_homestead": {
+      "points": 20,
+      "description": "No homestead exemption — confirms investment property"
+    },
+    "value_150k_500k": {
+      "points": 10,
+      "description": "Property value $150K-$500K — DSCR sweet spot"
+    },
+    "value_500k_1m": {
+      "points": 8,
+      "description": "Property value $500K-$1M — larger deals, fewer investors qualify"
+    },
+    "multi_family": {
+      "points": 10,
+      "description": "Multi-family 2-4 units — higher rental income, better DSCR ratios",
+      "use_codes": ["02", "03", "04"],
+      "use_keywords": ["DUPLEX", "TRIPLEX", "QUAD"]
+    },
+    "str_eligible_zip": {
+      "points": 5,
+      "description": "Property in tourist zip code — STR strategy viable"
+    }
+  },
+  "owner_signals": {
+    "absentee_out_of_state": {
+      "points": 15,
+      "description": "Mailing address outside Florida — strong investor indicator"
+    },
+    "absentee_in_state": {
+      "points": 10,
+      "description": "In-state but different zip from property — local investor"
+    },
+    "llc_corp_owned": {
+      "points": 10,
+      "description": "LLC/Corp ownership — sophisticated investor, structured for DSCR"
+    },
+    "portfolio_5_plus": {
+      "points": 20,
+      "description": "Portfolio landlord with 5+ properties — high-value target"
+    },
+    "portfolio_2_to_4": {
+      "points": 10,
+      "description": "Portfolio landlord with 2-4 properties — growing investor"
+    }
+  },
+  "transaction_signals": {
+    "cash_purchase": {
+      "points": 15,
+      "description": "Cash purchase, no mortgage — may want DSCR cash-out refi"
+    },
+    "recent_purchase_0_12mo": {
+      "points": 10,
+      "description": "Purchased within last 12 months — active buyer"
+    },
+    "recent_purchase_12_24mo": {
+      "points": 5,
+      "description": "Purchased 12-24 months ago — moderately active"
+    },
+    "long_hold_no_refi": {
+      "points": 5,
+      "description": "Owned 5+ years with no refinance — likely has equity to tap"
+    }
+  },
+  "tiers": {
+    "tier_1": {
+      "label": "Hot Leads",
+      "min_score": 50,
+      "action": "Immediate outreach — phone call + email + direct mail"
+    },
+    "tier_2": {
+      "label": "Warm Leads",
+      "min_score": 30,
+      "action": "Email + direct mail sequence, phone if resources allow"
+    },
+    "tier_3": {
+      "label": "Nurture",
+      "min_score": 15,
+      "action": "Add to long-term email nurture only"
+    },
+    "discard": {
+      "label": "Discard",
+      "min_score": 0,
+      "action": "Do not outreach — insufficient investor signals"
+    }
+  },
+  "property_use_codes": {
+    "include": ["01", "02", "03", "04", "05", "08"],
+    "descriptions": {
+      "01": "Single Family Residential",
+      "02": "Mobile Home",
+      "03": "Multi-Family (2-9 units)",
+      "04": "Condominium",
+      "05": "Cooperatives",
+      "08": "Multi-Family (10+ units)"
+    }
+  },
+  "str_eligible_zips": {
+    "orlando": ["32801", "32803", "32804", "32806", "32807", "32808", "32809", "32812", "32819", "32821", "32822", "32824", "32827", "32828", "32829", "32830", "32836", "32837", "34711", "34714", "34747", "34786", "34787"],
+    "miami_fort_lauderdale": ["33101", "33109", "33132", "33133", "33137", "33139", "33140", "33141", "33154", "33160", "33180", "33304", "33305", "33308", "33316", "33334", "33019", "33020"],
+    "florida_keys": ["33036", "33037", "33040", "33042", "33043", "33050", "33051", "33070"],
+    "gulf_coast": ["34102", "34103", "34108", "34109", "34110", "34112", "34119", "34201", "34228", "34229", "34230", "34231", "34236", "34237", "34238", "34239", "34242", "33901", "33908", "33919", "33928", "33931", "33957", "32541", "32550", "32459"],
+    "jacksonville_st_augustine": ["32082", "32084", "32233", "32250", "32266"],
+    "tampa_st_pete_clearwater": ["33701", "33702", "33703", "33704", "33705", "33706", "33707", "33708", "33709", "33710", "33711", "33712", "33713", "33714", "33715", "33716", "33762", "33763", "33764", "33765", "33767", "33770", "33771", "33772", "33773", "33774", "33776", "33785", "33786"]
+  },
+  "llc_keywords": ["LLC", "INC", "CORP", "TRUST", "LP", "LLP", "PARTNERSHIP", "HOLDINGS", "INVESTMENTS", "PROPERTIES", "GROUP", "CAPITAL", "VENTURES", "MANAGEMENT", "ASSOCIATES", "ENTERPRISES", "FUND", "REALTY"]
+}

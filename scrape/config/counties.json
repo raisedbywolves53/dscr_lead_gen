@@ -1,0 +1,124 @@
+{
+  "primary_source": {
+    "name": "FL Department of Revenue NAL Files",
+    "description": "Statewide Name-Address-Legal files covering all 67 counties",
+    "how_to_obtain": "Email PTOTechnology@floridarevenue.com requesting the most recent NAL files",
+    "format": "fixed-width text",
+    "cost": "free"
+  },
+  "priority_counties": [
+    {
+      "name": "miami-dade",
+      "fips": "086",
+      "url": "https://bbs.miamidade.gov",
+      "format": "bulk_purchase",
+      "bulk_download": false,
+      "cost": "$50/file",
+      "notes": "Bulk download available for purchase"
+    },
+    {
+      "name": "broward",
+      "fips": "011",
+      "url": "https://www.bcpa.net",
+      "format": "scrape",
+      "bulk_download": false,
+      "cost": "free",
+      "notes": "Free search portal, requires scraping"
+    },
+    {
+      "name": "palm-beach",
+      "fips": "099",
+      "url": "https://www.pbcgov.org",
+      "format": "gis",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "GIS data downloads available"
+    },
+    {
+      "name": "orange",
+      "fips": "095",
+      "url": "https://www.ocpafl.org",
+      "format": "csv",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "Data downloads available"
+    },
+    {
+      "name": "hillsborough",
+      "fips": "057",
+      "url": "https://www.hcpafl.org",
+      "format": "scrape",
+      "bulk_download": false,
+      "cost": "free",
+      "notes": "GIS search portal, requires scraping"
+    },
+    {
+      "name": "duval",
+      "fips": "031",
+      "url": "https://www.coj.net",
+      "format": "csv",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "Property appraiser downloads available"
+    },
+    {
+      "name": "pinellas",
+      "fips": "103",
+      "url": "https://www.pcpao.gov",
+      "format": "csv",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "Data extracts available"
+    },
+    {
+      "name": "lee",
+      "fips": "071",
+      "url": "https://www.leepa.org",
+      "format": "csv",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "Data downloads available"
+    },
+    {
+      "name": "sarasota",
+      "fips": "115",
+      "url": "https://www.sc-pa.com/downloads/download-data/",
+      "format": "csv",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "Free CSV including historical sales"
+    },
+    {
+      "name": "seminole",
+      "fips": "117",
+      "url": "https://www.scpafl.org/",
+      "format": "xlsx",
+      "bulk_download": true,
+      "cost": "free",
+      "notes": "Free Excel/Access downloads, updated daily. Best county to start with."
+    }
+  ],
+  "additional_bulk_counties": [
+    {
+      "name": "clay",
+      "url": "https://www.ccpao.com/parcel-information/",
+      "format": "csv",
+      "bulk_download": true,
+      "notes": "Free, updated monthly"
+    },
+    {
+      "name": "martin",
+      "url": "https://www.pa.martin.fl.us/tools-resources/data-downloads",
+      "format": "csv",
+      "bulk_download": true,
+      "notes": "Custom filters, export to CSV/Excel/mailing labels"
+    },
+    {
+      "name": "volusia",
+      "url": "https://vcpa.vcgov.org/search/real-property",
+      "format": "csv",
+      "bulk_download": true,
+      "notes": "Export to CSV or mailing list"
+    }
+  ]
+}
