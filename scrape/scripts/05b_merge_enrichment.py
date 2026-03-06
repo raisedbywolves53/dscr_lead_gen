@@ -408,14 +408,25 @@ def main():
             zipcode = str(row.get("OWN_ZIPCD", "")).strip()[:5]
 
             person_name = resolved if resolved.upper() not in ("", "NAN", "NONE") else owner
+            # Strip trailing "&" (joint ownership marker)
+            person_name = person_name.rstrip("& ").strip()
             if "," in person_name:
+                # "LAST, FIRST" format
                 parts = person_name.split(",", 1)
                 last = parts[0].strip().upper()
                 first = parts[1].strip().split()[0].upper() if len(parts) > 1 and parts[1].strip() else ""
             else:
+                # FDOR format: "LAST FIRST" or "LAST FIRST MIDDLE"
                 parts = person_name.split()
-                first = parts[0].upper() if parts else ""
-                last = parts[-1].upper() if len(parts) >= 2 else ""
+                if len(parts) >= 2:
+                    last = parts[0].upper()
+                    first = parts[1].upper()
+                elif len(parts) == 1:
+                    last = parts[0].upper()
+                    first = ""
+                else:
+                    last = ""
+                    first = ""
 
             key = f"{first}|{last}|{zipcode}"
             if key in tracerfy_results:
@@ -488,14 +499,23 @@ def main():
 
             # Try resolved person first
             person_name = resolved if resolved.upper() not in ("", "NAN", "NONE") else owner
+            person_name = person_name.rstrip("& ").strip()
             if "," in person_name:
                 parts = person_name.split(",", 1)
                 last = parts[0].strip().upper()
                 first = parts[1].strip().split()[0].upper() if len(parts) > 1 else ""
             else:
+                # FDOR format: "LAST FIRST"
                 parts = person_name.split()
-                first = parts[0].upper() if parts else ""
-                last = parts[-1].upper() if len(parts) >= 2 else ""
+                if len(parts) >= 2:
+                    last = parts[0].upper()
+                    first = parts[1].upper()
+                elif len(parts) == 1:
+                    last = parts[0].upper()
+                    first = ""
+                else:
+                    last = ""
+                    first = ""
 
             key = f"{first}|{last}|{zipcode}"
             if key in datazapp_results:

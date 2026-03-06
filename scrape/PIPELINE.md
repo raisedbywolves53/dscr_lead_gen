@@ -249,13 +249,16 @@ python scripts/05_enrich_contacts.py --counties "palm beach,broward"
 #    Result: 2,880 matches (45%), 2,869 phones, 2,461 emails
 python scripts/08_tracerfy_skip_trace.py --skip-dnc
 
-# 3. Merge all enrichment sources (Tracerfy + DBPR + SunBiz)
+# 3. Merge all enrichment sources (Tracerfy + DBPR + SunBiz) ✅ DONE
+#    Result: 3,143 phones, 2,599 emails merged
 python scripts/05b_merge_enrichment.py
 
-# 4. Validate contacts (needs MillionVerifier + Twilio keys in .env)
-python scripts/06_validate_contacts.py --county merged
+# 4. Validate contacts                                       ✅ PARTIAL
+#    Twilio v2: 1,800 phones validated ($9.00)
+#    MV: credits exhausted — emails not yet validated
+python scripts/06_validate_contacts.py --county merged --max-phones 1800 --primary-only
 
-# 5. Export campaign-ready lists
+# 5. Export campaign-ready lists                              ⏳ NEXT
 python scripts/07_export_campaign_ready.py --county merged
 ```
 

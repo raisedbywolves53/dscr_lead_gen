@@ -62,12 +62,19 @@ Previous estimates in this project were WRONG for several services.
 - **Minimum**: 2,000 credits for $4.90 ($0.00245/email) — NO subscription
 - **Credits never expire**
 - **API access included** with any credit purchase
+- **Status**: API key configured. 2,000 credits purchased — EXHAUSTED (need to buy more)
+- **GOTCHA**: If credits run out mid-run, API returns error responses that look like
+  "invalid" results. Script must check for "Insufficient credits" error.
 
 ### Twilio Lookup (twilio.com)
-- **Line Type Intelligence**: $0.008/lookup (mobile vs landline vs VoIP)
-- **Carrier lookup**: $0.005/lookup
-- **Free trial**: $15 credit on signup (~1,875 lookups)
+- **Must use v2 API** — v1 does NOT return carrier/type data on free trial
+- **Line Type Intelligence (v2)**: $0.008/lookup (mobile vs landline vs VoIP)
+- **Free trial**: $15 credit on signup = ~1,875 lookups
 - **No minimum purchase**
+- **Status**: API keys configured. Used $9.00 of $15 trial (1,800 lookups).
+  ~750 lookups remaining in trial.
+- **Actual results (March 2026)**: Only 197/1,800 returned carrier data from Twilio.
+  Tracerfy phone_type data filled in the rest (2,826 mobile, 269 landline, 48 VoIP).
 
 ---
 

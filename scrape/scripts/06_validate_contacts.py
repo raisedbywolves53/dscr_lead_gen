@@ -180,7 +180,8 @@ def validate_email_millionverifier(email: str) -> dict:
 
 def validate_phone_twilio(phone: str) -> dict:
     """
-    Validate a phone number via Twilio Lookup API.
+    Validate a phone number via Twilio Lookup v2 API (Line Type Intelligence).
+    Cost: $0.008/lookup. Free trial gives $15 = ~1,875 lookups.
 
     Returns dict with:
       - valid: True/False
@@ -190,8 +191,8 @@ def validate_phone_twilio(phone: str) -> dict:
     if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN or not requests:
         return {"valid": True, "carrier": "", "phone_type": "unknown"}
 
-    url = f"https://lookups.twilio.com/v1/PhoneNumbers/+1{phone}"
-    params = {"Type": "carrier"}
+    url = f"https://lookups.twilio.com/v2/PhoneNumbers/+1{phone}"
+    params = {"Fields": "line_type_intelligence"}
 
     try:
         resp = requests.get(
@@ -206,16 +207,20 @@ def validate_phone_twilio(phone: str) -> dict:
             return {"valid": True, "carrier": "", "phone_type": "unknown"}
 
         data = resp.json()
-        carrier_info = data.get("carrier", {})
-        phone_type = carrier_info.get("type", "unknown")
+        valid = data.get("valid", True)
+        lti = data.get("line_type_intelligence", {}) or {}
+        carrier = lti.get("carrier_name", "")
+        phone_type = lti.get("type", "unknown")
 
         # Map Twilio types
-        type_map = {"mobile": "mobile", "landline": "landline", "voip": "voip"}
+        type_map = {"mobile": "mobile", "landline": "landline", "voip": "voip",
+                    "fixedVoip": "voip", "nonFixedVoip": "voip",
+                    "tollFree": "tollfree", "personal": "mobile"}
         clean_type = type_map.get(phone_type, "unknown")
 
         return {
-            "valid": True,
-            "carrier": carrier_info.get("name", ""),
+            "valid": valid,
+            "carrier": carrier,
             "phone_type": clean_type,
         }
 
@@ -245,7 +250,8 @@ def find_input_file(county_name: str) -> Path:
     return candidates[0]  # return enriched path for error message
 
 
-def validate_county(county_name: str):
+def validate_county(county_name: str, max_phones: int = 0, max_emails: int = 0,
+                    primary_only: bool = False):
     """Validate contacts for a single county."""
 
     input_file = find_input_file(county_name)
@@ -311,13 +317,18 @@ def validate_county(county_name: str):
     emails_to_check = df[df["email_1"].astype(str).str.contains("@", na=False)]
     email_count = len(emails_to_check)
 
+    actual_email_limit = min(email_count, max_emails) if max_emails > 0 else email_count
     if email_count > 0 and has_mv:
-        print(f"\n  Validating {email_count:,} emails via MillionVerifier...")
-        print(f"  Estimated cost: ~${email_count / 1000 * 0.50:.2f}")
+        print(f"\n  Validating {actual_email_limit:,} emails via MillionVerifier...")
+        if max_emails > 0:
+            print(f"  (capped at {max_emails} to stay within credit limit)")
 
         validated = 0
         valid_count = 0
         for idx, row in emails_to_check.iterrows():
+            if max_emails > 0 and validated >= max_emails:
+                break
+
             email = str(row["email_1"]).strip()
             if "@" in email:
                 result = validate_email_millionverifier(email)
@@ -326,16 +337,18 @@ def validate_county(county_name: str):
                     valid_count += 1
                 validated += 1
                 if validated % 100 == 0:
-                    print(f"    Checked {validated}/{email_count} "
+                    print(f"    Checked {validated}/{actual_email_limit} "
                           f"({valid_count} valid so far)")
                 time.sleep(MV_DELAY)
 
-            # Also check email_2 if present
-            email2 = str(row.get("email_2", "")).strip()
-            if "@" in email2:
-                result2 = validate_email_millionverifier(email2)
-                df.at[idx, "email_2_status"] = result2["status"]
-                time.sleep(MV_DELAY)
+            # Also check email_2 if present (skip if --primary-only)
+            if not primary_only:
+                email2 = str(row.get("email_2", "")).strip()
+                if "@" in email2 and (max_emails == 0 or validated < max_emails):
+                    result2 = validate_email_millionverifier(email2)
+                    df.at[idx, "email_2_status"] = result2["status"]
+                    validated += 1
+                    time.sleep(MV_DELAY)
 
         print(f"    Done: {valid_count}/{validated} emails valid or catch-all")
     elif email_count > 0:
@@ -350,8 +363,11 @@ def validate_county(county_name: str):
     phones_to_check = df[df["phone_1"].astype(str).str.len() >= 10]
     phone_count = len(phones_to_check)
 
+    actual_phone_limit = min(phone_count, max_phones) if max_phones > 0 else phone_count
     if phone_count > 0:
-        print(f"\n  Processing {phone_count:,} phone numbers...")
+        print(f"\n  Processing {actual_phone_limit:,} phone numbers...")
+        if max_phones > 0:
+            print(f"  (capped at {max_phones} Twilio lookups to stay within trial)")
 
         validated = 0
         valid_count = 0
@@ -363,15 +379,15 @@ def validate_county(county_name: str):
                 df.at[idx, "phone_1_valid"] = "False"
                 continue
 
-            # DNC check (free, no API needed)
+            # DNC check (free, no API needed — always run, no cap)
             if has_dnc:
                 is_dnc = phone in dnc_set
                 df.at[idx, "phone_1_dnc"] = str(is_dnc)
                 if is_dnc:
                     dnc_count += 1
 
-            # Twilio carrier lookup
-            if has_twilio:
+            # Twilio carrier lookup (respect cap)
+            if has_twilio and (max_phones == 0 or validated < max_phones):
                 result = validate_phone_twilio(phone)
                 df.at[idx, "phone_1_valid"] = str(result["valid"])
                 df.at[idx, "phone_1_carrier"] = result["carrier"]
@@ -380,23 +396,25 @@ def validate_county(county_name: str):
                     valid_count += 1
                 validated += 1
                 if validated % 100 == 0:
-                    print(f"    Checked {validated}/{phone_count} "
+                    print(f"    Checked {validated}/{actual_phone_limit} "
                           f"({valid_count} valid, {dnc_count} DNC)")
                 time.sleep(TWILIO_DELAY)
-            else:
+            elif not has_twilio:
                 df.at[idx, "phone_1_valid"] = "not_validated"
 
-            # Also check phone_2 if present
-            phone2 = normalize_phone(row.get("phone_2", ""))
-            if phone2:
-                if has_dnc:
-                    df.at[idx, "phone_2_dnc"] = str(phone2 in dnc_set)
-                if has_twilio:
-                    result2 = validate_phone_twilio(phone2)
-                    df.at[idx, "phone_2_valid"] = str(result2["valid"])
-                    df.at[idx, "phone_2_carrier"] = result2["carrier"]
-                    df.at[idx, "phone_2_type"] = result2["phone_type"]
-                    time.sleep(TWILIO_DELAY)
+            # Also check phone_2 if present (skip if --primary-only or at cap)
+            if not primary_only:
+                phone2 = normalize_phone(row.get("phone_2", ""))
+                if phone2:
+                    if has_dnc:
+                        df.at[idx, "phone_2_dnc"] = str(phone2 in dnc_set)
+                    if has_twilio and (max_phones == 0 or validated < max_phones):
+                        result2 = validate_phone_twilio(phone2)
+                        df.at[idx, "phone_2_valid"] = str(result2["valid"])
+                        df.at[idx, "phone_2_carrier"] = result2["carrier"]
+                        df.at[idx, "phone_2_type"] = result2["phone_type"]
+                        validated += 1
+                        time.sleep(TWILIO_DELAY)
 
         if has_twilio:
             cost = validated * 0.005
@@ -459,6 +477,23 @@ def main():
         required=True,
         help='County name (e.g. "seminole") or "all"',
     )
+    parser.add_argument(
+        "--max-phones",
+        type=int,
+        default=0,
+        help="Max phone lookups (0 = unlimited). Use to stay within Twilio trial.",
+    )
+    parser.add_argument(
+        "--max-emails",
+        type=int,
+        default=0,
+        help="Max email lookups (0 = unlimited). Use to stay within MV credits.",
+    )
+    parser.add_argument(
+        "--primary-only",
+        action="store_true",
+        help="Only validate phone_1 and email_1, skip secondary contacts.",
+    )
     args = parser.parse_args()
 
     VALIDATED_DIR.mkdir(parents=True, exist_ok=True)
@@ -484,7 +519,8 @@ def main():
         print("=" * 60)
         print(f"  VALIDATING: {county_name.upper()}")
         print("=" * 60)
-        validate_county(county_name)
+        validate_county(county_name, max_phones=args.max_phones,
+                        max_emails=args.max_emails, primary_only=args.primary_only)
 
     print("=" * 60)
     print(f"  Next step: python scripts/07_export_campaign_ready.py --county {county_arg}")
