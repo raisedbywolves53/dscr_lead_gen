@@ -93,37 +93,47 @@ def format_for_tracerfy(df: pd.DataFrame) -> str:
         resolved = str(row.get("resolved_person", "")).strip()
         owner = str(row.get("OWN_NAME", "")).strip()
 
-        # For skip tracing, we need a person name — not an LLC name
-        # If no resolved person, use the owner name but only if it looks like a person
-        entity_keywords = ["LLC", "L.L.C", "INC", "CORP", "LP", "LTD", "TRUST",
-                           "PARTNERSHIP", "ASSOCIATION", "COMPANY", "HOLDINGS",
-                           "PROPERTIES", "INVESTMENTS", "ENTERPRISES", "GROUP",
-                           "MANAGEMENT", "CAPITAL", "VENTURES", "REALTY", "HOMES",
-                           "APARTMENTS", "DEVELOPMENT"]
+        # Priority: resolved person name > individual owner name > entity name
+        # Tracerfy matches on address + name. Even LLC names can help with address matching.
+        is_entity = False
+        entity_keywords = ("LLC", "INC", "CORP", "CORPORATION", "TRUST",
+                           "LP", "LLP", "LTD", "PARTNERSHIP", "ASSOCIATION",
+                           "ASSOC", "HOLDINGS", "PROPERTIES", "INVESTMENTS",
+                           "INVESTMENT", "INVESTM", "INVESTEMENTS", "VENTURES",
+                           "GROUP", "ENTERPRISES", "COMPANY", "CO",
+                           "REVOCABLE", "IRREVOCABLE", "LIVING", "FAMILY",
+                           "REALTY", "REAL ESTATE", "APARTMENTS", "HOMES",
+                           "DEVELOPMENT", "DEVELOPERS", "MANAGEMENT", "MGT",
+                           "CAPITAL", "EQUITY", "FUND", "PARTNERS", "ASSETS")
 
         if resolved and resolved.upper() not in ("NAN", "NONE", ""):
             name = resolved
         else:
-            # Check if owner name is an entity (not a person)
-            owner_upper = owner.upper()
-            is_entity = any(kw in owner_upper for kw in entity_keywords)
-            if is_entity:
-                # Can't skip trace an LLC name — use mailing address only
-                name = ""
-            else:
-                name = owner
+            name = owner
+            # Check if this is an entity name (not a person)
+            # Strip periods for matching (e.g., "INC." → "INC")
+            upper = name.upper().replace(".", "")
+            if any(upper.endswith(f" {s}") or f" {s} " in upper for s in entity_keywords):
+                is_entity = True
 
         # Parse into first/last
         first, last = "", ""
-        if name and "," in name:
+        if is_entity:
+            # Entity names: send empty first/last, let Tracerfy match on address only
+            first, last = "", ""
+        elif name and "," in name:
+            # "LAST, FIRST" format
             parts = name.split(",", 1)
             last = parts[0].strip()
             first = parts[1].strip().split()[0] if len(parts) > 1 and parts[1].strip() else ""
         elif name:
-            parts = name.split()
+            # FDOR format: "LAST FIRST" or "LAST FIRST MIDDLE"
+            # Strip trailing "&" (joint ownership marker)
+            clean = name.rstrip("& ").strip()
+            parts = clean.split()
             if len(parts) >= 2:
-                first = parts[0]
-                last = parts[-1]
+                last = parts[0]
+                first = parts[1]
             elif len(parts) == 1:
                 last = parts[0]
 
@@ -157,6 +167,18 @@ def submit_trace(csv_content: str) -> dict:
         "trace_type": "normal",
     }
 
+    # Tracerfy requires column mapping parameters
+    data["first_name_column"] = "First Name"
+    data["last_name_column"] = "Last Name"
+    data["address_column"] = "Address"
+    data["city_column"] = "City"
+    data["state_column"] = "State"
+    data["zip_column"] = "Zip"
+    # Mail address fields — use same as property owner address
+    data["mail_address_column"] = "Address"
+    data["mail_city_column"] = "City"
+    data["mail_state_column"] = "State"
+
     print("  Uploading leads to Tracerfy...")
     resp = requests.post(url, headers=get_headers(), files=files, data=data, timeout=60)
 
@@ -171,8 +193,12 @@ def submit_trace(csv_content: str) -> dict:
 
 
 def poll_queue(queue_id: str) -> dict:
-    """Poll a queue job until completion. Returns job info with download URL."""
-    url = f"{TRACERFY_BASE}/queue/{queue_id}"
+    """Poll a queue job until completion. Returns job info with download URL.
+
+    Uses GET /queues/ (plural) which returns all jobs with pending/download_url.
+    GET /queue/{id} (singular) returns individual lead records, NOT job status.
+    """
+    url = f"{TRACERFY_BASE}/queues/"
 
     for attempt in range(1, MAX_POLL_ATTEMPTS + 1):
         resp = requests.get(url, headers=get_headers(), timeout=30)
@@ -181,18 +207,32 @@ def poll_queue(queue_id: str) -> dict:
             time.sleep(POLL_INTERVAL)
             continue
 
-        data = resp.json()
-        status = data.get("status", "").lower()
+        queues = resp.json()
+        if not isinstance(queues, list):
+            queues = queues.get("results", [])
 
-        if status in ("completed", "complete", "done", "finished"):
-            print(f"  Job completed after {attempt * POLL_INTERVAL}s")
-            return data
-        elif status in ("failed", "error"):
-            print(f"  Job FAILED: {data}")
+        # Find our queue by ID
+        data = {}
+        for q in queues:
+            if str(q.get("id", "")) == queue_id:
+                data = q
+                break
+
+        if not data:
+            print(f"  Queue {queue_id} not found in response (attempt {attempt})")
+            time.sleep(POLL_INTERVAL)
+            continue
+
+        pending = data.get("pending", True)
+
+        if not pending:
+            elapsed = attempt * POLL_INTERVAL
+            print(f"  Job completed after {elapsed}s")
+            print(f"  Credits deducted: {data.get('credits_deducted', '?')}")
             return data
         else:
             if attempt % 4 == 1:  # Print every ~60s
-                print(f"  Waiting... status: {status} (attempt {attempt}/{MAX_POLL_ATTEMPTS})")
+                print(f"  Waiting... pending=True (attempt {attempt}/{MAX_POLL_ATTEMPTS})")
             time.sleep(POLL_INTERVAL)
 
     print(f"  TIMEOUT: Job did not complete after {MAX_POLL_ATTEMPTS * POLL_INTERVAL}s")
@@ -201,13 +241,15 @@ def poll_queue(queue_id: str) -> dict:
 
 def download_results(download_url: str) -> pd.DataFrame:
     """Download completed trace results as a DataFrame."""
-    print(f"  Downloading results...")
+    print(f"  Downloading results from {download_url[:80]}...")
 
     # If the URL is relative, prepend base
     if download_url.startswith("/"):
         download_url = f"https://tracerfy.com{download_url}"
 
-    resp = requests.get(download_url, headers=get_headers(), timeout=120)
+    # CDN URLs don't need auth headers — only use auth for API URLs
+    headers = get_headers() if "tracerfy.com/v1/api" in download_url else {}
+    resp = requests.get(download_url, headers=headers, timeout=120)
     if resp.status_code != 200:
         print(f"  ERROR downloading results: HTTP {resp.status_code}")
         return pd.DataFrame()
@@ -293,65 +335,56 @@ def normalize_phone(phone) -> str:
 def normalize_tracerfy_results(raw_df: pd.DataFrame) -> pd.DataFrame:
     """
     Normalize Tracerfy output into our standard format.
-    Tracerfy returns up to 8 phones and 5 emails per record.
-    We consolidate to: best phone (prefer cell), best email, all phones list.
+
+    Tracerfy returns columns like:
+      first_name, last_name, address, city, state, zip,
+      primary_phone, primary_phone_type,
+      Email-1 through Email-5,
+      Mobile-1 through Mobile-5,
+      Landline-1 through Landline-3
     """
     if raw_df.empty:
         return raw_df
 
-    # Tracerfy column names vary — normalize
-    col_lower = {c: c.lower().strip() for c in raw_df.columns}
-    raw_df = raw_df.rename(columns=col_lower)
-
     rows = []
     for _, row in raw_df.iterrows():
-        # Extract all phone columns
+        # Collect all phones: primary, then mobiles, then landlines
         phones = []
         phone_types = []
-        for i in range(1, 9):
-            for pattern in [f"phone {i}", f"phone{i}", f"phone_{i}"]:
-                if pattern in row.index:
-                    p = normalize_phone(row.get(pattern, ""))
-                    if p:
-                        # Try to get phone type
-                        type_col = pattern.replace("phone", "phone_type").replace(" ", "_")
-                        ptype = str(row.get(type_col, row.get(f"phone_type_{i}", ""))).lower()
-                        phones.append(p)
-                        phone_types.append(ptype if ptype not in ("nan", "", "none") else "unknown")
-                    break
 
-        # Also check generic "phone" column
-        if not phones:
-            for col in row.index:
-                if "phone" in col and "type" not in col:
-                    p = normalize_phone(row.get(col, ""))
-                    if p:
-                        phones.append(p)
-                        phone_types.append("unknown")
+        # Primary phone
+        primary = normalize_phone(row.get("primary_phone", ""))
+        primary_type = str(row.get("primary_phone_type", "")).lower()
+        if primary:
+            phones.append(primary)
+            phone_types.append(primary_type if primary_type not in ("nan", "", "none") else "unknown")
 
-        # Extract all email columns
+        # Mobile-1 through Mobile-5
+        for i in range(1, 6):
+            p = normalize_phone(row.get(f"Mobile-{i}", ""))
+            if p and p not in phones:
+                phones.append(p)
+                phone_types.append("mobile")
+
+        # Landline-1 through Landline-3
+        for i in range(1, 4):
+            p = normalize_phone(row.get(f"Landline-{i}", ""))
+            if p and p not in phones:
+                phones.append(p)
+                phone_types.append("landline")
+
+        # Collect emails: Email-1 through Email-5
         emails = []
         for i in range(1, 6):
-            for pattern in [f"email {i}", f"email{i}", f"email_{i}"]:
-                if pattern in row.index:
-                    e = str(row.get(pattern, "")).strip()
-                    if e and "@" in e and e.upper() not in ("NAN", "NONE"):
-                        emails.append(e)
-                    break
+            e = str(row.get(f"Email-{i}", "")).strip()
+            if e and "@" in e and e.upper() not in ("NAN", "NONE"):
+                emails.append(e)
 
-        # Also check generic "email" column
-        if not emails:
-            for col in row.index:
-                if "email" in col:
-                    e = str(row.get(col, "")).strip()
-                    if e and "@" in e and e.upper() not in ("NAN", "NONE"):
-                        emails.append(e)
-
-        # Pick best phone (prefer cell/mobile)
+        # Pick best phone (prefer mobile)
         best_phone = ""
         best_phone_type = ""
         for p, t in zip(phones, phone_types):
-            if "cell" in t or "mobile" in t:
+            if t == "mobile":
                 best_phone = p
                 best_phone_type = "mobile"
                 break
@@ -359,17 +392,17 @@ def normalize_tracerfy_results(raw_df: pd.DataFrame) -> pd.DataFrame:
             best_phone = phones[0]
             best_phone_type = phone_types[0] if phone_types else "unknown"
 
-        # Build first/last key for matching back to our leads
-        first = str(row.get("first name", row.get("first_name", row.get("firstname", "")))).strip()
-        last = str(row.get("last name", row.get("last_name", row.get("lastname", "")))).strip()
-        zipcode = str(row.get("zip", row.get("zipcode", row.get("zip code", "")))).strip()[:5]
-        address = str(row.get("address", row.get("street", ""))).strip()
+        # Build matching keys
+        first = str(row.get("first_name", "")).strip()
+        last = str(row.get("last_name", "")).strip()
+        zipcode = str(row.get("zip", "")).strip()[:5]
+        address = str(row.get("address", "")).strip()
 
         rows.append({
-            "tracerfy_first": first,
-            "tracerfy_last": last,
-            "tracerfy_zip": zipcode,
-            "tracerfy_address": address,
+            "tracerfy_first": first if first.upper() not in ("NAN", "NONE") else "",
+            "tracerfy_last": last if last.upper() not in ("NAN", "NONE") else "",
+            "tracerfy_zip": zipcode if zipcode.upper() not in ("NAN", "NONE") else "",
+            "tracerfy_address": address if address.upper() not in ("NAN", "NONE") else "",
             "tracerfy_phone_1": best_phone,
             "tracerfy_phone_1_type": best_phone_type,
             "tracerfy_phone_2": phones[1] if len(phones) > 1 else "",

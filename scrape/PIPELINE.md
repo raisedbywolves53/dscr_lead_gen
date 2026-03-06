@@ -238,16 +238,16 @@ Save to `data/dossiers/`
 
 ## Execution Order
 
-### Full PB/Broward Run (7,537 leads — $226 total)
+### Full PB/Broward Run (7,537 leads — actual cost $57.60)
 ```bash
 # Already have data from existing pipeline (pipeline/output/06_enriched.csv)
 
-# 1. Select all PB/Broward leads + resolve LLCs
+# 1. Select all PB/Broward leads + resolve LLCs          ✅ DONE
 python scripts/05_enrich_contacts.py --counties "palm beach,broward"
 
-# 2. Skip trace via Tracerfy API ($150.74)
-#    Requires TRACERFY_API_KEY in .env
-python scripts/08_tracerfy_skip_trace.py
+# 2. Skip trace via Tracerfy API                          ✅ DONE ($57.60)
+#    Result: 2,880 matches (45%), 2,869 phones, 2,461 emails
+python scripts/08_tracerfy_skip_trace.py --skip-dnc
 
 # 3. Merge all enrichment sources (Tracerfy + DBPR + SunBiz)
 python scripts/05b_merge_enrichment.py
@@ -259,7 +259,7 @@ python scripts/06_validate_contacts.py --county merged
 python scripts/07_export_campaign_ready.py --county merged
 ```
 
-### Optional: DNC scrub via Tracerfy ($70-100)
+### Optional: DNC scrub via Tracerfy (~$57)
 ```bash
 # Run after step 2 if you didn't include DNC scrub in the trace
 python scripts/08_tracerfy_skip_trace.py --dnc-only
@@ -293,22 +293,22 @@ python scripts/07_export_campaign_ready.py --county palm_beach
 
 ---
 
-## Cost Estimate Per 1,000 Leads (Verified March 2026)
+## Cost — Actual PB/Broward Run (March 2026)
 
 | Step | Cost | Notes |
 |------|------|-------|
 | FDOR NAL/SDF download | $0 | Free public data |
 | SunBiz LLC resolution | $0 | Free (time only) |
 | County clerk scraping | $0 | Free (time only) |
-| Apollo.io | $99/mo subscription | Weak for private RE investors; best for B2B leads |
-| Datazapp phone+email append | $30-60 | $0.03/match, $75 min balance, $125 min order |
-| Datazapp DNC phone scrub | $5 | $0.005/number, NO minimum |
-| Tracerfy skip trace (alt) | $20 | $0.02/lead, 500 min on web |
+| **Tracerfy skip trace** | **$57.60** | 7,537 uploaded → 2,880 matches @ $0.02/match |
+| Tracerfy DNC scrub | ~$57 | ~2,869 phones @ $0.02 (or use free FTC) |
+| Datazapp second-pass | ~$125 | For Tracerfy misses, $125 min transaction |
 | MillionVerifier email validation | $4.90 | Min purchase 2,000 credits, never expire |
-| Twilio phone validation | $8 | $0.008/lookup, free $15 trial |
+| Twilio phone validation | $0 | Free $15 trial covers ~1,875 lookups |
 | DNC Federal Registry | $0 | First 5 area codes free |
 | FEC / IRS 990 / HUD FMR | $0 | Free public APIs |
-| **TOTAL** | **~$70-100 + $99/mo Apollo** | |
+| **TOTAL (spent)** | **$57.60** | |
+| **TOTAL (remaining)** | **$5-$62** | DNC + validation |
 
 **DNC COMPLIANCE IS MANDATORY.** All phone numbers must be scrubbed against
 federal + Florida state DNC lists before any outreach. Fines up to $51,744/call.

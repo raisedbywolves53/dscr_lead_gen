@@ -1,36 +1,23 @@
-# Action Items for Frank (Updated March 5, 2026)
+# Action Items for Frank (Updated March 6, 2026)
 
-## Priority: Get the full 7,537-lead PB/Broward list skip-traced and DNC-compliant
+## Status: Tracerfy skip trace COMPLETE — 2,880 leads with contact info
 
----
-
-## 1. GET A TRACERFY API KEY (do this first)
-
-Tracerfy is our primary skip trace provider. $0.02/lead, no minimums, API access.
-
-1. Go to https://www.tracerfy.com
-2. Sign up for a free account (no credit card required to start)
-3. Go to your dashboard and generate an API key
-4. Add the key to `scrape/.env`:
-   ```
-   TRACERFY_API_KEY=your_key_here
-   ```
-5. Load credits: 7,537 leads x $0.02 = **$150.74**
-   - If also doing DNC scrub via Tracerfy: add ~$70-100 for phone scrubbing
-
-Once the API key is set, the script handles everything automatically:
-```bash
-python scripts/08_tracerfy_skip_trace.py
-```
-
-### What Tracerfy returns per lead:
-- Up to 8 phone numbers (cell, landline, VoIP labeled)
-- Up to 5 email addresses
-- Mailing address verification
+### Results Summary
+- **7,537 leads uploaded** → 6,437 accepted by Tracerfy → **2,880 matched (45%)**
+- **2,869 phone numbers** found (mobile + landline, labeled)
+- **2,461 email addresses** found
+- **Cost: $57.60** (charges per match, not per upload)
+- Results saved: `data/enriched/tracerfy_results.csv`
 
 ---
 
-## 2. REGISTER FOR FTC DO NOT CALL LIST (free)
+## ~~1. GET A TRACERFY API KEY~~ ✅ DONE
+
+API key configured, full run completed successfully.
+
+---
+
+## 2. REGISTER FOR FTC DO NOT CALL LIST (free) — DO THIS NOW
 
 This is legally required before making any cold calls. Fines are up to $51,744 per call.
 
@@ -85,15 +72,15 @@ and private RE investors through LLCs don't have profiles.
 
 ---
 
-## 5. DATAZAPP $75 BALANCE (save for later)
+## 5. DATAZAPP $75 BALANCE (ready to use as second-pass)
 
-Your $75 is sitting in Datazapp. Don't use it yet.
+Your $75 is sitting in Datazapp. Now that Tracerfy is done, this is the right time.
 
-**When to use it:**
-- After Tracerfy results come back, identify leads where Tracerfy returned nothing
-- Batch those into Datazapp as a second-pass (different database = different matches)
+**Strategy:**
+- Tracerfy missed ~3,557 leads (no phone or email found)
+- Upload those misses to Datazapp — different database catches different people
 - You'll need to add $50 to hit the $125 minimum transaction
-- Upload 2,000+ leads at once to get value from the minimum
+- Upload all 3,557 misses at once to get value from the minimum
 
 **Do NOT use Datazapp for:**
 - Small batches (25-100 leads) — the $125 minimum makes it $1.25-5.00/lead
@@ -163,11 +150,12 @@ Florida-specific rules (stricter than federal):
 
 | Item | Cost | Status |
 |------|------|--------|
-| Tracerfy skip trace (7,537 leads) | $150.74 | NEED API KEY |
-| Tracerfy DNC scrub (~3,500 phones) | ~$70-100 | Optional (FTC is free) |
-| FTC DNC registry (4 area codes) | $0 | NEED TO REGISTER |
+| Tracerfy skip trace (2,880 matches) | $57.60 | ✅ DONE |
+| Tracerfy DNC scrub (~2,869 phones) | ~$57 | ⏳ Decide (FTC is free) |
+| FTC DNC registry (4 area codes) | $0 | ⏳ REGISTER NOW |
 | MillionVerifier (email validation) | $4.90 | Optional |
 | Twilio (phone type detection) | $0 (free trial) | Optional |
-| **Total to launch** | **$151-$256** | |
-| Datazapp balance (saved for later) | $75 (already paid) | Hold |
+| **Total spent so far** | **$57.60** | |
+| **Total to full launch** | **$62.50-$120** | |
+| Datazapp second-pass (saved) | $75 (already paid) + $50 | Optional |
 | Apollo.io (consider cancelling) | $99/mo | Review |

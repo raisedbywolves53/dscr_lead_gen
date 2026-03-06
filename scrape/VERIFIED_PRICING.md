@@ -16,8 +16,10 @@ Previous estimates in this project were WRONG for several services.
 - **No credit card required to start**
 - **API access**: Bearer token auth, CSV upload, async processing
 - **API rate limit**: Max 10 POST trace requests per 5 minutes
-- **Processing time**: 30-60 minutes for ~1,000 records
-- **Status**: NOT YET USED — need to create account and get API key
+- **Processing time**: ~24 minutes for 7,537 records
+- **Charges per match, NOT per upload** — unmatched leads cost nothing
+- **Status**: ACTIVE — API key configured, full PB/Broward run completed
+- **Actual results (March 2026)**: 6,437 accepted, 2,880 matched (45%), $57.60 total
 
 ### Datazapp (datazapp.com) — SECONDARY (second-pass only)
 - **Minimum fund**: $75 account balance
@@ -96,16 +98,19 @@ Previous estimates in this project were WRONG for several services.
 
 ## Cost Summary — Full PB/Broward Run (7,537 leads)
 
-### Recommended Plan (Tracerfy primary)
+### Actual Cost (Completed March 2026)
 
 | Service | What | Cost |
 |---------|------|------|
-| Tracerfy skip trace | 7,537 leads @ $0.02 | $150.74 |
-| Tracerfy DNC scrub | ~3,500 matched phones @ $0.02 | ~$70 |
-| MillionVerifier | Validate emails found | $4.90 |
+| Tracerfy skip trace | 7,537 uploaded → 2,880 matches @ $0.02 | **$57.60** |
+| Tracerfy DNC scrub | ~2,869 matched phones @ $0.02 | ~$57 (not yet run) |
+| MillionVerifier | Validate 2,461 emails found | $4.90 |
 | Twilio Lookup | Phone type detection | $0 (free $15 trial) |
 | FTC DNC Registry | 4 FL area codes | $0 (free) |
-| **TOTAL** | | **$225.64** |
+| **TOTAL** | | **$62.50-$120** |
+
+**KEY FINDING**: Tracerfy charges per MATCH, not per upload. Unmatched leads cost nothing.
+Original estimate was $150.74 assuming per-upload charging — actual cost was $57.60.
 
 ### Monthly recurring after launch
 
