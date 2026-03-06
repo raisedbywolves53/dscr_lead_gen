@@ -420,6 +420,8 @@ def main():
                         help=f"Input CSV (default: {DEFAULT_INPUT} or apollo_results.csv)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be looked up without making any requests")
+    parser.add_argument("--skip-fec", action="store_true",
+                        help="Skip FEC lookups (useful when rate-limited with DEMO_KEY)")
     args = parser.parse_args()
 
     # Load FEC API key
@@ -526,13 +528,16 @@ def main():
         }
 
         # --- A. FEC Lookup ---
-        fec_data = lookup_fec(first, last, fec_api_key)
-        if fec_data.get("error") == "rate_limited":
-            print(f"  [{i+1}/{len(to_fetch)}] {full_name} — FEC rate limited, waiting 60s...")
-            time.sleep(60)
+        if args.skip_fec:
+            fec_data = {}
+        else:
             fec_data = lookup_fec(first, last, fec_api_key)
+            if fec_data.get("error") == "rate_limited":
+                print(f"  [{i+1}/{len(to_fetch)}] {full_name} — FEC rate limited, waiting 60s...")
+                time.sleep(60)
+                fec_data = lookup_fec(first, last, fec_api_key)
+            time.sleep(FEC_DELAY)
         result["fec"] = fec_data
-        time.sleep(FEC_DELAY)
 
         # --- B. ProPublica 990 Lookup ---
         nonprofit_data = lookup_propublica_990(full_name)
