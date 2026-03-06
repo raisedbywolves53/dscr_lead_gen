@@ -1,0 +1,11 @@
+Property Address,City,State,ZIP,County,Property Type,Beds,Baths,Sq Ft,Year Built,Estimated Property Value,Purchase Price,Purchase Date,Estimated Monthly Rent,Occupancy Status,Homestead Exempt,Listing Status,Owner Investor,Owner Entity
+1234 Ocean Blvd,Boca Raton,FL,33432,Palm Beach,SFR,4,3,2800,2005,850000,620000,2019-03-15,4200,Tenant Occupied,FALSE,Not Listed,Carlos Rivera,Rivera Investments LLC
+567 SE 5th Ave,Delray Beach,FL,33483,Palm Beach,Duplex,4,3,2200,1998,625000,480000,2020-07-22,3800,Tenant Occupied,FALSE,Not Listed,Carlos Rivera,Rivera Investments LLC
+890 NE 20th Ave,Fort Lauderdale,FL,33305,Broward,SFR,3,2,1800,2001,580000,425000,2018-11-01,3200,Tenant Occupied,FALSE,Not Listed,Jennifer Wu,Suncoast Capital Partners LLC
+1100 Las Olas Blvd Unit 12,Fort Lauderdale,FL,33301,Broward,Condo,2,2,1400,2015,520000,465000,2021-01-10,3500,Tenant Occupied,FALSE,Not Listed,Jennifer Wu,Suncoast Capital Partners LLC
+2300 S Ocean Blvd,Palm Beach,FL,33480,Palm Beach,Condo,3,3,2600,2008,1250000,980000,2017-05-20,6500,Tenant Occupied,FALSE,Not Listed,David Goldstein,WPB Holdings Trust
+445 Australian Ave,West Palm Beach,FL,33401,Palm Beach,Fourplex,8,4,3600,1985,920000,710000,2016-09-12,5800,Tenant Occupied,FALSE,Not Listed,David Goldstein,Palm Beach Capital Group LLC
+78 NE 4th Ave,Delray Beach,FL,33483,Palm Beach,SFR,3,2,1650,2002,495000,495000,2025-08-30,0,Vacant,FALSE,Not Listed,Marcus Thompson,
+3400 Galt Ocean Dr Unit 8,Fort Lauderdale,FL,33308,Broward,Condo,2,2,1200,2010,410000,340000,2019-06-18,2800,Tenant Occupied,FALSE,Not Listed,Angela Martinez,Broward Holdings Inc
+1800 SE 10th Ave,Fort Lauderdale,FL,33316,Broward,SFR,3,2,1900,1995,550000,420000,2022-04-05,3100,Tenant Occupied,FALSE,Not Listed,Natasha Petrov,Petrov Property Group LLC
+2200 NE 36th St,Lighthouse Point,FL,33064,Broward,SFR,4,3,2400,2003,725000,725000,2025-11-15,0,Vacant,FALSE,Not Listed,Natasha Petrov,Petrov Property Group LLC
