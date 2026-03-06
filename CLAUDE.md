@@ -2,11 +2,75 @@
 
 ## Project Summary
 
-This is an automated lead generation system for **DSCR (Debt Service Coverage Ratio) mortgage loans** targeting Florida real estate investors. Built for **Frank Christiano / CrossCountry Mortgage (CCM)**.
+This is an automated lead generation system for **DSCR (Debt Service Coverage Ratio) mortgage loans** targeting Florida real estate investors. Built for **Zack / CrossCountry Mortgage (CCM)**.
 
 Two pipelines exist:
 1. **`pipeline/`** — Original pipeline (built, Palm Beach data processed, 39K leads)
 2. **`scrape/`** — Active investor intelligence pipeline (in progress, Tracerfy integration)
+
+**Plus the Airtable CRM** — the operational hub where all leads, properties, financing, and opportunities are managed.
+
+---
+
+## Airtable CRM (Active Build)
+
+### Base Details
+- **Base ID:** appJV7J1ZrNEBAWAm
+- **Workspace ID:** wspqb7kWqj5RidMkV
+- **API Token:** stored in `.env` file (key: `AIRTABLE_API_TOKEN`)
+- **Base URL:** https://airtable.com/appJV7J1ZrNEBAWAm
+
+### Build Status (as of 2026-03-06)
+
+**COMPLETED:**
+- All 7 tables (191 fields total, 0 broken formulas/rollups)
+  - Investors (50 fields) — contact info, 10 rollups, 9 formulas, full lead scoring 0-100
+  - Ownership Entities (18 fields) — entity details, 3 rollups, 1 formula
+  - Properties (36 fields) — property details, 3 rollups, 10 formulas, 1 lookup
+  - Financing (35 fields) — loan details, 11 formulas (all trigger flags)
+  - Compliance (15 fields) — DNC/consent tracking, 2 formulas
+  - Opportunities (24 fields) — deal pipeline, 5 formulas + auto timestamps
+  - Outreach Log (13 fields) — activity tracking
+- All 9 link relationships between tables
+- Rollup chains: Financing → Properties → Investors
+- Test CSV data in `airtable/test_data/`
+
+**NOT YET DONE (Zack is working through these manually on desktop):**
+Follow `airtable/NEXT_STEPS_Sequential_Guide.md`:
+1. Phase 1: Quick Fixes (delete Table 8, rename Trigger County, add 2 missing fields)
+2. Phase 2: 24 Views (all manual in Airtable UI)
+3. Phase 3: 8 Automations (all manual)
+4. Phase 4: Test Upload (CSVs ready in `airtable/test_data/`)
+5. Phase 5: 4 Interfaces/Dashboards
+6. Phase 6: Full 7,500 lead import + HubSpot sync
+
+### Key Airtable Files
+- `DSCR_Airtable_Build_Guide.md` — Master spec (1,162 lines): all fields, formulas, views, automations, interfaces
+- `airtable/NEXT_STEPS_Sequential_Guide.md` — Step-by-step manual instructions for remaining work
+- `airtable/Airtable_AI_Field_Prompts.md` — AI prompts used to create 32 formula/rollup fields
+- `airtable/airtable_build_v2.py` — API script that created the base skeleton (tokens redacted)
+- `airtable/create_remaining_fields.py` — Attempted API field creation (blocked by API limitations)
+- `airtable/test_data/` — Test CSVs + README with expected trigger results
+
+### Important Technical Notes
+- Airtable API CANNOT create formula, rollup, createdTime, or lastModifiedTime fields
+- Airtable AI assistant CANNOT create views or automations
+- Financing trigger fields lack emoji prefixes (e.g., "Hard Money Flag" not "🚨 Hard Money Flag")
+- "Trigger County" on Properties is actually Trigger Count rollup (typo, needs rename)
+- Rollup aggregations show as "NONE" in API metadata — this is normal, they work
+
+### How To Validate via API
+```python
+import os, requests
+API_TOKEN = os.getenv('AIRTABLE_API_TOKEN')  # stored in .env file
+BASE_ID = 'appJV7J1ZrNEBAWAm'
+headers = {'Authorization': f'Bearer {API_TOKEN}'}
+resp = requests.get(f'https://api.airtable.com/v0/meta/bases/{BASE_ID}/tables', headers=headers)
+data = resp.json()
+for table in data['tables']:
+    broken = sum(1 for f in table['fields'] if f['type'] in ('formula','rollup') and f.get('options',{}).get('result') is None)
+    print(f"{table['name']}: {len(table['fields'])} fields" + (f" ({broken} BROKEN)" if broken else ""))
+```
 
 ---
 
@@ -14,6 +78,7 @@ Two pipelines exist:
 
 ### Active Docs (START HERE)
 - `DSCR_Lead_Gen_Strategy.md` — Comprehensive data acquisition & outreach strategy
+- `DSCR_Airtable_Build_Guide.md` — Complete Airtable CRM spec
 - `E2E_EXECUTION_PLAN.md` — Step-by-step instructions to run the original pipeline
 - `ICP_DEFINITIONS.md` — All 19 ICP segments with signals, sources, and classification logic
 - `PIPELINE_RUNBOOK.md` — Data flow, troubleshooting, memory management, known issues
@@ -23,7 +88,7 @@ Two pipelines exist:
 - `scrape/CLAUDE.md` — Full project specification, data schema, design principles
 - `scrape/PIPELINE.md` — Execution spec for all scripts (01-20)
 - `scrape/DATA_SOURCES.md` — Every data field mapped to its source
-- `scrape/TODO_FOR_FRANK.md` — Action items for Frank (API keys, costs, compliance)
+- `scrape/TODO_FOR_FRANK.md` — Action items for Zack (API keys, costs, compliance)
 - `scrape/VERIFIED_PRICING.md` — Fact-checked vendor pricing (Tracerfy, Datazapp, Apollo, etc.)
 - `scrape/ICP_CRITERIA.md` — Scoring weights for scrape pipeline
 - `scrape/BUILD_PLAN.md` — Development roadmap and milestones
@@ -139,7 +204,8 @@ pip install pandas openpyxl requests beautifulsoup4 python-dotenv
 
 ## Contact & Ownership
 
-- **Client**: Frank Christiano, CrossCountry Mortgage
+- **User**: Zack, Mortgage Loan Originator (DSCR specialist)
 - **Focus Market**: Palm Beach + Broward County, Florida
 - **Target Scale**: All 67 FL counties, then nationwide
 - **Pipeline Date**: March 2026
+- **GitHub**: https://github.com/raisedbywolves53/dscr_lead_gen.git
