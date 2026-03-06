@@ -240,7 +240,18 @@ For each view: click the **+** icon next to the existing views on the left sideb
 3. Filter: **Record Type** → is any of → select: `Consent Obtained`, `Consent Revoked`
 4. Sort: **Date** → Descending
 
-**✅ After Views 1-24: All views created.**
+#### View 25: 📞 Call Queue
+1. **First, run the refresh script:** `python airtable/refresh_call_queue.py`
+2. Go to **Investors** table
+3. Click **+ Add a view** → **Grid**
+4. Name: `📞 Call Queue`
+5. Filter (2 conditions, AND):
+   - **DNC Status** → is → `Clear`
+   - AND **Call Priority** → is not empty
+6. Sort: **Call Priority** → Ascending, then **Lead Score (0-100)** → Descending
+7. Show only 12 columns — see `airtable/CALL_QUEUE_SETUP.md` for the full list and usage guide
+
+**✅ After Views 1-25: All views created.**
 
 ---
 
