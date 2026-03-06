@@ -40,6 +40,10 @@ import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 import pandas as pd
 
 try:
@@ -70,22 +74,23 @@ DEFAULT_OUTPUT = HISTORY_DIR / "purchase_history.csv"
 # ---------------------------------------------------------------------------
 FL_COUNTIES = {
     "alachua": "01", "baker": "02", "bay": "03", "bradford": "04",
-    "brevard": "05", "broward": "06", "calhoun": "07", "charlotte": "08",
+    "brevard": "05", "broward": "16", "calhoun": "07", "charlotte": "08",
     "citrus": "09", "clay": "10", "collier": "11", "columbia": "12",
-    "desoto": "13", "dixie": "14", "duval": "16", "escambia": "17",
-    "flagler": "18", "franklin": "19", "gadsden": "20", "gilchrist": "21",
-    "glades": "22", "gulf": "23", "hamilton": "24", "hardee": "25",
-    "hendry": "26", "hernando": "27", "highlands": "28", "hillsborough": "29",
-    "holmes": "30", "indian_river": "31", "jackson": "32", "jefferson": "33",
-    "lafayette": "34", "lake": "35", "lee": "36", "leon": "37",
-    "levy": "38", "liberty": "39", "madison": "40", "manatee": "41",
-    "marion": "42", "martin": "43", "miami_dade": "13", "monroe": "44",
-    "nassau": "45", "okaloosa": "46", "okeechobee": "47", "orange": "48",
-    "osceola": "49", "palm_beach": "50", "pasco": "51", "pinellas": "52",
-    "polk": "53", "putnam": "54", "santa_rosa": "57", "sarasota": "58",
-    "seminole": "59", "st_johns": "55", "st_lucie": "56",
-    "sumter": "60", "suwannee": "61", "taylor": "62", "union": "63",
-    "volusia": "64", "wakulla": "65", "walton": "66", "washington": "67",
+    "dade": "13", "desoto": "14", "dixie": "15", "duval": "16",
+    "escambia": "17", "flagler": "18", "franklin": "19", "gadsden": "20",
+    "gilchrist": "21", "glades": "22", "gulf": "23", "hamilton": "24",
+    "hardee": "25", "hendry": "26", "hernando": "27", "highlands": "28",
+    "hillsborough": "29", "holmes": "30", "indian_river": "31",
+    "jackson": "32", "jefferson": "33", "lafayette": "34", "lake": "35",
+    "lee": "36", "leon": "37", "levy": "38", "liberty": "39",
+    "madison": "40", "manatee": "41", "marion": "42", "martin": "43",
+    "monroe": "44", "nassau": "45", "okaloosa": "46", "okeechobee": "47",
+    "orange": "48", "osceola": "49", "palm_beach": "60", "pasco": "51",
+    "pinellas": "52", "polk": "53", "putnam": "54", "st_johns": "55",
+    "st_lucie": "56", "santa_rosa": "57", "sarasota": "58",
+    "seminole": "59", "sumter": "60", "suwannee": "61", "taylor": "62",
+    "union": "63", "volusia": "64", "wakulla": "65", "walton": "66",
+    "washington": "67", "miami_dade": "13",
 }
 
 # ---------------------------------------------------------------------------
@@ -156,7 +161,7 @@ def download_sdf(county_name: str, dry_run: bool = False) -> Path:
 
     # Check if we already have extracted data
     for ext in [".txt", ".csv"]:
-        for year in ["2024", "2023"]:
+        for year in ["2025", "2024", "2023"]:
             candidate = HISTORY_DIR / f"{code}_{year}_sdf{ext}"
             if candidate.exists() and candidate.stat().st_size > 0:
                 size_mb = candidate.stat().st_size / (1024 * 1024)
@@ -563,13 +568,21 @@ def derive_metrics(sales_df: pd.DataFrame, lead_name: str) -> dict:
     # treat all records as general transactions
     all_sales = sales_df.copy()
 
+    # When no grantor/grantee available, use all_sales as the transaction source
+    has_buyer_seller = len(acquisitions) > 0 or len(dispositions) > 0
+    transaction_source = acquisitions if has_buyer_seller else all_sales
+
     # Count acquisitions and dispositions
-    total_acquisitions = len(acquisitions)
+    total_acquisitions = len(acquisitions) if has_buyer_seller else len(all_sales)
     total_dispositions = len(dispositions)
 
     # Filter to valid dates
-    acq_dated = acquisitions[acquisitions["sale_date"].notna()] if len(acquisitions) > 0 else pd.DataFrame()
-    disp_dated = dispositions[dispositions["sale_date"].notna()] if len(dispositions) > 0 else pd.DataFrame()
+    if has_buyer_seller:
+        acq_dated = acquisitions[acquisitions["sale_date"].notna()] if len(acquisitions) > 0 else pd.DataFrame()
+        disp_dated = dispositions[dispositions["sale_date"].notna()] if len(dispositions) > 0 else pd.DataFrame()
+    else:
+        acq_dated = all_sales[all_sales["sale_date"].notna()] if len(all_sales) > 0 else pd.DataFrame()
+        disp_dated = pd.DataFrame()
 
     # Purchases in last 12 and 36 months
     purchases_12mo = 0
@@ -579,7 +592,7 @@ def derive_metrics(sales_df: pd.DataFrame, lead_name: str) -> dict:
         purchases_36mo = int((acq_dated["sale_date"] >= thirty_six_mo_ago).sum())
 
     # Average purchase price (exclude $0 and $100 non-arms-length transfers)
-    real_purchases = acquisitions[acquisitions["sale_price"] > 100] if len(acquisitions) > 0 else pd.DataFrame()
+    real_purchases = transaction_source[transaction_source["sale_price"] > 100] if len(transaction_source) > 0 else pd.DataFrame()
     avg_purchase_price = int(real_purchases["sale_price"].mean()) if len(real_purchases) > 0 else 0
 
     # Most recent purchase
@@ -767,11 +780,11 @@ def main():
     parcel_index = build_parcel_lookup(sdf_all)
 
     # -------------------------------------------------------------------
-    # 4. Load leads and match
+    # 3.5 Resolve owner names to parcel IDs via Property Appraiser APIs
     # -------------------------------------------------------------------
     print()
     print("-" * 50)
-    print("PHASE 4: Match sales to leads")
+    print("PHASE 3.5: Resolve owner names to parcels (PAO API)")
     print("-" * 50)
 
     if not input_path.exists():
@@ -796,6 +809,119 @@ def main():
 
     print(f"  Using name column: {name_col}")
 
+    # Cache for PAO lookups
+    pao_cache_path = CACHE_DIR / "pao_parcel_cache.json"
+    pao_cache = {}
+    if pao_cache_path.exists():
+        with open(pao_cache_path, "r") as f:
+            pao_cache = json.load(f)
+        print(f"  PAO cache: {len(pao_cache)} entries loaded")
+
+    # Build owner→parcels mapping via PAO APIs
+    owner_parcels = {}
+    lookups_needed = 0
+    lookups_done = 0
+
+    for _, lead in leads.iterrows():
+        owner_name = str(lead.get(name_col, "")).strip()
+        co_no = str(lead.get("CO_NO", "")).strip()
+        if not owner_name:
+            continue
+
+        cache_key = f"{co_no}:{owner_name}"
+        if cache_key in pao_cache:
+            owner_parcels[owner_name] = pao_cache[cache_key]
+        else:
+            lookups_needed += 1
+
+    print(f"  Need PAO lookups: {lookups_needed}")
+    print(f"  Already cached:   {len(pao_cache) - (len(leads) - lookups_needed - len([1 for _,l in leads.iterrows() if not str(l.get(name_col,'')).strip()]))}")
+
+    if lookups_needed > 0 and HAS_REQUESTS:
+        print(f"\n  Resolving owner names to parcels via Property Appraiser APIs...")
+        print(f"  Estimated time: ~{lookups_needed * 0.5:.0f}s ({lookups_needed * 0.5 / 60:.1f} min)\n")
+
+        for i, (_, lead) in enumerate(leads.iterrows()):
+            owner_name = str(lead.get(name_col, "")).strip()
+            co_no = str(lead.get("CO_NO", "")).strip()
+            if not owner_name:
+                continue
+
+            cache_key = f"{co_no}:{owner_name}"
+            if cache_key in pao_cache:
+                continue
+
+            parcels = []
+            try:
+                if co_no == "60":
+                    # Palm Beach County PAO
+                    resp = requests.post(
+                        "https://pbcpao.gov/AutoComplete/GetOwners",
+                        data={"ownerName": owner_name},
+                        headers={"User-Agent": "Mozilla/5.0"},
+                        timeout=10,
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        parcels = [item["pcn"] for item in data if item.get("pcn")]
+                elif co_no == "16":
+                    # Broward County PA
+                    resp = requests.post(
+                        "https://web.bcpa.net/BcpaClient/search.aspx/GetData",
+                        json={
+                            "value": owner_name,
+                            "cities": "", "orderBy": "", "pageNumber": "1",
+                            "pageCount": "50", "arrayOfValues": "",
+                            "selectedFromList": "false", "totalCount": "0",
+                        },
+                        headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"},
+                        timeout=10,
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        rows = data.get("d", {}).get("Data", []) if isinstance(data.get("d"), dict) else []
+                        parcels = [r.get("folioNumber", "") for r in rows if r.get("folioNumber")]
+            except Exception as e:
+                pass  # silently skip failures
+
+            pao_cache[cache_key] = parcels
+            owner_parcels[owner_name] = parcels
+            lookups_done += 1
+
+            if lookups_done % 50 == 0:
+                print(f"  Resolved {lookups_done}/{lookups_needed}... ({sum(len(v) for v in owner_parcels.values() if v)} total parcels)")
+                # Save cache periodically
+                with open(pao_cache_path, "w") as f:
+                    json.dump(pao_cache, f)
+
+            time.sleep(0.3)  # rate limit
+
+        # Final cache save
+        with open(pao_cache_path, "w") as f:
+            json.dump(pao_cache, f)
+
+    total_parcels = sum(len(v) for v in owner_parcels.values() if v)
+    owners_with_parcels = sum(1 for v in owner_parcels.values() if v)
+    print(f"\n  Resolved: {owners_with_parcels} owners → {total_parcels} parcels")
+
+    # Add resolved parcels to the parcel index match
+    for owner_name, parcels in owner_parcels.items():
+        for pid in parcels:
+            pid_clean = str(pid).strip().strip('"')
+            if pid_clean in parcel_index:
+                # Already indexed — these will be found during matching
+                pass
+
+    # -------------------------------------------------------------------
+    # 4. Match sales to leads
+    # -------------------------------------------------------------------
+    print()
+    print("-" * 50)
+    print("PHASE 4: Match sales to leads")
+    print("-" * 50)
+
+    print(f"  Matching {len(leads):,} leads against {len(sdf_all):,} SDF records")
+
     # Process each lead
     results = []
     matched_count = 0
@@ -806,8 +932,27 @@ def main():
         if i > 0 and i % 100 == 0:
             print(f"  Processed {i:,}/{len(leads):,} leads... ({matched_count} matched)")
 
-        # Match
-        sales = match_lead_sales(lead, sdf_all, name_index, parcel_index)
+        # Get resolved parcels for this owner
+        lead_parcels = owner_parcels.get(owner_name, [])
+
+        # Match via parcel index using resolved parcels
+        matching_indices = set()
+        for pid in lead_parcels:
+            pid_clean = str(pid).strip().strip('"')
+            if pid_clean in parcel_index:
+                matching_indices.update(parcel_index[pid_clean])
+
+        # Also try name index (in case SDF has grantor/grantee)
+        norm_name = normalize_name(owner_name)
+        if norm_name and norm_name in name_index:
+            entry = name_index[norm_name]
+            matching_indices.update(entry.get("as_buyer", []))
+            matching_indices.update(entry.get("as_seller", []))
+
+        if matching_indices:
+            sales = sdf_all.loc[list(matching_indices)].copy()
+        else:
+            sales = pd.DataFrame()
 
         if len(sales) > 0:
             matched_count += 1
