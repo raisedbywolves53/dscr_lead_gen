@@ -509,8 +509,8 @@ def main():
     parser.add_argument(
         "--limit",
         type=int,
-        default=25,
-        help="Number of top leads to enrich (default: 25)",
+        default=0,
+        help="Number of top leads to enrich (default: 0 = all)",
     )
     parser.add_argument(
         "--skip-sunbiz",
@@ -605,8 +605,11 @@ def main():
     df["_enrich_score"] = df.apply(score_lead, axis=1)
     df = df.sort_values("_enrich_score", ascending=False)
 
-    top = df.head(args.limit).copy()
-    print(f"  Selected top {len(top)} leads (scores {top['_enrich_score'].max()}-{top['_enrich_score'].min()})")
+    if args.limit > 0:
+        top = df.head(args.limit).copy()
+    else:
+        top = df.copy()
+    print(f"  Selected {len(top)} leads (scores {top['_enrich_score'].max()}-{top['_enrich_score'].min()})")
 
     # -------------------------------------------------------------------
     # 3. SunBiz re-resolution for unresolved LLCs

@@ -4,25 +4,40 @@
 
 This is an automated lead generation system for **DSCR (Debt Service Coverage Ratio) mortgage loans** targeting Florida real estate investors. Built for **Frank Christiano / CrossCountry Mortgage (CCM)**.
 
-The pipeline ingests free public data sources, identifies investment property owners, classifies them into ICP segments (including purchase AND refinance candidates), enriches contacts, scores leads, and outputs a multi-tab Excel workbook.
+Two pipelines exist:
+1. **`pipeline/`** — Original pipeline (built, Palm Beach data processed, 39K leads)
+2. **`scrape/`** — Active investor intelligence pipeline (in progress, Tracerfy integration)
 
 ---
 
 ## Key Files & Where to Find Things
 
-### Execution Docs (START HERE)
-- `E2E_EXECUTION_PLAN.md` — Step-by-step instructions to run the full pipeline end to end
+### Active Docs (START HERE)
+- `DSCR_Lead_Gen_Strategy.md` — Comprehensive data acquisition & outreach strategy
+- `E2E_EXECUTION_PLAN.md` — Step-by-step instructions to run the original pipeline
 - `ICP_DEFINITIONS.md` — All 19 ICP segments with signals, sources, and classification logic
 - `PIPELINE_RUNBOOK.md` — Data flow, troubleshooting, memory management, known issues
 - `OUTPUT_SPEC.md` — Final Excel format, column definitions, tab structure
 
-### Research (Background Context)
-- `DSCR_Research_Memo.md` — Core DSCR market intelligence, lender comparison, ICP universe
-- `DSCR_Research_Memo_Part2.md` — Competitive landscape, referral ecosystem, LatAm buyers
-- `Phase1_ICP_Sourcing_Playbook.md` — Tactical sourcing for each ICP: signal, source, method, cost
-- `research/01-04_*.md` — Deep-dive research on product mechanics, ICPs, competition, market sizing
+### Scrape Pipeline (Active Development)
+- `scrape/CLAUDE.md` — Full project specification, data schema, design principles
+- `scrape/PIPELINE.md` — Execution spec for all scripts (01-20)
+- `scrape/DATA_SOURCES.md` — Every data field mapped to its source
+- `scrape/TODO_FOR_FRANK.md` — Action items for Frank (API keys, costs, compliance)
+- `scrape/VERIFIED_PRICING.md` — Fact-checked vendor pricing (Tracerfy, Datazapp, Apollo, etc.)
+- `scrape/ICP_CRITERIA.md` — Scoring weights for scrape pipeline
+- `scrape/BUILD_PLAN.md` — Development roadmap and milestones
+- `scrape/QUICKSTART.md` — Setup instructions
+- `scrape/research/county_clerk_research.md` — PB/Broward clerk portal findings
 
-### Pipeline Code
+### Archived Research (Background Context)
+- `archive/DSCR_Research_Memo.md` — Core DSCR market intelligence, lender comparison
+- `archive/DSCR_Research_Memo_Part2.md` — Competitive landscape, referral ecosystem
+- `archive/Phase1_ICP_Sourcing_Playbook.md` — Tactical ICP sourcing guide
+- `archive/SAMPLE_VALIDATION_REPORT.md` — 50-lead validation results
+- `archive/research/01-05_*.md` — Deep-dive research (product mechanics, ICPs, competition, market sizing, vendors)
+
+### Original Pipeline Code
 - `pipeline/scripts/run_pipeline.py` — Master orchestrator (runs all steps)
 - `pipeline/scripts/01_chunked_filter.py` — Step 1: FDOR property filter (memory-efficient)
 - `pipeline/scripts/08_refi_simple.py` — Step 2: Refinance candidate detection
@@ -32,6 +47,19 @@ The pipeline ingests free public data sources, identifies investment property ow
 - `pipeline/scripts/05_enrich_contacts.py` — Step 6: Phone/email enrichment
 - `pipeline/scripts/06_score_and_output.py` — Step 7: ICP scoring + Excel generation
 
+### Scrape Pipeline Code
+- `scrape/scripts/01_download_nal.py` — Download FDOR NAL files
+- `scrape/scripts/02_parse_nal.py` — Parse & standardize property data
+- `scrape/scripts/03_filter_icp.py` — Score and filter by ICP criteria
+- `scrape/scripts/04_sunbiz_llc_resolver.py` — Resolve LLCs to people via SunBiz
+- `scrape/scripts/05_enrich_contacts.py` — Multi-source contact enrichment + county filter
+- `scrape/scripts/05b_merge_enrichment.py` — Merge all enrichment sources
+- `scrape/scripts/06_validate_contacts.py` — Email/phone/DNC validation
+- `scrape/scripts/07_export_campaign_ready.py` — Export for outreach platforms
+- `scrape/scripts/08_tracerfy_skip_trace.py` — Tracerfy API skip trace + DNC scrub
+- `scrape/scripts/10_apollo_enrich.py` — Apollo.io API enrichment
+- `scrape/scripts/11-16, 20` — Phase 2 intelligence scripts (specced, not all built)
+
 ### Pipeline Module Docs
 - `pipeline/01_fdor_property_data.md` through `pipeline/08_refi_candidates.md`
 - `pipeline/README.md` — Architecture overview
@@ -40,58 +68,46 @@ The pipeline ingests free public data sources, identifies investment property ow
 ### Data Locations
 - `pipeline/data/fdor/` — Florida DOR NAL property files (343MB+ per county)
 - `pipeline/data/dbpr/` — DBPR vacation rental license CSV (126MB)
-- `pipeline/data/sunbiz/` — SunBiz resolution cache (JSON)
-- `pipeline/data/enrichment/` — Contact enrichment cache (JSON)
-- `pipeline/output/` — Intermediate CSVs and final Excel
+- `pipeline/output/06_enriched.csv` — 39,353 leads (source for scrape pipeline)
+- `scrape/data/enriched/` — Contact enrichment results
+- `scrape/data/enriched/tracerfy_results.csv` — Tracerfy skip trace output
+- `scrape/data/enriched/merged_enriched.csv` — All sources merged
 
 ---
 
-## Pipeline Execution Order
+## Current Execution Flow (Scrape Pipeline)
 
 ```
-Step 1: FDOR Filter      → pipeline/output/01_investor_properties.csv
-Step 2: Refi Detection    → pipeline/output/02_refi_tagged.csv
-Step 3: SunBiz Resolve    → pipeline/output/03_resolved_entities.csv
-Step 4: DBPR STR Tag      → pipeline/output/04_str_tagged.csv
-Step 5: SEC EDGAR         → pipeline/output/05_fund_managers.csv
-Step 6: Contact Enrich    → pipeline/output/06_enriched.csv
-Step 7: Score + Excel     → pipeline/output/leads_YYYY-MM-DD.xlsx
+Step 1: Select + filter PB/Broward leads    → scrape/data/enriched/top_leads_enriched.csv
+Step 2: Tracerfy skip trace ($0.02/lead)     → scrape/data/enriched/tracerfy_results.csv
+Step 3: Merge all enrichment sources         → scrape/data/enriched/merged_enriched.csv
+Step 4: Validate emails + phones + DNC       → scrape/data/validated/merged_validated.csv
+Step 5: Export campaign-ready lists          → scrape/data/campaign_ready/
 ```
 
-See `E2E_EXECUTION_PLAN.md` for full execution commands.
+```bash
+python scrape/scripts/05_enrich_contacts.py --counties "palm beach,broward"
+python scrape/scripts/08_tracerfy_skip_trace.py
+python scrape/scripts/05b_merge_enrichment.py
+python scrape/scripts/06_validate_contacts.py --county merged
+python scrape/scripts/07_export_campaign_ready.py --county merged
+```
 
 ---
 
-## ICP Segments (Summary)
+## Skip Trace & Enrichment Stack
 
-The pipeline identifies leads across **two major opportunity types**:
+| Provider | Cost | Role | Status |
+|----------|------|------|--------|
+| Tracerfy | $0.02/lead, no minimums | Primary skip trace | NEED API KEY |
+| Tracerfy DNC | $0.02/phone | Federal+State+DMA+TCPA litigator scrub | Optional |
+| Datazapp | $125 minimum/transaction | Second-pass on Tracerfy misses | $75 balance, unused |
+| Apollo.io | $99/mo | B2B enrichment | Returns nothing for LLC investors — cancel? |
+| FTC DNC | Free (4 area codes) | Federal DNC compliance | NEED TO REGISTER |
+| MillionVerifier | $4.90 one-time | Email validation | NEED API KEY |
+| Twilio | Free $15 trial | Phone type detection | NEED API KEY |
 
-### Purchase Candidates (need DSCR for new acquisitions)
-1. Individual Investors (1-10 properties) — Tier 1
-2. Serial Investors (10+) — Tier 1
-3. STR Operators — Tier 1
-4. Foreign Nationals — Tier 1
-5. Self-Employed Borrowers — Tier 1
-6. BRRRR Strategy Investors — Tier 1
-7. Corporate Entities (LLC/Trust) — Tier 1
-8. HNWIs — Tier 2
-9. Multi-Family (2-4 units) — Tier 2
-10. 1031 Exchange Buyers — Tier 2
-11. Recently Retired — Tier 2
-12. Tax-Strategy Investors — Tier 2
-13. Fund Managers / Syndicators — Tier 2
-
-### Refinance Candidates (need DSCR to refi existing properties)
-14. All-Cash Buyers (leverage-up via cash-out refi) — Tier 1
-15. Equity Harvesters (30%+ equity, 2yr+ hold) — Tier 1
-16. Rate Refi Candidates (2022-2023 vintage at 7-8%+) — Tier 2
-17. BRRRR Exit (hard money to DSCR conversion) — Tier 1
-18. Portfolio Equity Harvest (3+ properties, 35%+ avg equity) — Tier 1
-
-### Niche Segments
-19. Section 8 Landlords, First-Time Investors, Commercial Crossover, Diaspora, Digital Nomads, Accidental Landlords — Tier 3
-
-See `ICP_DEFINITIONS.md` for complete signal definitions and classification logic.
+**Total cost for full PB/Broward run (7,537 leads): $156-$226**
 
 ---
 
@@ -100,46 +116,30 @@ See `ICP_DEFINITIONS.md` for complete signal definitions and classification logi
 ### Memory Management
 - Palm Beach NAL file is 343MB / 654K rows — **MUST use chunked processing**
 - Use `01_chunked_filter.py` (NOT `01_fdor_download_filter.py`) to avoid OOM kills
-- Load only needed columns via `usecols` parameter
-- Process in 50K-row chunks
 
 ### Rate Limiting
-- SunBiz: 2-second delay between requests, max 500 lookups per run
-- SEC EDGAR: 7 requests/second (limit is 10/sec)
-- People search enrichment: 3-second delay
-- All lookups use persistent caching (JSON files in `pipeline/data/`)
+- SunBiz: 3-second delay between requests
+- Tracerfy: max 10 POST requests per 5 minutes
+- SEC EDGAR: 7 requests/second
 
 ### Data Quality Known Issues
-- FDOR `SALE_YR1`/`SALE_PRC1` reflects most recent sale only — no historical sale data
-- Rate refi detection (2022-2023 vintage) limited by NAL only showing latest sale year
-- Equity ratio is estimated (JV vs. sale price); no mortgage balance data from FDOR
+- FDOR `SALE_YR1`/`SALE_PRC1` reflects most recent sale only
+- Equity ratio is estimated (JV vs. sale price); no mortgage balance from FDOR
 - SunBiz web scraping may hit Cloudflare blocks — uses session cookies + retry
-- DBPR matching is fuzzy (address normalization) — ~70-80% match rate expected
+- DBPR matching is fuzzy (address normalization) — ~70-80% match rate
+- Apollo.io returns 0 contact data for private RE investors through LLCs
+- Datazapp has $125 minimum per transaction (not per-match as advertised)
 
 ### Dependencies
 ```bash
-pip install pandas openpyxl requests beautifulsoup4
+pip install pandas openpyxl requests beautifulsoup4 python-dotenv
 ```
-
----
-
-## What "Free Method" Means
-
-This pipeline uses only **free or freemium** data sources:
-- **FDOR**: Free public records (FL Dept of Revenue)
-- **SunBiz**: Free web search (FL Division of Corporations)
-- **DBPR**: Free public records (FL Dept of Business & Professional Regulation)
-- **SEC EDGAR**: Free public API (Securities and Exchange Commission)
-- **People Search Sites**: Free ad-supported (TruePeopleSearch, FastPeopleSearch)
-- **Apollo.io**: 10K free credits/month
-
-No paid data vendors (PropStream, BatchLeads, AirDNA, etc.) are used in this pipeline. Those are referenced in the research docs as future enhancements.
 
 ---
 
 ## Contact & Ownership
 
 - **Client**: Frank Christiano, CrossCountry Mortgage
-- **Focus Market**: Florida, starting with Palm Beach County
-- **Target Scale**: All 67 FL counties
+- **Focus Market**: Palm Beach + Broward County, Florida
+- **Target Scale**: All 67 FL counties, then nationwide
 - **Pipeline Date**: March 2026

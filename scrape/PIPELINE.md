@@ -238,27 +238,39 @@ Save to `data/dossiers/`
 
 ## Execution Order
 
-### 25-Record Proof of Concept
+### Full PB/Broward Run (7,537 leads — $226 total)
 ```bash
 # Already have data from existing pipeline (pipeline/output/06_enriched.csv)
 
-# 1. Select top 25 + resolve LLCs + generate research materials
-python scripts/05_enrich_contacts.py --limit 25 --counties "palm beach,broward"
+# 1. Select all PB/Broward leads + resolve LLCs
+python scripts/05_enrich_contacts.py --counties "palm beach,broward"
 
-# 2. Apollo enrichment (needs API key in .env)
-python scripts/10_apollo_enrich.py
+# 2. Skip trace via Tracerfy API ($150.74)
+#    Requires TRACERFY_API_KEY in .env
+python scripts/08_tracerfy_skip_trace.py
 
-# 3. County clerk mortgage data (for 25 leads' properties)
-python scripts/11_county_clerk.py --limit 25
-
-# 4. Merge all enrichment sources
+# 3. Merge all enrichment sources (Tracerfy + DBPR + SunBiz)
 python scripts/05b_merge_enrichment.py
 
-# 5. Validate contacts
+# 4. Validate contacts (needs MillionVerifier + Twilio keys in .env)
 python scripts/06_validate_contacts.py --county merged
 
-# 6. Build dossiers
-python scripts/20_build_dossier.py --limit 25
+# 5. Export campaign-ready lists
+python scripts/07_export_campaign_ready.py --county merged
+```
+
+### Optional: DNC scrub via Tracerfy ($70-100)
+```bash
+# Run after step 2 if you didn't include DNC scrub in the trace
+python scripts/08_tracerfy_skip_trace.py --dnc-only
+```
+
+### Optional: Second-pass with Datazapp (for Tracerfy misses)
+```bash
+# Upload Tracerfy misses to Datazapp web platform ($125 minimum)
+# Save results as data/enriched/datazapp_results.csv
+# Then re-run merge:
+python scripts/05b_merge_enrichment.py
 ```
 
 ### Full County Run (after POC validated)
