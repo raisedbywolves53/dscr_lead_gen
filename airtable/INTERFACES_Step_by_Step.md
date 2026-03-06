@@ -1,236 +1,439 @@
-# Airtable Interfaces (Dashboards) — Step-by-Step Guide
+# Airtable Interfaces — Step-by-Step Guide (v4)
 
 **Base:** DSCR Lead Gen CRM
-**Total interfaces to build:** 4
-**Time estimate:** 30–45 minutes
+**Total interfaces:** 4
+**Time estimate:** 45–60 minutes
 
 ---
 
-## How to Build Each Interface
+## CRITICAL CONCEPT: How Dashboard Interfaces Actually Work
 
-Airtable's interface builder has an AI assistant. Here's the workflow:
+A dashboard is built from **Groups**. Here are the rules:
 
-1. Click **"Interfaces"** in the top-left sidebar (below your table list)
-2. Click **"+ New interface"**
-3. You'll see layout options — pick the one specified for each interface
-4. Once inside the interface editor, you can use AI to help add and configure elements
-5. Look for an AI input box or assistant — paste the prompt provided below
-6. Review what the AI builds, then adjust anything that's off using the manual notes
+1. **Each Group = one source table.** All elements inside a group pull from that group's table. You CANNOT mix tables inside one group.
+2. **Number elements (Count/Summary cards)** live inside a group. They appear as cards showing counts or totals from that group's table.
+3. **Charts and grids** also live inside a group and use that group's table.
+4. **To show data from multiple tables, you add MULTIPLE GROUPS** — one per table.
 
-### If the AI Can't Build the Whole Thing
-Airtable's interface AI may only handle one element at a time. If so, add elements one by one — paste the prompt for each element separately, or use the manual fallback notes to configure it by hand.
+### What a Group Looks Like on Screen
+Each group shows up as a section on the dashboard with:
+- A **heading** (defaults to the source table name — you can rename it)
+- A **description** area (optional)
+- **Number cards** across the top (Count or Summary)
+- A **chart or grid** below the cards
 
-### Important Notes
-- All number/chart elements need a **source table** and usually a **filter**
-- Formula fields (Lead Score, Trigger Count, etc.) sort as **A→Z / Z→A**, not 1→9
-- Everything will show 0 or empty until we push test data — that's normal
+### The Three Levels
+When you click different areas, the right panel changes:
+
+| What you click | Right panel shows | What you can configure |
+|---------------|-------------------|----------------------|
+| **Empty space outside all groups** | **Page** settings | Title, Allow printing |
+| **The group heading** | **Group** settings | Source table, Filter, Width, User filters |
+| **A number card or chart** | **Element** settings | Title, Type (Count/Summary), Filter, Color |
+
+---
+
+## How to Do Things (Reference)
+
+### How to Add a New Group
+1. Scroll to the **very bottom** of the dashboard canvas
+2. **Hover** right at the bottom edge — a small **blue + button** appears
+3. Click the **blue +** button
+4. A menu appears with element types: Bar chart, Line chart, Pie chart, Donut chart, List, Gallery, Kanban, Calendar, etc.
+5. Pick an element type — this creates a new group with that element
+6. Click the **group heading** to open Group settings on the right
+7. Change **Source** to the table you want
+
+### How to Change a Group's Source Table
+1. Click the **group heading text** (e.g., "Opportunities")
+2. Right panel shows **Page > Group**
+3. Click the **Source** dropdown
+4. Pick the table you want: Investors, Outreach Log, Financing, Properties, Compliance, or Opportunities
+
+### How to Rename a Group Heading
+1. Click directly on the heading text
+2. Delete the old text and type your new heading
+
+### How to Configure a Number Card
+1. Click on the number card element
+2. Right panel shows these settings:
+   - **Title** — the label above the number
+   - **Source** — inherited from the group (greyed out)
+   - **Filter by** — click the ⚙️ gear to add filter conditions
+   - **Type: Count** — counts records matching the filter
+   - **Type: Summary** — pick a field and math (Sum, Average, Min, Max)
+   - **Color** — pick a color
+   - **Click to see underlying records** — toggle ON so you can click the card to see the actual records
+
+### How to Configure a Chart
+1. Click on the chart element
+2. Right panel shows:
+   - **Title** — chart label
+   - **Type** — Bar, Line, Pie, etc.
+   - **Source** — inherited from group
+   - **Filter by** — click ⚙️ for filters
+   - **X-axis** — click ⚙️ to pick the grouping field
+   - **Y-axis (left)** — click ⚙️ to pick field and aggregation (Count, Sum, etc.)
 
 ---
 
 ## Interface 1: Daily Command Center
 
-**Layout type:** Dashboard (blank canvas)
+This dashboard uses **3 groups** (one per source table).
 
-### Create the Interface
-1. Click **"+ New interface"**
-2. Pick **Dashboard** (or "Blank" if that's what it's called)
-3. Name it: `Daily Command Center`
+### Step 1: Open Your Existing Interface
+1. Click **Interfaces** in the top nav bar
+2. Click **Daily Command Center** in the left sidebar
+3. You should see the existing "Opportunities" group with Active Pipeline Value and Deals in Pipeline
 
-### AI Prompts — Paste Each One Separately
+### Step 2: Fix Up the Existing Opportunities Group (Group 1 of 3)
 
-**Element 1 — Active Pipeline Value:**
-```
-Add a number element. Source: Opportunities table. Filter: Opportunity Stage is none of "Closed Won", "Closed Lost", "On Hold". Field: Weighted Value. Aggregation: Sum. Label: "Active Pipeline Value"
-```
+Your existing group already has the Source set to **Opportunities**. Let's configure what's inside it.
 
-**Element 2 — Deals in Pipeline:**
-```
-Add a number element. Source: Opportunities table. Filter: Opportunity Stage is none of "Closed Won", "Closed Lost", "On Hold". Aggregation: Record count. Label: "Deals in Pipeline"
-```
+**Rename the heading:**
+1. Click the "Opportunities" heading text
+2. Change it to: `Pipeline Overview`
 
-**Element 3 — Follow-Ups Due Today:**
-```
-Add a number element. Source: Outreach Log table. Filter: Follow Up Date is today. Aggregation: Record count. Label: "Follow-Ups Due Today"
-```
+**Number Card 1 — Already exists: "Active Pipeline Value"**
+1. Click the Active Pipeline Value card
+2. Confirm these settings in the right panel:
 
-**Element 4 — Tier 1 Prospects (Uncontacted):**
-```
-Add a number element. Source: Investors table. Filter: Lead Tier contains "Tier 1" AND Last Contact Date is empty. Aggregation: Record count. Label: "Tier 1 Prospects (Uncontacted)"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Active Pipeline Value` |
+| **Filter by** | Click ⚙️ → **Opportunity Stage** → **is none of** → select `Closed Won`, `Closed Lost`, `On Hold` |
+| **Type** | **Summary** |
+| **Summary field** | **Weighted Value** → **Sum** |
+| **Color** | `Solid green` |
+| **Click to see underlying records** | **ON** ✓ |
 
-**Element 5 — Pipeline by Stage chart:**
-```
-Add a bar chart. Source: Opportunities table. X-axis: Opportunity Stage. Y-axis: Count of records. Label: "Pipeline by Stage"
-```
+**Number Card 2 — Already exists: "Deals in Pipeline"**
+1. Click the Deals in Pipeline card
+2. Confirm/set:
 
-**Element 6 — Lead Score Distribution chart:**
-```
-Add a bar chart. Source: Investors table. X-axis: Lead Tier. Y-axis: Count of records. Label: "Lead Score Distribution"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Deals in Pipeline` |
+| **Filter by** | Click ⚙️ → **Opportunity Stage** → **is none of** → `Closed Won`, `Closed Lost`, `On Hold` |
+| **Type** | **Count** |
+| **Color** | `Solid blue` |
+| **Click to see underlying records** | **ON** ✓ |
 
-**Element 7 — Today's Follow-Up List grid:**
-```
-Add a grid element. Source: Outreach Log table. Filter: Follow Up Date is today. Show these fields only: Investor, Follow Up Action, Outcome, Contact Method. Label: "Today's Follow-Up List"
-```
+**Chart — Pipeline by Stage**
+1. Click the chart element (the empty box below the number cards)
+2. Set:
 
-**Element 8 — Top 10 Hottest Leads grid:**
-```
-Add a grid element. Source: Investors table. Sort by Lead Score (0-100) descending (Z to A). Limit to 10 records. Show these fields only: Full Name, Lead Score (0-100), Lead Tier, Property Count, Total Portfolio Value, Phone (Mobile). Label: "Top 10 Hottest Leads"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Pipeline by Stage` |
+| **Type** | **Bar** |
+| **X-axis** | Click ⚙️ → select **Opportunity Stage** |
+| **Y-axis (left)** | Click ⚙️ → select **Count** of records |
 
-### Manual Fallback Notes
-If the AI doesn't understand an element, add it manually:
-- Click **"+ Add element"** → pick the element type (Number, Chart, or Grid)
-- Set the **Source** table, add **Filters** using the funnel icon, pick the **Field** and **Aggregation**
-- For grids: use the field visibility toggle to show/hide columns
+---
+
+### Step 3: Add a New Group for Outreach Log (Group 2 of 3)
+
+1. Scroll to the **very bottom** of the dashboard
+2. **Hover** near the bottom edge until the **blue + button** appears
+3. Click the **blue +**
+4. From the menu, pick **Bar chart** (we'll change it — this just creates the group)
+5. A new group section appears below the first one
+
+**Set the source table:**
+1. Click the new group's **heading text** (it may say the default table name)
+2. In the right panel under **Data > Source**, click the dropdown
+3. Select **Outreach Log**
+
+**Rename the heading:**
+1. Click the heading text
+2. Change to: `Follow-Ups`
+
+**Configure the Number Card(s):**
+
+If a Number card appeared automatically, click it and set:
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Follow-Ups Due Today` |
+| **Filter by** | Click ⚙️ → **Follow Up Date** → **is** → **today** |
+| **Type** | **Count** |
+| **Color** | `Solid orange` |
+| **Click to see underlying records** | **ON** ✓ |
+
+**Configure the Chart/Grid:**
+1. Click the chart or grid element in this group
+2. If it's a chart, you can change it to show a grid instead, or set:
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Today's Follow-Ups` |
+
+If you see a way to switch to a **List** or **Grid** view, do so and show: **Investor**, **Follow Up Action**, **Outcome**, **Contact Method**. If not, leave as chart and move on.
+
+---
+
+### Step 4: Add a New Group for Investors (Group 3 of 3)
+
+1. Scroll to the **very bottom** again
+2. Hover for the **blue + button** → click it
+3. Pick **Bar chart** from the menu
+4. A third group appears
+
+**Set the source table:**
+1. Click the new group's **heading**
+2. In right panel: **Data > Source** → select **Investors**
+
+**Rename the heading:**
+1. Change to: `Leads`
+
+**Configure Number Card:**
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Tier 1 Uncontacted` |
+| **Filter by** | Click ⚙️ → add TWO conditions (make sure they say AND, not OR): |
+| | Condition 1: **Lead Tier** → **contains** → type `Tier 1` |
+| | Condition 2: **Last Contact Date** → **is empty** |
+| **Type** | **Count** |
+| **Color** | `Solid red` |
+| **Click to see underlying records** | **ON** ✓ |
+
+**Configure the Chart — Lead Score Distribution:**
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Lead Score Distribution` |
+| **Type** | **Bar** |
+| **X-axis** | Click ⚙️ → select **Lead Tier** |
+| **Y-axis (left)** | Click ⚙️ → select **Count** of records |
+
+### Step 5: Publish
+Click the **Publish** button (top right, orange/red button).
 
 ---
 
 ## Interface 2: Investor Profile
 
-**Layout type:** List-Detail (split screen — record list on left, full detail on right)
+This one uses a different layout — **List-Detail** (not Dashboard).
 
-### Create the Interface
-1. Click **"+ New interface"**
-2. Pick **List-Detail** (might be called "Record Detail" or "Record List")
-3. Source table: **Investors**
+### Create It
+1. Click **+ New interface** in the left sidebar
+2. Pick the **List** or **Record detail** layout (split screen — list on left, detail on right)
+3. Set source table to **Investors**
 4. Name it: `Investor Profile`
 
-### AI Prompt for the Whole Interface
-```
-Create a list-detail interface from the Investors table. The left panel should show a searchable list with Full Name, Lead Tier, and Primary Market. The right detail panel should show the selected investor's full record organized into sections:
+### Left Panel (the scrollable list)
+Show: **Full Name**, **Lead Tier**, **Primary Market**
+Hide everything else from the list.
 
-Section 1 - Header: Full Name (large), Lead Tier, Lead Score (0-100), Relationship Strength
-Section 2 - Contact Info: Phone (Mobile), Email (Primary), LinkedIn URL, DNC Status, Consent Status, Preferred Contact Method
-Section 3 - Portfolio Summary: Property Count, Entity Count, Total Portfolio Value, Total Portfolio Debt, Estimated Portfolio Equity, Investor Type, Primary Market
-Section 4 - Linked Properties grid showing: Property Address, Property Type, Estimated Property Value, DSCR Status, Cash Purchase Flag
-Section 5 - Linked Opportunities grid showing: Deal Name, Opportunity Stage, Estimated Loan Amount, Probability of Close, Expected Close Date
-Section 6 - Outreach History grid showing: Date, Contact Method, Outcome, Disposition Notes, Follow Up Date
-```
+### Right Panel (detail of selected investor)
+Arrange fields top to bottom:
 
-### Manual Fallback Notes
-If the AI can't do it all at once:
-1. Set the **left panel** list fields to: Full Name, Lead Tier, Primary Market
-2. On the **right panel**, drag fields into groups/sections:
-   - Header fields at the top
-   - Contact fields together
-   - Portfolio rollup fields together
-3. For linked record grids (Properties, Opportunities, Outreach Log): add a **linked records** element for each and configure which fields to show
+**Header:** Full Name, Lead Tier, Lead Score (0-100), Relationship Strength
+
+**Contact:** Phone (Mobile), Email (Primary), LinkedIn URL, DNC Status, Consent Status, Preferred Contact Method
+
+**Portfolio:** Property Count, Entity Count, Total Portfolio Value, Total Portfolio Debt, Estimated Portfolio Equity, Investor Type, Primary Market
+
+**Linked Records (expand each):**
+- **Properties:** Property Address, Property Type, Estimated Property Value, DSCR Status, Cash Purchase Flag
+- **Opportunities:** Deal Name, Opportunity Stage, Estimated Loan Amount, Probability of Close, Expected Close Date
+- **Outreach Log:** Date, Contact Method, Outcome, Disposition Notes, Follow Up Date
+
+### Publish when done.
 
 ---
 
 ## Interface 3: Pipeline Manager
 
-**Layout type:** Dashboard
+Dashboard layout — **2 groups**.
 
-### Create the Interface
-1. Click **"+ New interface"**
-2. Pick **Dashboard**
-3. Name it: `Pipeline Manager`
+### Create It
+1. Click **+ New interface** → pick **Dashboard**
+2. Name it: `Pipeline Manager`
 
-### AI Prompts — Paste Each One Separately
+### Group 1: Opportunities (auto-created)
 
-**Element 1 — Deal Pipeline visual:**
-```
-Add a bar chart. Source: Opportunities table. X-axis: Opportunity Stage. Y-axis: Sum of Estimated Loan Amount. Label: "Deal Pipeline by Stage"
-```
+**Rename heading** to: `Deal Pipeline`
 
-*Note: If Airtable offers a Kanban element in interfaces, use that instead with Opportunity Stage as the stack field and Deal Name, Investor, Estimated Loan Amount as card fields.*
+**Number Card 1:**
 
-**Element 2 — Total Pipeline Value:**
-```
-Add a number element. Source: Opportunities table. Filter: Opportunity Stage is none of "Closed Won", "Closed Lost", "On Hold". Field: Estimated Loan Amount. Aggregation: Sum. Label: "Total Pipeline Value"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Total Pipeline Value` |
+| **Filter by** | **Opportunity Stage** → **is none of** → `Closed Won`, `Closed Lost`, `On Hold` |
+| **Type** | **Summary** → field: **Estimated Loan Amount** → **Sum** |
+| **Color** | `Solid green` |
+| **Click to see underlying records** | **ON** ✓ |
 
-**Element 3 — Weighted Pipeline Value:**
-```
-Add a number element. Source: Opportunities table. Filter: Opportunity Stage is none of "Closed Won", "Closed Lost", "On Hold". Field: Weighted Value. Aggregation: Sum. Label: "Weighted Pipeline Value"
-```
+**Number Card 2:**
 
-**Element 4 — Expected Commission:**
-```
-Add a number element. Source: Opportunities table. Filter: Opportunity Stage is none of "Closed Won", "Closed Lost", "On Hold". Field: Weighted Commission. Aggregation: Sum. Label: "Expected Commission"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Weighted Pipeline` |
+| **Filter by** | Same as above |
+| **Type** | **Summary** → field: **Weighted Value** → **Sum** |
+| **Color** | `Solid blue` |
+| **Click to see underlying records** | **ON** ✓ |
 
-**Element 5 — Deals by Source chart:**
-```
-Add a pie chart or donut chart. Source: Opportunities table. Segment by: Opportunity Source. Label: "Deals by Source"
-```
+**Number Card 3** (add if the group allows a 3rd card):
 
-**Element 6 — Deals Closing This Month grid:**
-```
-Add a grid element. Source: Opportunities table. Filter: Expected Close Date is within this month. Sort: Expected Close Date earliest to latest. Show these fields only: Deal Name, Investor, Estimated Loan Amount, Opportunity Stage, Probability of Close, Expected Close Date. Label: "Deals Closing This Month"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Expected Commission` |
+| **Filter by** | Same as above |
+| **Type** | **Summary** → field: **Weighted Commission** → **Sum** |
+| **Color** | `Solid green` |
+| **Click to see underlying records** | **ON** ✓ |
+
+**Chart — Pipeline by Stage:**
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Deal Pipeline by Stage` |
+| **Type** | **Bar** |
+| **X-axis** | **Opportunity Stage** |
+| **Y-axis (left)** | **Sum** of **Estimated Loan Amount** |
+
+### Group 2: Deals by Source (also Opportunities, but different view)
+
+If you want a second chart showing deals by source:
+1. Add a new group (blue + at bottom) → pick **Pie chart** or **Donut chart**
+2. Set Source to **Opportunities**
+3. Rename heading to: `Deal Sources`
+4. Configure chart:
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Deals by Source` |
+| **Type** | **Pie** or **Donut** |
+| **Segment by / X-axis** | **Opportunity Source** |
+
+### Publish when done.
 
 ---
 
 ## Interface 4: Trigger Alert Center
 
-**Layout type:** Dashboard
+Dashboard layout — **2 groups** (Financing + Properties).
 
-### Create the Interface
-1. Click **"+ New interface"**
-2. Pick **Dashboard**
-3. Name it: `Trigger Alert Center`
+### Create It
+1. Click **+ New interface** → pick **Dashboard**
+2. Name it: `Trigger Alert Center`
 
-### AI Prompts — Paste Each One Separately
+### Group 1: Financing Triggers (auto-created)
 
-**Element 1 — Hard Money Loans Found:**
-```
-Add a number element. Source: Financing table. Filter: Hard Money Flag is not empty. Aggregation: Record count. Label: "Hard Money Loans Found"
-```
+**Set Source** to **Financing** (click heading → right panel → Source dropdown)
+**Rename heading** to: `Financing Triggers`
 
-**Element 2 — Maturing Within 24 Months:**
-```
-Add a number element. Source: Financing table. Filter: Maturity Window Flag is not empty. Aggregation: Record count. Label: "Maturing Within 24 Months"
-```
+**Number Card 1:**
 
-**Element 3 — High Rate Loans:**
-```
-Add a number element. Source: Financing table. Filter: High Rate Flag is not empty. Aggregation: Record count. Label: "High Rate Loans (>7%)"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Hard Money Loans` |
+| **Filter by** | **Hard Money Flag** → **is not empty** |
+| **Type** | **Count** |
+| **Color** | `Solid red` |
+| **Click to see underlying records** | **ON** ✓ |
 
-**Element 4 — Cash Purchases:**
-```
-Add a number element. Source: Properties table. Filter: Cash Purchase Flag is not empty. Aggregation: Record count. Label: "Cash Purchases"
-```
+**Number Card 2:**
 
-**Element 5 — All Active Triggers grid:**
-```
-Add a grid element. Source: Financing table. Filter: Trigger Count is greater than 0. Sort: Trigger Count Z to A, then Refinance Opportunity Score Z to A. Show these fields only: Loan ID, Property, Current Lender, Loan Type, Interest Rate, Maturity Window Flag, Hard Money Flag, High Rate Flag, Balloon Risk Flag, Refinance Opportunity Score. Label: "All Active Triggers"
-```
+| Setting | Value |
+|---------|-------|
+| **Title** | `Maturing Within 24mo` |
+| **Filter by** | **Maturity Window Flag** → **is not empty** |
+| **Type** | **Count** |
+| **Color** | `Solid orange` |
+| **Click to see underlying records** | **ON** ✓ |
 
-**Element 6 — Cash Purchases Awaiting Outreach grid:**
-```
-Add a grid element. Source: Properties table. Filter: Cash Purchase Flag is not empty. Sort: Purchase Date latest to earliest. Show these fields only: Property Address, Owner Investor, Purchase Price, Estimated Property Value, Purchase Date. Label: "Cash Purchases Awaiting Outreach"
-```
+**Number Card 3** (if available):
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `High Rate Loans (>7%)` |
+| **Filter by** | **High Rate Flag** → **is not empty** |
+| **Type** | **Count** |
+| **Color** | `Solid orange` |
+| **Click to see underlying records** | **ON** ✓ |
+
+**Chart/Grid — Active Triggers:**
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `All Active Triggers` |
+| **Filter by** | **Trigger Count** → **is greater than** → `0` |
+
+If it's a grid/list, show: **Loan ID**, **Property**, **Current Lender**, **Loan Type**, **Interest Rate**, **Hard Money Flag**, **Maturity Window Flag**, **High Rate Flag**, **Refinance Opportunity Score**
+
+### Group 2: Cash Purchases from Properties
+
+1. Scroll to bottom → hover for **blue + button** → click it
+2. Pick **List** or **Bar chart** from the menu
+3. Click the new group heading → set **Source** to **Properties**
+4. Rename heading to: `Cash Purchase Triggers`
+
+**Number Card:**
+
+| Setting | Value |
+|---------|-------|
+| **Title** | `Cash Purchases` |
+| **Filter by** | **Cash Purchase Flag** → **is not empty** |
+| **Type** | **Count** |
+| **Color** | `Solid red` |
+| **Click to see underlying records** | **ON** ✓ |
+
+**Grid/List:**
+If available, show: **Property Address**, **Owner Investor**, **Purchase Price**, **Estimated Property Value**, **Purchase Date**
+Sort: **Purchase Date** → **Latest → Earliest**
+
+### Publish when done.
 
 ---
 
-## Checklist — After All 4 Are Built
+## Final Checklist
 
-- [ ] Interface 1: Daily Command Center (8 elements)
-- [ ] Interface 2: Investor Profile (list-detail layout)
-- [ ] Interface 3: Pipeline Manager (6 elements)
-- [ ] Interface 4: Trigger Alert Center (6 elements)
+- [ ] Interface 1: Daily Command Center — 3 groups (Opportunities, Outreach Log, Investors) → Published
+- [ ] Interface 2: Investor Profile — List-Detail layout from Investors table → Published
+- [ ] Interface 3: Pipeline Manager — 2 groups (both Opportunities) → Published
+- [ ] Interface 4: Trigger Alert Center — 2 groups (Financing, Properties) → Published
 
-Everything will show 0 / empty right now — that's expected. Once I push test data via API, all dashboards will light up and we can validate everything is calculating correctly.
+---
+
+## Color Cheat Sheet
+
+| Color | Used for |
+|-------|---------|
+| 🟢 **Solid green** | Money totals: Pipeline Value, Commission |
+| 🔵 **Solid blue** | Counts and weighted values: Deals in Pipeline, Weighted Pipeline |
+| 🟠 **Solid orange** | Warnings: Follow-ups Due, Maturing Loans, High Rate |
+| 🔴 **Solid red** | Urgent/hot: Tier 1 Uncontacted, Hard Money, Cash Purchases |
 
 ---
 
 ## Troubleshooting
 
-**"The AI doesn't understand my prompt"**
-→ Try shorter prompts, one element at a time. Or add the element manually: click **"+ Add element"**, pick the type, configure source/filter/fields.
+**"I don't see the blue + at the bottom"**
+→ Scroll all the way down past the last group. Hover your mouse along the bottom edge — the blue + appears on hover, it's not always visible.
 
-**"I don't see Dashboard as a layout option"**
-→ It might be labeled "Blank" or show as a template with an empty canvas preview.
+**"The Source dropdown is greyed out on an element"**
+→ The Source is set at the GROUP level, not the element level. Click the group heading to change the source table.
 
-**"I don't see List-Detail"**
-→ Look for "Record Detail", "Record List", or a template showing a split-screen preview.
+**"I can only see one Number card but I need more"**
+→ Look for a toggle or "add summary" option in the group settings. If you can't add more Number cards to an existing group, that group may only support the ones auto-generated. You can create another group from the same table using the blue + to get more cards.
 
-**"Number shows 0"**
-→ Normal — no records yet. Will populate after test data upload.
+**"The new group created from blue + doesn't have Number cards"**
+→ Some group types auto-generate summary Number cards, others don't. If your new group only shows a chart, the chart itself may have summary fields you can configure. Or try the "List" type from the blue + menu — it typically includes summary cards.
 
-**"Sort shows A→Z instead of 1→9"**
-→ Formula fields sort as A→Z. Use **Z→A** to get highest values first.
+**"I need a grid/table view but my group only has a chart"**
+→ Try deleting the group and re-creating it by picking **List** from the blue + menu instead of Bar chart.
+
+**"Numbers all show 0"**
+→ Expected! There are no records yet. Once I push test data via API, everything will populate.
+
+---
+
+## Sources
+- [Airtable Interface Layout: Dashboard](https://support.airtable.com/docs/interface-layout-dashboard)
+- [Interface Designer: Dashboards Guide](https://www.airtable.com/guides/collaborate/interface-designer-dashboards)
+- [Moving Groups in Dashboard Interface](https://community.airtable.com/interface-designer-12/moving-groups-in-dashboard-interface-39664)

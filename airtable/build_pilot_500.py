@@ -1,6 +1,8 @@
 """Select 500 diverse pilot leads weighted across ICP segments.
-Filter: mailing or property in Palm Beach (CO_NO=60) or Broward (CO_NO=6)."""
+Filter: mailing or property in Palm Beach (CO_NO=60) or Broward (CO_NO=6).
+Exports selected leads to scrape/data/enriched/pilot_500.csv."""
 import csv
+import os
 from collections import defaultdict
 
 with open('scrape/data/enriched/merged_enriched.csv', 'r', encoding='utf-8') as f:
@@ -268,3 +270,24 @@ print()
 print(f'  Already have phone:   {has_phone} ({has_phone*100//len(selected)}%)')
 print(f'  Already have email:   {has_email} ({has_email*100//len(selected)}%)')
 print(f'  Need enrichment:      {len(selected) - has_phone} (no phone yet)')
+
+# ---- STEP 6: Export to CSV ----
+output_path = os.path.join('scrape', 'data', 'enriched', 'pilot_500.csv')
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+# Get all columns — original CSV fields plus computed ones
+# (computed fields may already be in keys() since we modified dicts in-place)
+all_fields = list(dict.fromkeys(
+    list(selected[0].keys()) if selected else []
+))
+
+with open(output_path, 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=all_fields, extrasaction='ignore')
+    writer.writeheader()
+    for r in selected:
+        writer.writerow(r)
+
+print()
+print(f'  EXPORTED: {output_path}')
+print(f'  Rows: {len(selected)}')
+print(f'  Columns: {len(all_fields)}')
