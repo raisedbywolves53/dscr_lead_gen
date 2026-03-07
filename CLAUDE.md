@@ -76,23 +76,22 @@ for table in data['tables']:
 
 ## Key Files & Where to Find Things
 
-### Active Docs (START HERE)
-- `DSCR_Lead_Gen_Strategy.md` — Comprehensive data acquisition & outreach strategy
-- `DSCR_Airtable_Build_Guide.md` — Complete Airtable CRM spec
-- `E2E_EXECUTION_PLAN.md` — Step-by-step instructions to run the original pipeline
-- `ICP_DEFINITIONS.md` — All 19 ICP segments with signals, sources, and classification logic
-- `PIPELINE_RUNBOOK.md` — Data flow, troubleshooting, memory management, known issues
-- `OUTPUT_SPEC.md` — Final Excel format, column definitions, tab structure
+### Docs (all reference docs in `docs/`)
+- `docs/strategy.md` — Comprehensive data acquisition & outreach strategy
+- `docs/icp_definitions.md` — All 19 ICP segments with signals, sources, and classification logic
+- `docs/airtable_build_guide.md` — Complete Airtable CRM spec
+- `docs/e2e_execution_plan.md` — Step-by-step instructions to run the original pipeline
+- `docs/pipeline_runbook.md` — Data flow, troubleshooting, memory management, known issues
+- `docs/output_spec.md` — Final Excel format, column definitions, tab structure
+- `docs/verified_pricing.md` — Fact-checked vendor pricing
+- `docs/todo_for_frank.md` — Action items for Frank
+- `docs/data_sources.md` — Every data field mapped to its source
+- `docs/airtable/` — Airtable CRM setup guides (views, automations, interfaces)
 
 ### Scrape Pipeline (Active Development)
 - `scrape/CLAUDE.md` — Full project specification, data schema, design principles
 - `scrape/PIPELINE.md` — Execution spec for all scripts (01-20)
-- `scrape/DATA_SOURCES.md` — Every data field mapped to its source
-- `scrape/TODO_FOR_FRANK.md` — Action items for Zack (API keys, costs, compliance)
-- `scrape/VERIFIED_PRICING.md` — Fact-checked vendor pricing (Tracerfy, Datazapp, Apollo, etc.)
 - `scrape/ICP_CRITERIA.md` — Scoring weights for scrape pipeline
-- `scrape/BUILD_PLAN.md` — Development roadmap and milestones
-- `scrape/QUICKSTART.md` — Setup instructions
 - `scrape/research/county_clerk_research.md` — PB/Broward clerk portal findings
 
 ### Archived Research (Background Context)
@@ -130,13 +129,22 @@ for table in data['tables']:
 - `pipeline/README.md` — Architecture overview
 - `pipeline/output_schema.md` — Output column schema
 
+### MVP (Current Focus)
+- `scrape/data/mvp/pilot_500_master.csv` — Clean master dataset (500 leads, 157 cols)
+- `scrape/data/mvp/dscr_mvp_sheets.xlsx` — Local backup of Google Sheets
+- `scrape/scripts/build_pilot_master.py` — Data cleanup + talking points generator
+- `scrape/scripts/build_google_sheets.py` — Google Sheets export (3 tabs)
+- Google Sheet: https://docs.google.com/spreadsheets/d/10Acu2VQHHkn_-LBRooytHpgC8FsfAeRNY1WT3DPM2RE/edit
+
 ### Data Locations
-- `pipeline/data/fdor/` — Florida DOR NAL property files (343MB+ per county)
-- `pipeline/data/dbpr/` — DBPR vacation rental license CSV (126MB)
-- `pipeline/output/06_enriched.csv` — 39,353 leads (source for scrape pipeline)
-- `scrape/data/enriched/` — Contact enrichment results
-- `scrape/data/enriched/tracerfy_results.csv` — Tracerfy skip trace output
-- `scrape/data/enriched/merged_enriched.csv` — All sources merged
+- `pipeline/data/` — Raw FDOR/DBPR source files (gitignored, large)
+- `scrape/data/enriched/` — Enrichment results (Tracerfy, Apollo, rent estimates)
+- `scrape/data/financing/` — Lender/mortgage data (ATTOM, clerk records)
+- `scrape/data/history/` — Purchase history (SDF data)
+- `scrape/data/signals/` — Wealth signals (FEC, SunBiz entities)
+- `scrape/data/validated/` — Phone/email validated leads
+- `scrape/data/mvp/` — MVP output files
+- `credentials/` — OAuth credentials (gitignored)
 
 ---
 
@@ -164,7 +172,7 @@ python scrape/scripts/07_export_campaign_ready.py --county merged
 
 | Provider | Cost | Role | Status |
 |----------|------|------|--------|
-| Tracerfy | $0.02/lead, no minimums | Primary skip trace | NEED API KEY |
+| Tracerfy | $0.02/match, no minimums | Primary skip trace | CONFIGURED — $57.84 spent |
 | Tracerfy DNC | $0.02/phone | Federal+State+DMA+TCPA litigator scrub | Optional |
 | Datazapp | $125 minimum/transaction | Second-pass on Tracerfy misses | $75 balance, unused |
 | Apollo.io | $99/mo | B2B enrichment | Returns nothing for LLC investors — cancel? |
