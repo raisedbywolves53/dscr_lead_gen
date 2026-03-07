@@ -1,0 +1,882 @@
+<style type="text/css">
+    .dataTables_info {
+        clear: both;
+        margin-top: -50px;
+        float: right !important;
+    }
+
+    .dataTables_length {
+        clear: both;
+        float: right !important;
+    }
+
+    .dataTables_paginate {
+        clear: both;
+        height: 40px;
+    }
+
+    table.dataTable thead th, table.dataTable thead td {
+        padding: 1px 8px;
+    }
+
+    .result > .tablecell {
+        -ms-word-wrap: normal;
+        word-wrap: normal;
+        -ms-word-break: normal;
+        word-break: normal;
+    }
+</style>
+
+<div style="padding: 10px">
+    <div class="btn-group" style="z-index: 1000; width: 670px">
+        <a href="javascript:void(0);" id="backToDocuments"
+           onclick="ToggleSearchDetail();" class="btn btn-primary hide">
+            <i class="icon-picture icon-fixed-width"></i>Show Details Section
+        </a>
+
+            <a href="javascript:void(0);" class="btn btn-primary" id="splitView">
+                <i class="icon-fixed-width icon-columns"></i>
+                Split View
+            </a>
+
+        <a href="javascript:void(0);" style="display: none" id="hideResults" onclick="ToggleResults('hide');" class="btn btn-inverse">
+            <i class="icon-arrow-up icon-fixed-width"></i>Hide Results
+        </a>
+        <a href="javascript:void(0);"
+           id="clearResults" class="btn popover-test hide btn-inverse" onclick="ClearResults();" data-title="Clear all results"
+           data-content="This option clears all search results.">
+            <i class="icon-remove icon-fixed-width"></i>Clear Results
+        </a>
+                <a href="javascript:void(0);" data-content="Click to send your current results, with filters and sorting applied, to a printable view." data-title="Print Results" class="btn btn-inverse hide" id="results-Print">
+                    <i class="icon-print icon-fixed-width"></i>Print
+                </a>            <a href="javascript:void(0);" id="results-Export" class="btn btn-inverse hide" data-content="Click to export the current result list, with filters and sorting applied, to an Excel spreadsheet." data-title="Export to Excel">
+                <i class="icon-share icon-fixed-width"></i>Export
+            </a>        &nbsp;&nbsp;
+        <a href="javascript:void(0);" id="results-SaveSearch" class="btn btn-inverse popover-test hide"
+           onclick="SaveSearch();" data-title="Save this Search" data-content="Click to save this the search criteria and filters that produced this result set.">
+            <i class="icon-heart icon-fixed-width"></i>Save Search
+        </a>
+            <a href="javascript:void(0);" id="results-showAllLegalFields" class="btn btn-inverse popover-test" 
+			   role="checkbox" tabindex="0"  aria-checked="true" onclick="ToggleShowAllLegalFields()">
+                <i id="showAllLegalFieldsIcon" class="icon-check-empty icon-fixed-width"></i>Show all legal fields
+            </a>
+    </div>
+    <div style="margin-top: 10px; font-weight: bold; font-size: 14px; margin-left: 3px; margin-bottom: -90px; max-width: 70%; word-break: break-word; word-wrap: break-word" id="filterDiv">
+        Your  Document Search for Document Types "MTG", Begin Date "3/1/2026", and End Date "3/6/2026"  returned the following results:
+
+    </div>
+
+    <div>
+        <table style="width: 100%; margin-top: 12px" id="tableWrapper">
+            <tr>
+                <td>
+
+                    <table class="table display" style="width: 800px" id="resultsTable">
+                        <thead>
+
+<tr>
+    <th column="number">
+        <input type="hidden" name="search_rownum" value="Row Number" class="search_init"
+               style="margin-top: 10px; width: 100%" />
+    </th>
+    <th column="eye">
+        <input type="hidden" name="search_viewed" value="Just here to preserver indexing"
+               class="search_init" style="width: 100%" />
+    </th>
+    <th column="list">
+        <input type="hidden" name="search_inlist" value="Just here to preserver indexing"
+               class="search_init" style="width: 100%" />
+    </th>
+
+
+    <th column="status">
+        <label title="Status Filter">
+            <input type="text" name="search_status" value="Status" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+                <th class="hidden placeholdercolumn">
+                <label title="Place Holder Filter">
+                    <input type="text" name="search_placeholder" value="PlaceHolder" class="search_init" style="margin-top: 10px; width: 100%" />
+                </label>
+            </th>
+    <th column="directname">
+        <label title="Direct Name Filter">
+            <input type="text" name="search_directname" value="Direct Name" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+    <th colunmn="reversename">
+        <label title="Reverse Name Filter">
+            <input type="text" name="search_reversename" value="Reverse Name" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+
+    <th column="recorddate">
+        <label title="Record Date Search Filter">
+            <input type="text" name="search_recorddate" value="Record Date Search" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+
+
+        <th column="SectionTownshipRangeQuarter">
+            <label title="Location Filter">
+                <input type="text" name="search_SectionTownshipRangeQuarter" value="Location" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+
+    <th column="documenttype">
+        <label title="Doc Type">
+            <input type="text" name="search_documenttype" value="Doc Type" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+    <th column="booktype">
+        <label title="Book Type Filter">
+            <input type="text" name="search_booktype" value="Book Type" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+    <th column="book">
+        <label title="Book Filter">
+            <input type="text" name="search_book" value="Book" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+    <th column="page">
+        <label title="Page Filter">
+            <input type="text" name="search_page" value="Page" class="search_init"
+                   style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+    <th column="instrumentnumber" class="">
+        <label title="Instrument Number  Filter">
+            <input type="text" name="search_instrumentnumber" value="Instrument Number "
+                   class="search_init" style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+            <th column="documentlinks">
+            <label title="DocLinks Filter">
+                <input type="text" name="search_ShowDocLinksInSearchSummary" value="DocLinks" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="legal">
+        <label title="Legal Filter">
+            <input type="text" name="search_legal" value="Legal" class="search_init" style="margin-top: 10px; width: 100%" />
+        </label>
+    </th>
+        <th column="location">
+            <label title="Location Filter">
+                <input type="text" name="search_location" value="Location" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Lot Filter">
+                <input type="text" name="search_lot" value="Lot" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Building Filter">
+                <input type="text" name="search_building" value="Building" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Block Filter">
+                <input type="text" name="search_block" value="Block" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Unit Filter">
+                <input type="text" name="search_unit" value="Unit" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Subdivision Filter">
+                <input type="text" name="search_subdivision" value="Subdivision" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Section Filter">
+                <input type="text" name="search_section" value="Section" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Township Filter">
+                <input type="text" name="search_township" value="Township" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Range Filter">
+                <input type="text" name="search_range" value="Range" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Land Lot Filter">
+                <input type="text" name="search_landlot" value="Land Lot" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="District Filter">
+                <input type="text" name="search_district" value="District" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+        <th column="propertysection" class="legalSearchFieldCol ">
+            <label title="Property Section Filter">
+                <input type="text" name="search_propertysection" value="Property Section" class="search_init" style="margin-top: 10px; width: 100%" />
+            </label>
+        </th>
+
+        <th column="imagecount">
+            <label title="Image Count">
+            </label>
+        </th>
+
+    <th class="hide">
+        <input type="hidden" name="search_docid" class="search_init" style="margin-top: 10px; width: 100%" />
+    </th>
+</tr>
+<tr>
+    <th column="number" class="headerrow noicon numbercolumn">#</th>
+    <th column="eye" class="headerrow noicon eyecolumn">
+        <i class="icon-eye-open popover-test" data-content="The eye  icon indicates that you've already viewed this record." data-title="Viewed Results" id="popover-viewedResults" aria-describedby="eyeIconTooltipDesc" tabindex="0" role="button"></i>
+        <div id="eyeIconTooltipDesc" class="sr-only">The eye icon indicates that you've already viewed this record</div>
+    </th>
+    <th column="list" class="headerrow noicon listcolumn">
+        <i class="icon-list popover-test" data-content="Click the plus icons for each record to add them to your View List" id="popover-viewList" data-title="Add to View List" aria-describedby="listIconTooltipDesc" tabindex="0" role="button"></i>
+        <div id="listIconTooltipDesc" class="sr-only">Click the plus icons for each record to add them to your View List</div>
+    </th>
+    <th column="status" class="headerrow statuscolumn printableColumn">Status</th>
+                <th class="headerrow hidden placeholdercolumn">&nbsp;</th>
+    <th column="directname" class="headerrow directnamecolumn printableColumn">Direct Name</th>
+    <th column="reversename" class="headerrow reversenamecolumn printableColumn">Reverse Name</th>
+    <th column="recorddate" class="headerrow recorddatecolumn printableColumn">Record Date Search</th>
+
+            <th column="SectionTownshipRangeQuarter" class="headerrow sectionTownshipRangeQuartercolumn printableColumn">Location</th>
+    <th column="documenttype" class="headerrow documenttypecolumn printableColumn">Doc Type</th>
+    <th column="booktype" class="headerrow booktypecolumn printableColumn">Book Type</th>
+    <th column="book" class="headerrow bookcolumn printableColumn">Book</th>
+    <th column="page" class="headerrow pagecolumn printableColumn">Page</th>
+    <th column="instrumentnumber" class="headerrow instrumentnumbercolumn printableColumn ">Instrument #</th>
+            <th column="documentlinks" class="headerrow ShowDocLinksInSearchSummarycolumn printableColumn">DocLinks</th>
+        <th column="legal" class="headerrow legalcolumn printableColumn">Legal</th>
+        <th column="location" class="headerrow locationcolumn printableColumn">Location</th>
+
+        <th column="lot" class="headerrow lotcolumn printableColumn legalSearchFieldCol ">Lot</th>
+        <th column="building" class="headerrow buildingcolumn printableColumn legalSearchFieldCol ">Building</th>
+        <th column="block" class="headerrow blockcolumn printableColumn legalSearchFieldCol ">Block</th>
+        <th column="unit" class="headerrow unitcolumn printableColumn legalSearchFieldCol ">Unit</th>
+        <th column="subdivision" class="headerrow subdivisioncolumn printableColumn legalSearchFieldCol ">Subdivision</th>
+        <th column="section" class="headerrow sectioncolumn printableColumn legalSearchFieldCol ">Section</th>
+        <th column="township" class="headerrow townshipcolumn printableColumn legalSearchFieldCol ">Township</th>
+        <th column="range" class="headerrow rangecolumn printableColumn legalSearchFieldCol ">Range</th>
+        <th column="landlot" class="headerrow landlotcolumn printableColumn legalSearchFieldCol ">Land Lot</th>
+        <th column="district" class="headerrow districtcolumn printableColumn legalSearchFieldCol ">District</th>
+        <th column="propertysection" class="headerrow propertysectioncolumn printableColumn legalSearchFieldCol ">Property Section</th>
+
+        <th column="imagecount" class="headerrow imagecountcolumn printableColumn">Images</th>
+    <th class="headerrow noicon hide docidcolumn">&nbsp;</th>
+    <th class="headerrow noicon hide printableColumn">DocLinks</th>
+</tr>
+                        </thead>
+                    </table>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<form id="printForm" target="_blank" method="post" action="/Search/PrintResults">
+    <input type="hidden" name="resultsToPrint" id="resultsToPrint" />
+    <input type="hidden" name="filter" id="filter" />
+    <input type="hidden" name="format" id="format" />
+</form>
+
+
+
+
+<script>	
+	totalPages =0;
+	var asInitVals = new Array();
+	var oTable;
+	var selLength;
+	var _displayLength = 25;
+
+
+
+	$(document).ready(function () {
+        // Add keyboard accessibility (Spacebar to toggle)
+		$('#results-showAllLegalFields').on('keydown', function (e) {
+            if (e.key === ' ') { 
+                e.preventDefault(); // Prevent the default action to stop scrolling
+                ToggleShowAllLegalFields();
+            }
+		});
+
+        function initializeCheckboxState() {
+            var isChecked = $('#showAllLegalFieldsIcon').hasClass('icon-check');
+            $('#results-showAllLegalFields').attr('aria-checked', isChecked);
+		}
+
+        initializeCheckboxState();
+
+
+				
+		var lastDocId = null;
+
+        if (splitView) {
+            splitView = false;
+            splitSearch();
+		}
+
+        function createSplit() {
+            if (!splitCreated) {
+                $("#mainSplit>.leftSplit").addClass('split').width('50%').resizable();
+                $('#mainSplit>.rightSplit').show();
+                splitCreated = true;
+            }
+            else {
+                $('#mainSplit>.rightSplit').show();
+                $('.ui-resizable-handle.ui-resizable-e').show();
+                $('#mainSplit>.leftSplit').addClass('split').addClass('ui-resizable').width("50%");
+			}
+
+            resizeGrid();
+        }
+
+		function splitSearch() {
+			$('#backToDocuments').hide();
+            splitView = !splitView;
+            if (splitView) {
+				$('#detailSection').detach().appendTo('.rightSplit');
+                $('#splitView').removeClass('btn-danger').removeClass('btn-primary').addClass('btn-danger').html('<i class="icon-fixed-width icon-columns" ></i>Unsplit View');
+
+                 if (lastDocId != null) {
+					createSplit();
+                    GetDetailSection(lastDocId.id, lastDocId.row, true, lastDocId.torren);
+                }
+            }
+            else {
+                $('#splitView').removeClass('btn-danger').removeClass('btn-primary').addClass('btn-primary').html('<i class="icon-fixed-width icon-columns" ></i>Split View');
+				$('#mainSplit>.rightSplit').hide();
+				$('#mainSplit>.leftSplit').removeClass('split').removeClass('ui-resizable').width('100%');
+				$('.ui-resizable-handle.ui-resizable-e').hide();
+				$('#detailSection').hide().detach().appendTo('#detailHolder');
+			}
+		}
+
+		$('#splitView').click(function () {
+			splitSearch();
+		});
+		
+
+
+		var aoColumns = []
+			
+		aoColumns = [
+				{ "targets": ["numbercolumn"], "orderable": false, "className": "tablecell" },
+				{ "targets": ["eyecolumn"], "orderable": false, "className": "tablecell"  },
+				{ "targets": ["listcolumn"], "orderable": false, "className": "tablecell"  },
+				{ "targets": ["directnamecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["reversenamecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["documenttypecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["recorddatecolumn"], "className": "tablecell", "sType" : "date-us" },
+				{ "targets": ["acknowledgementDatecolumn"], "className": "tablecell", "sType" : "date-us" },
+				{ "targets": ["sectionTownshipRangeQuartercolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["marriagedatecolumn"], "className": "tablecell", "type": "date-range" },
+				{ "targets": ["booktypecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["bookcolumn"], "className": "tablecell", "type": "text", "sType": "numeric", "bRegex": true, "bSmart": true },
+				{ "targets": ["pagecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["ShowDocLinksInSearchSummarycolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true  },
+				{ "targets": ["search_ShowCommentinSeparateColumnInSearchSummary"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["legalcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["towncolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["instrumentnumbercolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["locationcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["docidcolumn"], "sWidth": "1px",  "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["considerationcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["casenumbercolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["parcelidcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["searchnamecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+				{ "targets": ["placeholdercolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["statuscolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["lotcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["blockcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["unitcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["buildingcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["subdivisioncolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["sectioncolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["townshipcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["rangecolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["quartercolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["commentcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["landlotcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["districtcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["propertysectioncolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+                { "targets": ["imagecountcolumn"], "className": "tablecell", "type": "text", "bRegex": true, "bSmart": true },
+
+		];
+		
+
+		GetShoppingCartButtonStatus(1, "results");
+
+        // 04/18/2018 - iarribas / zskopec
+        //var hiddenColumns = $('#resultsTable th').map(function() {
+        var hiddenColumns = $('#resultsTable th.headerrow').map(function () {
+			return { i: $(this).index(), h: $(this).hasClass('hidden') };
+		}).toArray();
+
+		var extra = 'True' == "True";
+
+		if (!String.prototype.startsWith) {
+			String.prototype.startsWith = function(searchString, position) {
+				position = position || 0;
+				return this.indexOf(searchString, position) === position;
+			};
+		}
+
+		oTable =$('#resultsTable').DataTable( {
+			'dom':'ti<"clear">l<"clear">p<"clear">r<"tablewrapper"t>p<"clear">',
+			"deferRender": true,
+			"language": {
+				"search": "Search all columns:",
+				"lengthMenu": "<b id='displaySelect'>Displaying _MENU_ records per page<b>",
+				"zeroRecords": "<b>No results.</b>",
+				"info": "<b " + (extra ? "class='extraRecords'" : "")  + ">Returned " + '_TOTAL_ records of 661</b>',
+
+
+				"infoEmpty": "<b>Returned 0 records</b>",
+				"infoFiltered": "<b>(filtered from _MAX_ total records)</b>"
+			},
+		    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
+		    'displayLength':_displayLength,
+			"drawCallback": function (oSettings) {
+
+				adjustPaginationForAccessibility();
+
+				 resizeGrid();
+			    $('#idTotCount').html(oSettings._iRecordsTotal- 1);
+				 /* Need to redo the counters if filtered or sorted */
+				 if ( oSettings.bSorted || oSettings.bFiltered )
+				 {
+					for ( var i=0, iLen=oSettings.aiDisplay.length ; i<iLen ; i++ )
+					{
+						$('td:eq(0)', oSettings.aoData[ oSettings.aiDisplay[i] ].nTr ).html( i+1 );
+					}
+				 }
+			  },
+            "rowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+
+                hiddenColumns = $('#resultsTable th.headerrow').map(function () {
+                    return { i: $(this).index(), h: $(this).hasClass('hidden') };
+                }).toArray();
+
+			    for(var i in aData)
+                {
+					if(aData[i])
+					{
+					    if(aData[i].indexOf("unclickable_") >= 0)
+					    {
+						   aData[i] = aData[i].substring(12);
+							$('td:eq('+ i +')', nRow).addClass("unclickable").html(aData[i]);
+					    }
+
+					    if(aData[i].indexOf("hidden_") >= 0)
+                        {
+						   aData[i] = aData[i].substring(7);
+							$('td:eq('+ i +')', nRow).addClass("hidden").html(aData[i]);
+					    }
+
+					    if(aData[i].indexOf("nobreak_") >= 0)
+					    {
+						   aData[i] = aData[i].substring(8);
+							$('td:eq('+ i +')', nRow).addClass("nowordbreak").html(aData[i]);
+                        }
+
+                        if (aData[i].indexOf("legalfield_") >= 0) {
+                            aData[i] = aData[i].substring(11);
+                            $('td:eq(' + i + ')', nRow).addClass("legalfield").html(aData[i]);
+                        }
+
+					    if(aData[i].indexOf("_PLUS_") >= 0)
+					    {
+						   var ind = aData[i].indexOf("_PLUS_");
+						   var second = aData[i].substring(ind + 6).replace('_PLUS_', '');
+						   if(second.startsWith('<br>'))
+							  second = second.substring(4);
+
+						   aData[i] = aData[i].substring(0, ind) + " <div itemid='" + iDisplayIndexFull + "' class='btn showSearchExtraItems'><i class='icon-plus-sign'></i></div><div style='display: none' class='searchExtraItems' itemid='" + iDisplayIndexFull + "'>" + second + "</div>";
+							$('td:eq('+ i +')', nRow).addClass('unclickable').html(aData[i]);
+					    }
+					}
+
+					if(hiddenColumns.length > i && hiddenColumns[i].h)
+                    {
+						$('td:eq('+ i +')', nRow).addClass("hidden");
+					}
+				 }
+
+				// make sure not to bind it twice..
+				$('td:not(.unclickable)', nRow).off('click');
+				$('td:not(.unclickable)', nRow).on('click', function(e)
+				{
+					$('#loadingModal').modal('show');
+					var id = $(nRow).attr('id').replace('doc_', '');
+					var row = $(nRow).children('td').first().text();
+
+					GetDetailSection(id,row,true, $(this).parents('tr').first().hasClass('torrenresult')); // todo: may need to pass the row number here, too
+					$('#lastViewedDocId').val(id); // todo: also set this from the direct navigation. not from list
+					$('#lastRowViewed').val(row);
+
+						
+                            lastDocId = { id: id, row: row, torren: $(this).parents('tr').first().hasClass('torrenresult') };
+							if (splitView) {
+								createSplit();
+							}
+								
+                    });
+			  },
+			"autoWidth": false,
+			"filter": true,
+			"columnDefs": aoColumns,
+			"serverSide": true,
+			"processing": true,
+		     "pagingType": "full_numbers",
+			"ajax": {
+			  url: site + 'Search/GetSearchResults',
+			    type: 'POST'
+			}
+        });
+
+        oTable.on('page.dt', function () {
+            $('html, body').animate({
+                scrollTop: $(".dataTables_wrapper").offset().top
+            }, 'slow');
+        });
+
+	    if(_displayLength == '-1')
+	    {
+	        $('#searchResults .dataTables_paginate .next').addClass('disabled');
+	    }
+
+        $(window).off('resize.results').on('resize.results', function () {
+		   resizeGrid();
+		});
+
+		function adjustPaginationForAccessibility() {
+            $(".paginate_button").each(function () {
+                // Example: Adding aria-label attributes to page buttons
+                var pageNum = $(this).text(); // Get button text (page number)
+				$(this).attr("title", "Go to page " + pageNum);
+				$(this).attr("role", "button");
+			
+
+                // If you have specific aria attributes for "Next" and "Previous" buttons
+				if ($(this).hasClass('previous')) {
+                    $(this).attr("title", "Go to previous page");
+				} else if ($(this).hasClass('next')) {
+                    $(this).attr("title", "Go to next page");
+				} else if ($(this).hasClass("first")) {
+                    $(this).attr("title", "Go to first page");
+                }
+            });
+        }
+
+        function resizeGrid() {
+            if ($('#resultsTable_wrapper').width() >= $('#resultsGridDiv').width())
+                $('#resultsGridDiv').width($('#resultsTable_wrapper').width() + 10);
+            else {
+                $('#resultsGridDiv').width('');
+                $('#resultsGridDiv').width($('#resultsTable_wrapper').width() + 10);
+            }
+
+            $('.paginate_button.last').hide();
+			$('#resultsHr').width($('#resultsGridDiv').width());
+        }
+
+	   resizeGrid();
+
+		$(document).off('click', '.showSearchExtraItems').on('click', '.showSearchExtraItems',
+			function() {
+				$('.searchExtraItems[itemid=' + $(this).attr('itemid') + ']').toggle();
+	    });
+
+		$('#resultsTable_length').on('change', function(sel) {
+		   if($(this).find(":selected").val() == -1)
+				$('#searchResults .dataTables_paginate .next').addClass('disabled');
+
+			$.ajax({
+			  url:"/Search/UpdateSessionDisplayLength",
+				type:"POST",
+				data:{displayLength:$(this).find(":selected").val() },
+				success: function (response) {  },
+				error: function (request, text, err) { alert("UpdateSessionDisplayLength() - Unable to find controller method.\n"); }
+		   });
+	    });
+
+
+		$('select[name="resultsTable_length"]').val(_displayLength);
+
+		$('#results-Export, #results-Print').popover();
+
+		$('#results-Print').click(function () {
+		    if ($('#printResultsModal').length > 0) {
+			   $('#printResultsModal').modal('show');
+			   $('#printResultsModal').off('hidden').on('hidden', function () {
+				  printResults();
+			   });
+		    }
+		    else
+			   printResults();
+		});
+
+		function printResults()
+		{
+		    GetFilteredRows(function () {
+			   $('#format').val('print');
+			   $('#printForm')[0].submit();
+		    });
+		}
+
+		$(document).off('click', '#showCountButton').on('click', '#showCountButton', function() {
+			$('#showCountButton').hide();
+			$('#showCountSpan').text('Loading...');
+			$.post('/Search/GetSearchCount', function(result) {
+				$('#showCountSpan').text(result);
+		   });
+	    });
+
+        $('.printreport').click(function () {
+            var filtered = [];
+            var items = $('#resultsTable').dataTable()._('tr', { 'filter': 'applied' }).toArray();
+            for (var item in items) {
+                var fil = Object.values(items[item]);
+                filtered.push(fil[fil.length - 4]);
+            }
+
+			var typ = $(this).attr('type');
+
+            $.post('/Search/SetPrintReportIds', { ids : filtered.join(',') }, function () {
+                window.open('/Search/PrintReport' + '?type=' + typ, '_blank');
+            });
+	    });
+
+		$('#results-Export').click(function () {
+		    if ($('#exportResultsModal').length > 0) {
+			   $('#exportResultsModal').modal('show');
+			   $('#exportResultsModal').off('hidden').on('hidden', function () {
+				  exportResults();
+			   });
+		    }
+		    else
+			   exportResults();
+	    });
+
+		function exportResults()
+		{
+		    GetFilteredRows(function () {
+			   $('#format').val('export');
+			   $('#printForm')[0].submit();
+		    });
+		}
+
+		$("thead input").keyup( function () {
+		   /* Filter on the column (the index) of this element */
+		   oTable
+			  .columns($("thead input").index(this))
+			  .search(this.value)
+			  .draw();
+	    });
+
+		/*
+         * Support functions to provide a little bit of 'user friendliness' to the textboxes in
+         * the header
+         */
+		$("thead input").each( function (i) {
+		   asInitVals[i] = this.value;
+	    } );
+
+		$("thead input").focus( function () {
+		   if ( this.className == "search_init" )
+		   {
+			  this.className = "";
+			  this.value = "";
+		   }
+	    } );
+
+		$("thead input").blur( function (i) {
+		   if ( this.value == "" )
+		   {
+			  this.className = "search_init";
+			  this.value = asInitVals[$("thead input").index(this)];
+		   }
+	    } );
+
+		$('#clearResults, #results-SaveSearch').popover();
+		$('#saveSearchModal').modal('hide');
+		ScrollToTopOfSection($('#resultsTable'), 'fast');
+
+		// remove icons from columns that we don't want to sort
+		$('.noicon').css('background-image','none');
+		$('[id^=popover-]').popover();
+
+		$('#applyDisplayLength').popover().click(function(){
+		   var length="0";
+		   var newClass="btn-inverse";
+		   var btnHTML='<i class="icon-ok icon-white"></i> Apply to All Searches';
+		   var btn=$('#applyDisplayLength');
+		   if(btn.hasClass('btn-inverse'))
+		   {
+			  newClass="btn-success";
+			  length=selLength.val();
+			  btnHTML='<i class="icon-remove icon-white"></i> Current Result Length (' + length + ')';
+		   }
+			$.ajax({
+			  url:"/Search/UpdateSessionDisplayLength",
+				type:"POST",
+				data:{displayLength:length},
+				success: function (response) { btn.removeClass('btn-success').removeClass('btn-inverse').addClass(newClass).html(btnHTML); },
+				error: function (request, text, err) { alert("UpdateSessionDisplayLength() - Unable to render search results.\n" + err + text); }
+		   });
+	    });
+
+		jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+			"date-us-pre": function ( a ) {
+		   var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/),
+                    month = b[1],
+                    day = b[2],
+                    year = b[3]
+
+				if(year.length == 2){
+			  if(parseInt(year, 10)<70) year = '20'+year;
+			  else year = '19'+year;
+		   }
+		   if(month.length == 1) month = '0'+month;
+		   if(day.length == 1) day = '0'+day;
+
+		   var tt = year+month+day;
+		   return  tt;
+	    },
+			"date-us-asc": function ( a, b ) {
+		   return a - b;
+	    },
+
+			"date-us-desc": function ( a, b ) {
+		   return b - a;
+	    }
+		});
+
+		jQuery.fn.dataTableExt.aTypes.unshift(
+		 function ( sData )
+           {
+           	if (sData !== null && sData.match(/\d{1,2}\/\d{1,2}\/\d{2,4}/))
+           	{
+
+           		return 'date-us';
+           	}
+           	return null;
+           }
+        );
+
+
+		/*
+        * Function: fnGetFilteredData()
+        * Purpose:  Retrieve an array with all data that survived filtering
+        */
+
+		$.fn.dataTableExt.oApi.fnGetFilteredData = function ( oSettings ) {
+		   var a = [];
+		   var printableColumns = $(oSettings.aoColumns)
+		    .filter(function(index, item) {
+			  return item.nTh.className.indexOf("printableColumn") >= 0;
+		   })
+                .map(function(index, item) {
+			  return item.fnGetData();
+		   }).toArray();
+		   for ( var i=0, iLen=oSettings.aiDisplay.length ; i<iLen ; i++ ) {
+			  var aa = oSettings.aoData[ oSettings.aiDisplay[i] ]._aData;
+
+			  var z = 0;
+
+			  var b = [];
+			  while(z in aa)
+				{
+			  if($.inArray(z, printableColumns) >= 0)
+						b.push(aa[z])
+
+					z += 1;
+		   }
+
+		   a.push(b);
+	    }
+
+			return a;
+		}
+
+		var sum = 0;
+		$('.headerrow').each(function() {
+		   sum += parseInt($(this).css('min-width').replace('px', '')) + 20;
+	    });
+
+		$('#resultsGridDiv').css('min-width', (sum + 35) + 'px');
+	} );
+
+	if(!String.prototype.trim) {
+		String.prototype.trim = function () {
+			return this.replace(/^\s+|\s+$/g,'');
+		};
+	}
+
+	function GetFilteredRows(f){
+    		  // get header info
+		  var hs = $('.headerrow')
+		  .map(function() {
+			 return { i: $(this).index(), item: $(this) };
+		  })
+		  .filter(function() {
+			 return this.item.hasClass('printableColumn');
+		  })
+		  .map(function() {
+			 return this.i;
+		  })
+		   .toArray();
+
+		  var heads = $('.printableColumn').map(function () { return $(this).html().trim() }).toArray();
+
+		  $.post(site + 'Search/GetSearchResultsExport', { cols: JSON.stringify(hs), headers: JSON.stringify(heads), time: new Date() },
+		  function(s) {
+
+			var d = s;
+    		    var data, returnString="";
+
+		    headers=$('.printableColumn');
+		    returnString += '<thead><th>#</th>';
+		    headers.each(function()
+		    {
+			    returnString += "<th>" + $(this).html() + "</th>";
+		    });
+        		    returnString += "</thead></tr><tbody>";
+
+		    returnString += d.r;
+
+		    returnString += "</tbody>";
+		    $('#resultsToPrint').val(returnString);
+		    $('#filter').val($('#filterDiv').text().replace('returned the following results:', '').replace('Your', '') + ' | Total Records "'  + d.count + '"');
+
+    f();
+		  });
+	}
+
+	function SaveSearch() {
+		$('#saveSearchModal').modal('show');
+	}
+
+	function ClearResults() {
+		$('#clearResults').mouseleave();
+		$('#searchResults, #hideResults, #showResults, #backToDocuments, #results-Print, #results-Export, #clearResults, #results, #resultsGridDiv').hide(500);
+		$('#searchResults').html('');
+	}
+
+</script>

@@ -278,6 +278,21 @@ def compute_investor_fields(inv_rec, inv_id, props_by_investor,
                 f'{loan_id} ({lender}): {", ".join(triggers)}'
             )
 
+    # Cash purchase properties (no financing = bought with cash)
+    cash_props = [
+        p for pid, p in prop_entries
+        if not fin_by_property.get(pid)
+    ]
+    if cash_props:
+        cash_value = sum(
+            (p.get('fields', {}).get('Estimated Property Value') or 0)
+            for p in cash_props
+        )
+        cash_str = format_currency(cash_value) if cash_value else ''
+        trigger_lines.append(
+            f'{len(cash_props)} cash purchase(s) {cash_str} — no leverage, refi opportunity'
+        )
+
     result['Trigger Summary'] = '\n'.join(trigger_lines) if trigger_lines else ''
 
     # ---------------------------------------------------------------
@@ -405,11 +420,16 @@ def compute_investor_fields(inv_rec, inv_id, props_by_investor,
             for o in outreach_list
         )
 
-        # Trigger checks across all financing
-        hm = any(has_trigger(f, 'hard_money') for f in all_financing)
+        # Trigger checks: linked Financing records OR direct Investor fields
+        hm = (any(has_trigger(f, 'hard_money') for f in all_financing)
+              or fields.get('Hard Money') is True)
         bl = any(has_trigger(f, 'balloon') for f in all_financing)
-        mt = any(has_trigger(f, 'maturity') for f in all_financing)
-        hr = any(has_trigger(f, 'high_rate') for f in all_financing)
+        mt_linked = any(has_trigger(f, 'maturity') for f in all_financing)
+        mt_direct = (fields.get('Months to Maturity') or 999) <= 24
+        mt = mt_linked or mt_direct
+        hr_linked = any(has_trigger(f, 'high_rate') for f in all_financing)
+        hr_direct = (fields.get('Loan Rate') or 0) >= 0.07
+        hr = hr_linked or hr_direct
 
         # Cash purchase: property with no financing
         has_cash = any(
@@ -420,10 +440,8 @@ def compute_investor_fields(inv_rec, inv_id, props_by_investor,
             not outreach_list and not fields.get('Last Contact Date')
         )
 
-        # DNC = "Not Checked" → disqualify for safety
-        if dnc == 'Not Checked':
-            result['Call Priority'] = 'DQ-DNC'
-        elif has_followup_due:
+        # DNC = "Not Checked" → treat as new lead (Frank needs to see them)
+        if has_followup_due:
             result['Call Priority'] = 'P0-FollowUp'
         elif hm:
             result['Call Priority'] = 'P1-HardMoney'

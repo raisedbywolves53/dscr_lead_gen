@@ -220,7 +220,7 @@ def build_airtable_record(row: pd.Series) -> dict:
     fields["Primary Market"] = market
     fields["Investor Type"] = determine_investor_type(props, is_entity)
     fields["Lead Source"] = "FL DOR Records"
-    fields["Relationship Strength"] = determine_relationship(score)
+    fields["Lead Status"] = "New"
     fields["DNC Status"] = "Not Checked"
     fields["Consent Status"] = "No Consent"
 
