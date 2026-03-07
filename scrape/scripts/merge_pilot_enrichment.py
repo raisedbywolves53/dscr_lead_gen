@@ -93,6 +93,13 @@ ATTOM_COLS = [
     "attom_property_type", "attom_year_built",
 ]
 
+CLERK_CSV = PROJECT_DIR / "data" / "financing" / "clerk_lender_results.csv"
+CLERK_COLS = [
+    "clerk_lender", "clerk_lender_type", "clerk_loan_date",
+    "clerk_instrument", "clerk_doc_id", "clerk_all_mtg_count",
+    "clerk_status",
+]
+
 
 def safe_merge(base: pd.DataFrame, source_path: Path, merge_cols: list,
                key_col: str, source_name: str) -> pd.DataFrame:
@@ -177,6 +184,33 @@ def main():
     # Merge ATTOM mortgage + owner data (key: OWN_NAME)
     df = safe_merge(df, ATTOM_CSV, ATTOM_COLS, "OWN_NAME", "ATTOM Mortgage")
 
+    # Merge Clerk lender lookup (key: OWN_NAME)
+    df = safe_merge(df, CLERK_CSV, CLERK_COLS, "OWN_NAME", "Clerk Lender")
+
+    # Create combined best_lender column (ATTOM preferred, fallback to Clerk)
+    def pick_best_lender(row):
+        attom = str(row.get("attom_lender_name", "")).strip()
+        clerk = str(row.get("clerk_lender", "")).strip()
+        if attom and attom.lower() not in ("", "nan", "none", "n/a"):
+            return attom
+        if clerk and clerk.lower() not in ("", "nan", "none", "n/a"):
+            return clerk
+        return ""
+
+    df["best_lender"] = df.apply(pick_best_lender, axis=1)
+
+    # Also create best_lender_type
+    def pick_best_lender_type(row):
+        attom = str(row.get("attom_lender_name", "")).strip()
+        if attom and attom.lower() not in ("", "nan", "none", "n/a"):
+            return str(row.get("attom_lender_type", "")).strip()
+        clerk = str(row.get("clerk_lender", "")).strip()
+        if clerk and clerk.lower() not in ("", "nan", "none", "n/a"):
+            return str(row.get("clerk_lender_type", "")).strip()
+        return ""
+
+    df["best_lender_type"] = df.apply(pick_best_lender_type, axis=1)
+
     # Save
     OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUTPUT_CSV, index=False)
@@ -216,6 +250,9 @@ def main():
         ("ATTOM owner name", "attom_owner1_name"),
         ("ATTOM loan amount", "attom_loan_amount"),
         ("ATTOM rate type", "attom_rate_type"),
+        ("Clerk lender", "clerk_lender"),
+        ("Clerk loan date", "clerk_loan_date"),
+        ("Any lender (combined)", "best_lender"),
     ]
 
     for label, col in checks:
