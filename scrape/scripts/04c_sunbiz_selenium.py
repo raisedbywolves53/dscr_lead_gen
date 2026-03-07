@@ -35,6 +35,18 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 try:
+    from curl_cffi import requests as cffi_requests
+    HAS_CFFI = True
+except ImportError:
+    HAS_CFFI = False
+
+try:
+    import undetected_chromedriver as uc
+    HAS_UC = True
+except ImportError:
+    HAS_UC = False
+
+try:
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.common.by import By
@@ -43,8 +55,12 @@ try:
     from selenium.common.exceptions import (
         TimeoutException, NoSuchElementException, WebDriverException
     )
+    HAS_SELENIUM = True
 except ImportError:
-    print("ERROR: Selenium required. Install: pip install selenium")
+    HAS_SELENIUM = False
+
+if not HAS_CFFI and not HAS_SELENIUM:
+    print("ERROR: Need curl_cffi or selenium. Install: pip install curl_cffi")
     sys.exit(1)
 
 try:
@@ -218,31 +234,100 @@ def parse_detail_page(html: str, entity_name: str) -> dict:
 # Selenium-based SunBiz search
 # ---------------------------------------------------------------------------
 
-def create_driver(headed: bool = False) -> webdriver.Chrome:
-    """Create a Chrome WebDriver instance."""
-    opts = Options()
-    if not headed:
-        opts.add_argument("--headless=new")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
-    opts.add_argument("--disable-blink-features=AutomationControlled")
-    opts.add_argument("--window-size=1920,1080")
-    opts.add_argument(
-        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
-    # Suppress logging
-    opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+def create_driver(headed: bool = False):
+    """Create a Chrome WebDriver instance (uses undetected-chromedriver if available)."""
+    if HAS_UC:
+        print("  Using undetected-chromedriver (Cloudflare bypass)")
+        options = uc.ChromeOptions()
+        if not headed:
+            options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--window-size=1920,1080")
+        driver = uc.Chrome(options=options)
+        driver.set_page_load_timeout(30)
+        return driver
+    else:
+        print("  Using standard Selenium (install undetected-chromedriver for better Cloudflare bypass)")
+        opts = Options()
+        if not headed:
+            opts.add_argument("--headless=new")
+        opts.add_argument("--no-sandbox")
+        opts.add_argument("--disable-dev-shm-usage")
+        opts.add_argument("--disable-blink-features=AutomationControlled")
+        opts.add_argument("--window-size=1920,1080")
+        opts.add_argument(
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+        driver = webdriver.Chrome(options=opts)
+        driver.set_page_load_timeout(30)
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        })
+        return driver
 
-    driver = webdriver.Chrome(options=opts)
-    driver.set_page_load_timeout(30)
 
-    # Remove webdriver flag
-    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-    })
+def search_entity_cffi(session, entity_name: str) -> dict:
+    """Search SunBiz using curl_cffi (fastest, bypasses Cloudflare)."""
+    search_name = entity_name.strip()
+    for suffix in [" LLC", " L.L.C.", " L.L.C", " INC", " INC.",
+                   " CORP", " CORP.", " LP", " LTD", " LTD.",
+                   " LLLP", " L.P."]:
+        if search_name.upper().endswith(suffix):
+            search_name = search_name[: len(search_name) - len(suffix)].strip()
 
-    return driver
+    empty_result = {
+        "entity_name_searched": entity_name,
+        "status": "", "resolved_person": "",
+        "registered_agent_name": "", "registered_agent_address": "",
+        "officer_names": "", "principal_address": "",
+        "mailing_address": "", "filing_date": "", "entity_number": "",
+    }
+
+    try:
+        resp = session.post(
+            SUNBIZ_SEARCH_URL,
+            data={"SearchTerm": search_name, "InquiryType": "EntityName", "SearchNameOrder": ""},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            empty_result["status"] = f"HTTP {resp.status_code}"
+            return empty_result
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        links = soup.find_all("a", href=re.compile(r"SearchResultDetail"))
+        if not links:
+            empty_result["status"] = "NO RESULTS"
+            return empty_result
+
+        # Best match
+        detail_href = None
+        entity_upper = entity_name.upper().strip()
+        for link in links:
+            if link.get_text(strip=True).upper() == entity_upper:
+                detail_href = link["href"]
+                break
+        if not detail_href:
+            for link in links:
+                if search_name.upper() in link.get_text(strip=True).upper():
+                    detail_href = link["href"]
+                    break
+        if not detail_href:
+            detail_href = links[0]["href"]
+
+        time.sleep(1)
+        detail_resp = session.get(SUNBIZ_BASE + detail_href, timeout=15)
+        if detail_resp.status_code != 200:
+            empty_result["status"] = f"DETAIL HTTP {detail_resp.status_code}"
+            return empty_result
+
+        return parse_detail_page(detail_resp.text, entity_name)
+
+    except Exception as e:
+        empty_result["status"] = f"ERROR: {str(e)[:100]}"
+        return empty_result
 
 
 def search_entity_selenium(driver: webdriver.Chrome, entity_name: str) -> dict:
@@ -425,29 +510,36 @@ def main():
         print(f"\n  Looking up {len(to_lookup)} entities...")
         print(f"  Estimated time: ~{est_time/60:.0f} minutes")
 
-        # Create browser
-        print("\n  Starting Chrome browser...")
-        driver = create_driver(headed=args.headed)
+        # Choose method: curl_cffi (fast) or Selenium (fallback)
+        use_cffi = HAS_CFFI
+        driver = None
+        cffi_session = None
 
-        try:
-            # Initial page load to establish session
+        if use_cffi:
+            print("\n  Using curl_cffi (fast, Cloudflare bypass)...")
+            cffi_session = cffi_requests.Session(impersonate="chrome")
+            # Establish session
+            cffi_session.get(SUNBIZ_SEARCH_URL, timeout=15)
+        else:
+            print("\n  Starting Chrome browser...")
+            driver = create_driver(headed=args.headed)
             driver.get(SUNBIZ_SEARCH_URL)
             time.sleep(3)
-
-            # Check for Cloudflare
             if "Checking your browser" in driver.page_source:
                 print("  Waiting for Cloudflare challenge...")
                 time.sleep(10)
 
-            if "Search" not in driver.page_source:
-                print("  WARNING: SunBiz may be blocking. Trying to proceed...")
-
+        try:
             resolved_count = 0
             error_count = 0
             consecutive_errors = 0
 
             for i, entity_name in enumerate(to_lookup):
-                result = search_entity_selenium(driver, entity_name)
+                if use_cffi:
+                    result = search_entity_cffi(cffi_session, entity_name)
+                else:
+                    result = search_entity_selenium(driver, entity_name)
+
                 cache[entity_name] = result
 
                 person = result.get("resolved_person", "")
@@ -478,9 +570,12 @@ def main():
                 if consecutive_errors >= 5:
                     print(f"\n  5 consecutive errors. Waiting 30s before retrying...")
                     time.sleep(30)
-                    # Refresh the browser
-                    driver.get(SUNBIZ_SEARCH_URL)
-                    time.sleep(5)
+                    if use_cffi:
+                        cffi_session = cffi_requests.Session(impersonate="chrome")
+                        cffi_session.get(SUNBIZ_SEARCH_URL, timeout=15)
+                    elif driver:
+                        driver.get(SUNBIZ_SEARCH_URL)
+                        time.sleep(5)
                     consecutive_errors = 0
 
                 time.sleep(REQUEST_DELAY)
@@ -488,7 +583,8 @@ def main():
             print(f"\n  Lookups complete: {resolved_count} resolved, {error_count} errors")
 
         finally:
-            driver.quit()
+            if driver:
+                driver.quit()
             save_cache(cache)
             print(f"  Cache saved: {len(cache)} entries")
 
