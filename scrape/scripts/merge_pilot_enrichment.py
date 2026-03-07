@@ -39,6 +39,7 @@ WEALTH_SIGNALS_CSV = PROJECT_DIR / "data" / "signals" / "wealth_signals.csv"
 LLC_RESOLVED_CSV = PROJECT_DIR / "data" / "filtered" / "pilot_llc_resolved.csv"
 APOLLO_CSV = PROJECT_DIR / "data" / "enriched" / "apollo_results.csv"
 MORTGAGE_EST_CSV = PROJECT_DIR / "data" / "financing" / "mortgage_estimates.csv"
+ATTOM_CSV = PROJECT_DIR / "data" / "financing" / "attom_mortgage.csv"
 OUTPUT_CSV = PROJECT_DIR / "data" / "enriched" / "pilot_500_enriched.csv"
 
 # Columns to merge from each source (avoid duplicating base columns)
@@ -78,6 +79,18 @@ MORTGAGE_EST_COLS = [
     "est_monthly_payment", "est_portfolio_equity", "est_equity_pct",
     "est_months_to_maturity", "est_maturity_urgent", "est_refi_score",
     "est_refi_signals",
+]
+
+ATTOM_COLS = [
+    "attom_lender_name", "attom_lender_city", "attom_lender_state",
+    "attom_lender_type", "attom_title_company",
+    "attom_loan_amount", "attom_loan_date", "attom_loan_type",
+    "attom_interest_rate", "attom_rate_type", "attom_deed_type",
+    "attom_due_date", "attom_loan_term",
+    "attom_owner1_name", "attom_owner1_last", "attom_owner1_first",
+    "attom_owner2_name", "attom_corporate", "attom_absentee",
+    "attom_mail_address", "attom_property_address",
+    "attom_property_type", "attom_year_built",
 ]
 
 
@@ -161,6 +174,9 @@ def main():
     # Merge mortgage estimates (key: OWN_NAME)
     df = safe_merge(df, MORTGAGE_EST_CSV, MORTGAGE_EST_COLS, "OWN_NAME", "Mortgage Estimates")
 
+    # Merge ATTOM mortgage + owner data (key: OWN_NAME)
+    df = safe_merge(df, ATTOM_CSV, ATTOM_COLS, "OWN_NAME", "ATTOM Mortgage")
+
     # Save
     OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUTPUT_CSV, index=False)
@@ -196,6 +212,10 @@ def main():
         ("Refi score", "est_refi_score"),
         ("Cash purchase", "est_cash_purchase"),
         ("Hard money flag", "est_hard_money"),
+        ("ATTOM lender", "attom_lender_name"),
+        ("ATTOM owner name", "attom_owner1_name"),
+        ("ATTOM loan amount", "attom_loan_amount"),
+        ("ATTOM rate type", "attom_rate_type"),
     ]
 
     for label, col in checks:
