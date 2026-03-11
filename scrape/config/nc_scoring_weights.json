@@ -1,0 +1,120 @@
+{
+  "state": "NC",
+  "state_full": "North Carolina",
+
+  "property_signals": {
+    "no_homestead": {
+      "points": 0,
+      "description": "NC has no universal homestead exemption — signal disabled (not discriminatory)"
+    },
+    "value_150k_500k": {
+      "points": 10,
+      "description": "Property value $150K-$500K — DSCR sweet spot"
+    },
+    "value_500k_1m": {
+      "points": 8,
+      "description": "Property value $500K-$1M — larger deals, fewer investors qualify"
+    },
+    "multi_family": {
+      "points": 10,
+      "description": "Multi-family 2-4 units — higher rental income, better DSCR ratios",
+      "use_codes": ["02", "03", "04"],
+      "use_keywords": ["DUPLEX", "TRIPLEX", "QUAD", "MULTI-FAMILY", "MULTIFAMILY"]
+    },
+    "str_eligible_zip": {
+      "points": 5,
+      "description": "Property in tourist zip code — STR strategy viable"
+    }
+  },
+
+  "owner_signals": {
+    "absentee_out_of_state": {
+      "points": 15,
+      "description": "Mailing address outside North Carolina — strong investor indicator"
+    },
+    "absentee_in_state": {
+      "points": 10,
+      "description": "In-state but different zip from property — local investor"
+    },
+    "llc_corp_owned": {
+      "points": 10,
+      "description": "LLC/Corp ownership — sophisticated investor, structured for DSCR"
+    },
+    "portfolio_5_plus": {
+      "points": 20,
+      "description": "Portfolio landlord with 5+ properties — high-value target"
+    },
+    "portfolio_2_to_4": {
+      "points": 10,
+      "description": "Portfolio landlord with 2-4 properties — growing investor"
+    }
+  },
+
+  "transaction_signals": {
+    "cash_purchase": {
+      "points": 15,
+      "description": "Cash purchase, no mortgage — may want DSCR cash-out refi"
+    },
+    "recent_purchase_0_12mo": {
+      "points": 10,
+      "description": "Purchased within last 12 months — active buyer"
+    },
+    "recent_purchase_12_24mo": {
+      "points": 5,
+      "description": "Purchased 12-24 months ago — moderately active"
+    },
+    "long_hold_no_refi": {
+      "points": 5,
+      "description": "Owned 5+ years with no refinance — likely has equity to tap"
+    }
+  },
+
+  "tiers": {
+    "tier_1": {
+      "label": "Hot Leads",
+      "min_score": 40,
+      "action": "Immediate outreach — phone call + email + direct mail"
+    },
+    "tier_2": {
+      "label": "Warm Leads",
+      "min_score": 25,
+      "action": "Email + direct mail sequence, phone if resources allow"
+    },
+    "tier_3": {
+      "label": "Nurture",
+      "min_score": 10,
+      "action": "Add to long-term email nurture only"
+    },
+    "discard": {
+      "label": "Discard",
+      "min_score": 0,
+      "action": "Do not outreach — insufficient investor signals"
+    }
+  },
+
+  "property_use_codes": {
+    "include": ["01", "02", "03", "04", "05", "08"],
+    "descriptions": {
+      "01": "Single Family Residential",
+      "02": "Mobile Home",
+      "03": "Multi-Family (2-9 units)",
+      "04": "Condominium",
+      "05": "Cooperatives",
+      "08": "Multi-Family (10+ units)"
+    },
+    "note": "NC uses text descriptions more than numeric codes. Use keyword matching in nc_02_parse_parcels.py."
+  },
+
+  "str_eligible_zips": {
+    "outer_banks": ["27948", "27959", "27949", "27954", "27927", "27953", "27936", "27968"],
+    "asheville": ["28801", "28803", "28804", "28805", "28806", "28711", "28731", "28787"],
+    "charlotte_uptown": ["28202", "28203", "28204", "28205", "28206", "28207", "28208", "28209", "28210", "28211"],
+    "raleigh_downtown": ["27601", "27603", "27604", "27607", "27608", "27609", "27612", "27615"],
+    "wilmington_beaches": ["28401", "28403", "28405", "28428", "28449", "28480", "28443"],
+    "pinehurst": ["28374", "28387"],
+    "boone_banner_elk": ["28607", "28604", "28605"],
+    "lake_norman": ["28036", "28031", "28078", "28115", "28117"]
+  },
+
+  "llc_keywords": ["LLC", "INC", "CORP", "TRUST", "LP", "LLP", "PARTNERSHIP", "HOLDINGS", "INVESTMENTS", "PROPERTIES", "GROUP", "CAPITAL", "VENTURES", "MANAGEMENT", "ASSOCIATES", "ENTERPRISES", "FUND", "REALTY"]
+}

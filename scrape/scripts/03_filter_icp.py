@@ -25,6 +25,7 @@ matched most strongly.
 Usage:
     python scripts/03_filter_icp.py --county seminole
     python scripts/03_filter_icp.py --county all
+    python scripts/03_filter_icp.py --county wake --state NC
 """
 
 import argparse
@@ -42,6 +43,7 @@ PROJECT_DIR = SCRIPT_DIR.parent
 PARSED_DIR = PROJECT_DIR / "data" / "parsed"
 FILTERED_DIR = PROJECT_DIR / "data" / "filtered"
 CONFIG_FILE = PROJECT_DIR / "config" / "scoring_weights.json"
+NC_CONFIG_FILE = PROJECT_DIR / "config" / "nc_scoring_weights.json"
 
 # US state codes — used to detect out-of-state vs foreign owners
 US_STATES = {
@@ -53,9 +55,11 @@ US_STATES = {
 }
 
 
-def load_config():
+def load_config(state: str = "FL"):
     """Load scoring weights, STR zips, and tier thresholds from config."""
-    with open(CONFIG_FILE) as f:
+    config_path = NC_CONFIG_FILE if state.upper() == "NC" else CONFIG_FILE
+    print(f"  Loading config: {config_path.name}")
+    with open(config_path) as f:
         return json.load(f)
 
 
@@ -75,7 +79,7 @@ def safe_str(val) -> str:
     return s
 
 
-def score_record(row, config: dict, str_zips: set, today: date) -> tuple:
+def score_record(row, config: dict, str_zips: set, today: date, home_state: str = "FL") -> tuple:
     """
     Score a single record against the full ICP matrix.
 
@@ -143,10 +147,10 @@ def score_record(row, config: dict, str_zips: set, today: date) -> tuple:
 
     # --- Absentee: out-of-state vs in-state different zip ---
     # These are mutually exclusive — award the higher one
-    if mail_state and mail_state != "FL" and mail_state in US_STATES:
+    if mail_state and mail_state != home_state and mail_state in US_STATES:
         score += owner_signals["absentee_out_of_state"]["points"]
         matched.append("absentee_out_of_state")
-    elif mail_state and mail_state != "FL" and mail_state not in US_STATES:
+    elif mail_state and mail_state != home_state and mail_state not in US_STATES:
         # Foreign owner — treat as out-of-state (same points, different label)
         score += owner_signals["absentee_out_of_state"]["points"]
         matched.append("foreign_owner")
@@ -273,7 +277,7 @@ def assign_tier(score: int, tiers: dict) -> str:
         return "Discard"
 
 
-def score_dataframe(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+def score_dataframe(df: pd.DataFrame, config: dict, home_state: str = "FL") -> pd.DataFrame:
     """
     Score every row in the DataFrame. Adds columns:
       icp_score, icp_tier, icp_signals, icp_segment
@@ -282,7 +286,7 @@ def score_dataframe(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     tiers = config["tiers"]
     today = date.today()
 
-    print(f"  Scoring {len(df):,} records...")
+    print(f"  Scoring {len(df):,} records (state: {home_state})...")
 
     scores = []
     all_signals = []
@@ -290,7 +294,7 @@ def score_dataframe(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     tier_labels = []
 
     for _, row in df.iterrows():
-        score, matched = score_record(row, config, str_zips, today)
+        score, matched = score_record(row, config, str_zips, today, home_state)
         scores.append(score)
         all_signals.append(", ".join(matched))
         segments.append(assign_icp_segment(matched))
@@ -409,13 +413,20 @@ def main():
         required=True,
         help='County name (e.g. "seminole") or "all" to process all files in data/parsed/',
     )
+    parser.add_argument(
+        "--state",
+        type=str,
+        default="FL",
+        help='State code (FL or NC). Determines scoring config and absentee detection. Default: FL',
+    )
     args = parser.parse_args()
 
     FILTERED_DIR.mkdir(parents=True, exist_ok=True)
 
+    home_state = args.state.strip().upper()
+
     # Load scoring config
-    config = load_config()
-    print("  Loaded scoring weights from config/scoring_weights.json")
+    config = load_config(home_state)
 
     county_arg = args.county.strip().lower()
 
@@ -454,7 +465,7 @@ def main():
             continue
 
         # Score every record
-        scored = score_dataframe(df, config)
+        scored = score_dataframe(df, config, home_state)
 
         # Sort by score descending (best leads first)
         scored = scored.sort_values("icp_score", ascending=False)
@@ -478,7 +489,11 @@ def main():
         print()
 
     print("=" * 60)
-    print(f"  Next step: python scripts/04_sunbiz_llc_resolver.py --county {county_arg}")
+    if home_state == "NC":
+        print(f"  Next step: python scripts/05_enrich_contacts.py --counties {county_arg}")
+        print(f"  (Skipping step 04 — NC SoS does not allow scraping)")
+    else:
+        print(f"  Next step: python scripts/04_sunbiz_llc_resolver.py --county {county_arg}")
     print("=" * 60)
 
 
