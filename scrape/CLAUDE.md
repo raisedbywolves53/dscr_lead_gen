@@ -2,17 +2,17 @@
 
 ## Project Overview
 
-This project builds a comprehensive investor intelligence platform for a mortgage loan originator (MLO) specializing in DSCR (Debt Service Coverage Ratio) loans in Florida. The pipeline aggregates public data sources to build deep investor profiles — replacing $700+/mo platforms like BatchData, PropStream, and Reonomy.
+Portable investor intelligence platform for DSCR mortgage loan originators. Aggregates public data to build deep investor profiles — replacing $700+/mo platforms like BatchData, PropStream, and Reonomy. Deployable in any U.S. market.
 
-This is NOT just contact enrichment. We build full investor dossiers: entity structure, portfolio analysis, financing intelligence, purchase behavior, wealth signals, network mapping, and opportunity scoring.
+See `docs/SYSTEM_OVERVIEW.md` for full architecture. See `deployments/` for market-specific configs.
 
 ## Tech Stack
 
 - **Language:** Python 3.10+
-- **Key Libraries:** requests, beautifulsoup4, pandas, openpyxl, selenium
-- **APIs:** Apollo.io ($100/mo), MillionVerifier, Twilio Lookup
+- **Key Libraries:** requests, beautifulsoup4, pandas, openpyxl, python-dotenv
+- **Skip Trace:** Tracerfy ($0.02/match) — see `docs/ENRICHMENT_STACK.md`
+- **Validation:** MillionVerifier (email), Twilio v2 (phone)
 - **Data Storage:** CSV files in `data/` subdirectories
-- **IDE:** VS Code with Claude CLI
 
 ## Architecture
 

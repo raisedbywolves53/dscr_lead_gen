@@ -1257,17 +1257,402 @@ def upload_to_google_sheets(df, call_rows, bc_rows, pf_rows, dash_data):
 
 
 # ---------------------------------------------------------------------------
-# Export xlsx (backup)
+# Export formatted xlsx
 # ---------------------------------------------------------------------------
-def export_xlsx(call_rows, bc_rows, pf_rows):
+def export_xlsx(call_rows, bc_rows, pf_rows, dash_data):
+    """Export fully formatted Excel workbook matching Google Sheets styling."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, NamedStyle
+    from openpyxl.utils import get_column_letter
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from openpyxl.formatting.rule import CellIsRule, FormulaRule
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    wb = Workbook()
 
-    with pd.ExcelWriter(XLSX_OUTPUT, engine="openpyxl") as writer:
-        pd.DataFrame(call_rows, columns=CALL_HEADERS).to_excel(writer, sheet_name="Call Sheet", index=False)
-        pd.DataFrame(bc_rows, columns=BC_ALL_HEADERS).to_excel(writer, sheet_name="Battlecards", index=False)
-        pd.DataFrame(pf_rows, columns=PF_ALL_HEADERS).to_excel(writer, sheet_name="Performance", index=False)
+    # Shared styles
+    navy_fill = PatternFill('solid', fgColor='1a237e')
+    white_font = Font(bold=True, color='ffffff', size=13, name='Arial')
+    white_font_12 = Font(bold=True, color='ffffff', size=12, name='Arial')
+    gray_fill = PatternFill('solid', fgColor='e0e0e0')
+    alt_fill = PatternFill('solid', fgColor='f5f5f5')
+    bold_12 = Font(bold=True, size=12, name='Arial')
+    bold_10 = Font(bold=True, size=10, name='Arial')
+    normal_10 = Font(size=10, name='Arial')
+    wrap = Alignment(wrap_text=True, vertical='top')
+    wrap_center = Alignment(wrap_text=True, vertical='center', horizontal='center')
+    wrap_right = Alignment(wrap_text=True, vertical='top', horizontal='right')
+    thin_border = Border(
+        left=Side(style='thin', color='e0e0e0'), right=Side(style='thin', color='e0e0e0'),
+        top=Side(style='thin', color='e0e0e0'), bottom=Side(style='thin', color='e0e0e0'),
+    )
+    header_border = Border(
+        left=Side(style='thin', color='e0e0e0'), right=Side(style='thin', color='e0e0e0'),
+        top=Side(style='thin', color='e0e0e0'), bottom=Side(style='medium', color='000000'),
+    )
+    # Conditional format fills
+    green_fill = PatternFill('solid', fgColor='c8e6c9')
+    yellow_fill = PatternFill('solid', fgColor='fff9c4')
+    red_fill = PatternFill('solid', fgColor='ffcdd2')
+    blue_fill = PatternFill('solid', fgColor='bbdefb')
+    sched_fill = PatternFill('solid', fgColor='81c784')
 
-    print(f"\nBackup: {XLSX_OUTPUT} ({XLSX_OUTPUT.stat().st_size / 1024:.0f} KB)")
+    def _write_rows(ws, headers, rows, start_row=1):
+        """Write headers + data rows starting at start_row (1-based)."""
+        for c, h in enumerate(headers, 1):
+            ws.cell(row=start_row, column=c, value=h)
+        for r, row in enumerate(rows, start_row + 1):
+            for c, val in enumerate(row, 1):
+                ws.cell(row=r, column=c, value=val)
+
+    def _style_header(ws, row, num_cols, fill, font, border_style=header_border):
+        for c in range(1, num_cols + 1):
+            cell = ws.cell(row=row, column=c)
+            cell.fill = fill
+            cell.font = font
+            cell.alignment = wrap_center
+            cell.border = border_style
+
+    def _alt_rows(ws, start_row, end_row, num_cols):
+        for r in range(start_row, end_row + 1):
+            if r % 2 == 0:
+                for c in range(1, num_cols + 1):
+                    ws.cell(row=r, column=c).fill = alt_fill
+
+    def _borders(ws, start_row, end_row, num_cols):
+        for r in range(start_row, end_row + 1):
+            for c in range(1, num_cols + 1):
+                ws.cell(row=r, column=c).border = thin_border
+
+    # ===================================================================
+    # SHEET 1: Frank's Call Sheet
+    # ===================================================================
+    ws1 = wb.active
+    ws1.title = "Frank's Call Sheet"
+    ws1.sheet_properties.tabColor = '4caf50'
+    nc = len(CALL_HEADERS)
+    nr = len(call_rows)
+
+    _write_rows(ws1, CALL_HEADERS, call_rows)
+    _style_header(ws1, 1, nc, navy_fill, white_font)
+    ws1.freeze_panes = 'D2'  # freeze row 1 + cols A-C
+    ws1.row_dimensions[1].height = 40
+
+    # Column widths (chars) and data formatting
+    cs_widths = [15, 28, 21, 33, 8, 17, 33, 17, 10, 28, 47, 53, 32, 15, 18, 15, 15, 39]
+    for i, w in enumerate(cs_widths, 1):
+        ws1.column_dimensions[get_column_letter(i)].width = w
+
+    for r in range(2, nr + 2):
+        ws1.row_dimensions[r].height = 38
+        # Wrap all cells
+        for c in range(1, nc + 1):
+            cell = ws1.cell(row=r, column=c)
+            cell.alignment = wrap
+            cell.font = normal_10
+        # Bold contact name
+        ws1.cell(row=r, column=2).font = bold_12
+        # Currency: Portfolio Value (F), Equity (H)
+        ws1.cell(row=r, column=6).number_format = '$#,##0'
+        ws1.cell(row=r, column=8).number_format = '$#,##0'
+        # Right-align numbers
+        for c in [5, 6, 8, 9]:
+            ws1.cell(row=r, column=c).alignment = Alignment(wrap_text=True, horizontal='right', vertical='top')
+        # DSCR format (col I=9)
+        dscr_val = ws1.cell(row=r, column=9).value
+        if dscr_val and dscr_val != '':
+            ws1.cell(row=r, column=9).number_format = '0.00"x"'
+        # Date cols (P=16, Q=17)
+        for c in [16, 17]:
+            ws1.cell(row=r, column=c).number_format = 'MMM DD, YYYY'
+
+    # Alternating rows + borders
+    _alt_rows(ws1, 2, nr + 1, nc)
+    _borders(ws1, 1, nr + 1, nc)
+    _style_header(ws1, 1, nc, navy_fill, white_font, header_border)
+
+    # Data validation: Call Status (col O=15)
+    dv_status = DataValidation(type="list",
+        formula1='"Not Called,VM Left,Connected,Interested,Scheduled,Not Qualified,DNC"',
+        allow_blank=True)
+    dv_status.error = "Select from dropdown"
+    ws1.add_data_validation(dv_status)
+    dv_status.add(f'O2:O{nr + 1}')
+
+    # Conditional formatting: Equity (col H)
+    ws1.conditional_formatting.add(f'H2:H{nr+1}',
+        CellIsRule(operator='greaterThanOrEqual', formula=['200000'], fill=green_fill))
+    ws1.conditional_formatting.add(f'H2:H{nr+1}',
+        CellIsRule(operator='between', formula=['50000', '200000'], fill=yellow_fill))
+    ws1.conditional_formatting.add(f'H2:H{nr+1}',
+        CellIsRule(operator='lessThan', formula=['0'], fill=red_fill))
+
+    # Conditional formatting: DSCR (col I)
+    ws1.conditional_formatting.add(f'I2:I{nr+1}',
+        CellIsRule(operator='greaterThanOrEqual', formula=['1.0'], fill=green_fill))
+    ws1.conditional_formatting.add(f'I2:I{nr+1}',
+        FormulaRule(formula=[f'AND(I2<1,I2<>"")'], fill=red_fill))
+
+    # Conditional formatting: Call Status (col O)
+    for label, fill in [('VM Left', yellow_fill), ('Connected', blue_fill),
+                         ('Interested', green_fill), ('Scheduled', sched_fill),
+                         ('Not Qualified', gray_fill), ('DNC', red_fill)]:
+        ws1.conditional_formatting.add(f'O2:O{nr+1}',
+            CellIsRule(operator='equal', formula=[f'"{label}"'], fill=fill))
+
+    # Auto-filter
+    ws1.auto_filter.ref = f'A1:{get_column_letter(nc)}{nr+1}'
+
+    # ===================================================================
+    # SHEET 2: Battlecards
+    # ===================================================================
+    ws2 = wb.create_sheet("Battlecards")
+    ws2.sheet_properties.tabColor = '2196f3'
+    bc_nc = BC_NUM_COLS
+    bc_nr = len(bc_rows)
+
+    # Row 1: section headers (merged + colored)
+    section_colors_hex = ['1565c0', '00796b', 'e65100', '4a148c', 'b71c1c', '2e7d32', '616161']
+    for (name, sc, ec), color_hex in zip(BC_SECTION_RANGES, section_colors_hex):
+        ws2.merge_cells(start_row=1, start_column=sc + 1, end_row=1, end_column=ec)
+        cell = ws2.cell(row=1, column=sc + 1, value=name)
+        cell.fill = PatternFill('solid', fgColor=color_hex)
+        cell.font = white_font_12
+        cell.alignment = wrap_center
+    ws2.row_dimensions[1].height = 30
+
+    # Row 2: column headers
+    for c, h in enumerate(BC_ALL_HEADERS, 1):
+        cell = ws2.cell(row=2, column=c, value=h)
+        cell.fill = gray_fill
+        cell.font = bold_10
+        cell.alignment = wrap_center
+        cell.border = header_border
+    ws2.row_dimensions[2].height = 28
+
+    # Data rows (start at row 3)
+    for r_idx, row in enumerate(bc_rows, 3):
+        for c, val in enumerate(row, 1):
+            cell = ws2.cell(row=r_idx, column=c, value=val)
+            cell.alignment = wrap
+            cell.font = normal_10
+
+    ws2.freeze_panes = 'A3'
+
+    # Column widths
+    bc_char_widths = [
+        25, 30, 25, 8, 29, 20, 25, 15,     # IDENTITY
+        8, 17, 15, 22, 15, 9, 15,            # PORTFOLIO
+        30, 17, 14, 14, 9, 9, 14, 14,        # FINANCING
+        8, 8, 8, 17, 8, 8, 9, 9,             # ACQUISITION
+        11, 36, 8, 8, 8, 8, 42,              # REFI
+        11, 28, 8, 9, 28, 25, 11, 8,         # WEALTH
+        50, 28, 20, 9,                        # OUTREACH
+    ]
+    for i, w in enumerate(bc_char_widths[:bc_nc], 1):
+        ws2.column_dimensions[get_column_letter(i)].width = w
+
+    # Currency columns (0-indexed: 9,10,12,14,17,18,21,22,28,36 -> 1-indexed: 10,11,13,15,18,19,22,23,29,37)
+    currency_cols_1 = [10, 11, 13, 15, 18, 19, 22, 23, 29, 37]
+    for r in range(3, bc_nr + 3):
+        for c in currency_cols_1:
+            if c <= bc_nc:
+                ws2.cell(row=r, column=c).number_format = '$#,##0'
+        # Percentage: Equity % (14), Cash Purchase % (32)
+        for c in [14, 32]:
+            if c <= bc_nc:
+                ws2.cell(row=r, column=c).number_format = '0%'
+        # DSCR (21)
+        dv = ws2.cell(row=r, column=21).value
+        if dv and dv != '':
+            ws2.cell(row=r, column=21).number_format = '0.00"x"'
+
+    _alt_rows(ws2, 3, bc_nr + 2, bc_nc)
+    _borders(ws2, 2, bc_nr + 2, bc_nc)
+
+    # ===================================================================
+    # SHEET 3: Performance
+    # ===================================================================
+    ws3 = wb.create_sheet("Performance")
+    ws3.sheet_properties.tabColor = 'ff9800'
+    pf_nc = PF_NUM_COLS
+    pf_nr = len(pf_rows)
+
+    # Row 1: section headers
+    pf_colors_hex = ['546e7a', '1565c0', '2e7d32', 'f9a825']
+    for (name, sc, ec), color_hex in zip(PF_SECTION_RANGES, pf_colors_hex):
+        ws3.merge_cells(start_row=1, start_column=sc + 1, end_row=1, end_column=ec)
+        cell = ws3.cell(row=1, column=sc + 1, value=name)
+        cell.fill = PatternFill('solid', fgColor=color_hex)
+        cell.font = white_font_12
+        cell.alignment = wrap_center
+    ws3.row_dimensions[1].height = 30
+
+    # Row 2: column headers
+    for c, h in enumerate(PF_ALL_HEADERS, 1):
+        cell = ws3.cell(row=2, column=c, value=h)
+        cell.fill = gray_fill
+        cell.font = bold_10
+        cell.alignment = wrap_center
+        cell.border = header_border
+
+    # Data rows (start at row 3)
+    for r_idx, row in enumerate(pf_rows, 3):
+        for c, val in enumerate(row, 1):
+            cell = ws3.cell(row=r_idx, column=c, value=val)
+            cell.alignment = wrap
+            cell.font = normal_10
+
+    ws3.freeze_panes = 'A3'
+
+    # Column widths
+    pf_char_widths = [
+        25, 30, 25, 8, 8, 17, 28, 15,
+        13, 15, 10, 15,
+        10, 12, 14, 24, 15, 12, 17, 17, 10, 15, 14,
+        30, 30, 12, 39,
+    ]
+    for i, w in enumerate(pf_char_widths[:pf_nc], 1):
+        ws3.column_dimensions[get_column_letter(i)].width = w
+
+    # Currency: Portfolio Value (6), Loan Amount (19), Revenue (23)
+    for r in range(3, pf_nr + 3):
+        ws3.cell(row=r, column=6).number_format = '$#,##0'
+        ws3.cell(row=r, column=19).number_format = '$#,##0'
+        ws3.cell(row=r, column=23).number_format = '$#,##0'
+        # Date cols: First Contact (10), Last Contact (12), Appt (17), Close Date (22)
+        for c in [10, 12, 17, 22]:
+            ws3.cell(row=r, column=c).number_format = 'MMM DD, YYYY'
+
+    # Dropdowns
+    pf_dropdowns = {
+        9: 'Phone,Email,LinkedIn,Referral,Direct Mail',
+        13: 'Yes,No,Voicemail',
+        14: 'Yes,No',
+        15: 'Hot,Warm,Cold,Not Interested',
+        16: 'Happy with lender,Not buying,Bad timing,Rate too high,Don\'t qualify,Other',
+        18: 'Yes,No,Pending',
+        20: 'Cash-out Refi,Rate-Term Refi,Purchase,Bridge,Portfolio',
+        21: 'Yes,No,In Progress',
+    }
+    for col_1, vals in pf_dropdowns.items():
+        dv = DataValidation(type="list", formula1=f'"{vals}"', allow_blank=True)
+        ws3.add_data_validation(dv)
+        dv.add(f'{get_column_letter(col_1)}3:{get_column_letter(col_1)}{pf_nr + 2}')
+
+    # Conditional formatting: Closed=Yes (col U=21) green, Revenue>0 (col W=23) bold green
+    ws3.conditional_formatting.add(f'U3:U{pf_nr+2}',
+        CellIsRule(operator='equal', formula=['"Yes"'], fill=green_fill))
+    ws3.conditional_formatting.add(f'W3:W{pf_nr+2}',
+        CellIsRule(operator='greaterThan', formula=['0'],
+                   fill=green_fill, font=Font(bold=True, color='1b5e20')))
+    # Interest Level coloring (col O=15)
+    for label, fill in [('Hot', red_fill), ('Warm', yellow_fill), ('Cold', blue_fill)]:
+        ws3.conditional_formatting.add(f'O3:O{pf_nr+2}',
+            CellIsRule(operator='equal', formula=[f'"{label}"'], fill=fill))
+
+    _alt_rows(ws3, 3, pf_nr + 2, pf_nc)
+    _borders(ws3, 2, pf_nr + 2, pf_nc)
+
+    # ===================================================================
+    # SHEET 4: Dashboard
+    # ===================================================================
+    ws4 = wb.create_sheet("Dashboard")
+    ws4.sheet_properties.tabColor = '9c27b0'
+
+    num = len(pf_rows) + 2  # performance data ends at this row
+
+    # KPI Banner — row 1 labels, row 2 formulas
+    kpi_items = [
+        ('Total Leads', f'=COUNTA(Performance!A3:A{num})'),
+        ('Calls Made', f'=COUNTIF(Performance!I3:I{num},"<>")'),
+        ('Connect Rate', f'=IFERROR(COUNTIF(Performance!M3:M{num},"Yes")/COUNTIF(Performance!I3:I{num},"<>"),0)'),
+        ('Appointments', f'=COUNTA(Performance!Q3:Q{num})'),
+        ('Pipeline $', f'=SUM(Performance!S3:S{num})'),
+        ('Closed $', f'=SUM(Performance!W3:W{num})'),
+    ]
+    kpi_fill = PatternFill('solid', fgColor='e8eaf6')
+    kpi_font = Font(bold=True, size=22, name='Arial')
+    for i, (label, formula) in enumerate(kpi_items):
+        col = i * 2 + 1
+        # Merge label cells
+        ws4.merge_cells(start_row=1, start_column=col, end_row=1, end_column=col + 1)
+        cell = ws4.cell(row=1, column=col, value=label)
+        cell.fill = navy_fill
+        cell.font = Font(bold=True, color='ffffff', size=11, name='Arial')
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        # Merge value cells
+        ws4.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 1)
+        cell = ws4.cell(row=2, column=col, value=formula)
+        cell.fill = kpi_fill
+        cell.font = kpi_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    # Format Connect Rate as %
+    ws4.cell(row=2, column=5).number_format = '0%'
+    # Format Pipeline $ and Closed $ as currency
+    ws4.cell(row=2, column=9).number_format = '$#,##0'
+    ws4.cell(row=2, column=11).number_format = '$#,##0'
+    ws4.row_dimensions[1].height = 35
+    ws4.row_dimensions[2].height = 45
+
+    # ICP breakdown table (row 4 header, row 5 col headers, row 6+ data)
+    r = 4
+    ws4.merge_cells(start_row=r, start_column=1, end_row=r, end_column=7)
+    cell = ws4.cell(row=r, column=1, value='LEADS BY ICP SEGMENT')
+    cell.fill = PatternFill('solid', fgColor='009688')
+    cell.font = white_font_12
+    cell.alignment = Alignment(horizontal='left', vertical='center')
+
+    r = 5
+    for c, h in enumerate(dash_data['icp_header'], 1):
+        cell = ws4.cell(row=r, column=c, value=h)
+        cell.fill = gray_fill
+        cell.font = bold_10
+
+    for i, icp_row in enumerate(dash_data['icp_rows']):
+        r = 6 + i
+        for c, val in enumerate(icp_row, 1):
+            cell = ws4.cell(row=r, column=c, value=val)
+            cell.font = normal_10
+        ws4.cell(row=r, column=3).number_format = '0.0%'
+        ws4.cell(row=r, column=7).number_format = '0%'
+
+    # County breakdown
+    ch = dash_data['county_header_row'] + 1  # convert 0-indexed to 1-indexed
+    ws4.merge_cells(start_row=ch, start_column=1, end_row=ch, end_column=4)
+    cell = ws4.cell(row=ch, column=1, value='CONVERSION BY COUNTY')
+    cell.fill = PatternFill('solid', fgColor='2196f3')
+    cell.font = white_font_12
+    for c, h in enumerate(dash_data['county_header'], 1):
+        cell = ws4.cell(row=ch + 1, column=c, value=h)
+        cell.fill = gray_fill
+        cell.font = bold_10
+    for i, crow in enumerate(dash_data['county_rows']):
+        for c, val in enumerate(crow, 1):
+            ws4.cell(row=ch + 2 + i, column=c, value=val).font = normal_10
+        ws4.cell(row=ch + 2 + i, column=4).number_format = '0%'
+
+    # Objections breakdown
+    oh = dash_data['obj_header_row'] + 1
+    ws4.merge_cells(start_row=oh, start_column=1, end_row=oh, end_column=3)
+    cell = ws4.cell(row=oh, column=1, value='TOP OBJECTIONS')
+    cell.fill = PatternFill('solid', fgColor='ff9800')
+    cell.font = white_font_12
+    for c, h in enumerate(dash_data['obj_header'], 1):
+        cell = ws4.cell(row=oh + 1, column=c, value=h)
+        cell.fill = gray_fill
+        cell.font = bold_10
+    for i, orow in enumerate(dash_data['obj_rows']):
+        for c, val in enumerate(orow, 1):
+            ws4.cell(row=oh + 2 + i, column=c, value=val).font = normal_10
+        ws4.cell(row=oh + 2 + i, column=3).number_format = '0%'
+
+    # Dashboard column widths
+    for i, w in enumerate([32, 12, 13, 13, 13, 16, 13], 1):
+        ws4.column_dimensions[get_column_letter(i)].width = w
+
+    wb.save(XLSX_OUTPUT)
+    print(f"\nFormatted Excel: {XLSX_OUTPUT} ({XLSX_OUTPUT.stat().st_size / 1024:.0f} KB)")
 
 
 # ---------------------------------------------------------------------------
@@ -1293,7 +1678,7 @@ def main():
     pf_rows = build_performance(df)
     dash_data = build_dashboard_data(df)
 
-    export_xlsx(call_rows, bc_rows, pf_rows)
+    export_xlsx(call_rows, bc_rows, pf_rows, dash_data)
 
     if not args.xlsx_only:
         print("\nUploading to Google Sheets...")

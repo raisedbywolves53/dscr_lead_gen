@@ -1,219 +1,135 @@
-# DSCR Lead Generation Pipeline — Claude CLI Context
+# DSCR Lead Generation System — Claude CLI Context
 
-## Project Summary
+## What This Is
 
-This is an automated lead generation system for **DSCR (Debt Service Coverage Ratio) mortgage loans** targeting Florida real estate investors. Built for **Zack / CrossCountry Mortgage (CCM)**.
+A portable, automated lead generation platform for **DSCR (Debt Service Coverage Ratio) mortgage loans**. Deployable in any U.S. market for any loan originator. Identifies investment property owners from public records, enriches with contact data, scores by opportunity, and exports to CRM/outreach tools.
 
-Two pipelines exist:
-1. **`pipeline/`** — Original pipeline (built, Palm Beach data processed, 39K leads)
-2. **`scrape/`** — Active investor intelligence pipeline (in progress, Tracerfy integration)
+## Active Deployments
 
-**Plus the Airtable CRM** — the operational hub where all leads, properties, financing, and opportunities are managed.
+| Market | Counties | Client | Status |
+|--------|----------|--------|--------|
+| Florida | Palm Beach, Broward | Frank Christiano (CCM) | Pipeline built, 7,537 leads, ON HOLD |
+| North Carolina | Wake, Mecklenburg | TBD (prospecting LOs) | Research complete, not yet built |
 
 ---
 
-## Airtable CRM (Active Build)
+## Doc Structure
 
-### Base Details
-- **Base ID:** appJV7J1ZrNEBAWAm
-- **Workspace ID:** wspqb7kWqj5RidMkV
-- **API Token:** stored in `.env` file (key: `AIRTABLE_API_TOKEN`)
-- **Base URL:** https://airtable.com/appJV7J1ZrNEBAWAm
+### System Docs (How the platform works — generic)
+| Doc | What It Covers |
+|-----|---------------|
+| `docs/SYSTEM_OVERVIEW.md` | Architecture, pipeline stages, tech stack, deployment model |
+| `docs/ICP_PLAYBOOK.md` | All ICP segments, scoring matrix, signals, outreach angles |
+| `docs/ENRICHMENT_STACK.md` | Every vendor: cost, verdict, gotchas, API config |
+| `docs/PIPELINE_GUIDE.md` | Step-by-step execution, commands, rate limits, benchmarks |
+| `docs/OUTPUT_SCHEMA.md` | Canonical column definitions (157 columns) |
+| `docs/CRM_SETUP.md` | Airtable base design, Google Sheets MVP, setup process |
+| `docs/COMPLIANCE.md` | DNC, TCPA, state-specific calling rules |
 
-### Build Status (as of 2026-03-06)
+### Deployment Configs (What changes per market/client)
+| Doc | What It Covers |
+|-----|---------------|
+| `deployments/TEMPLATE.md` | Checklist for deploying in a new market |
+| `deployments/florida/CONFIG.md` | FL data sources: FDOR, SunBiz, DBPR, county codes, compliance |
+| `deployments/florida/frank/CLIENT.md` | Frank's deployment: CCM, PB+Broward, Airtable base, costs |
+| `deployments/north_carolina/CONFIG.md` | NC data sources: OneMap, SoS, Register of Deeds, compliance |
 
-**COMPLETED:**
-- All 7 tables (191 fields total, 0 broken formulas/rollups)
-  - Investors (50 fields) — contact info, 10 rollups, 9 formulas, full lead scoring 0-100
-  - Ownership Entities (18 fields) — entity details, 3 rollups, 1 formula
-  - Properties (36 fields) — property details, 3 rollups, 10 formulas, 1 lookup
-  - Financing (35 fields) — loan details, 11 formulas (all trigger flags)
-  - Compliance (15 fields) — DNC/consent tracking, 2 formulas
-  - Opportunities (24 fields) — deal pipeline, 5 formulas + auto timestamps
-  - Outreach Log (13 fields) — activity tracking
-- All 9 link relationships between tables
-- Rollup chains: Financing → Properties → Investors
-- Test CSV data in `airtable/test_data/`
+### Pipeline Code
+| Location | What It Contains |
+|----------|-----------------|
+| `scrape/scripts/` | All pipeline scripts (01-20) |
+| `scrape/config/` | JSON configs (scoring weights, counties, enrichment sources) |
+| `scrape/data/` | Pipeline output data (gitignored) |
+| `scrape/CLAUDE.md` | Pipeline-specific context |
+| `scrape/PIPELINE.md` | Execution spec for scripts |
 
-**NOT YET DONE (Zack is working through these manually on desktop):**
-Follow `airtable/NEXT_STEPS_Sequential_Guide.md`:
-1. Phase 1: Quick Fixes (delete Table 8, rename Trigger County, add 2 missing fields)
-2. Phase 2: 24 Views (all manual in Airtable UI)
-3. Phase 3: 8 Automations (all manual)
-4. Phase 4: Test Upload (CSVs ready in `airtable/test_data/`)
-5. Phase 5: 4 Interfaces/Dashboards
-6. Phase 6: Full 7,500 lead import + HubSpot sync
+### CRM & Output
+| Location | What It Contains |
+|----------|-----------------|
+| `airtable/` | CRM integration scripts (build, upload, validate) |
+| `docs/airtable/` | Step-by-step Airtable setup guides (views, automations, interfaces) |
+| `scrape/scripts/build_google_sheets.py` | Google Sheets export |
 
-### Key Airtable Files
-- `DSCR_Airtable_Build_Guide.md` — Master spec (1,162 lines): all fields, formulas, views, automations, interfaces
-- `airtable/NEXT_STEPS_Sequential_Guide.md` — Step-by-step manual instructions for remaining work
-- `airtable/Airtable_AI_Field_Prompts.md` — AI prompts used to create 32 formula/rollup fields
-- `airtable/airtable_build_v2.py` — API script that created the base skeleton (tokens redacted)
-- `airtable/create_remaining_fields.py` — Attempted API field creation (blocked by API limitations)
-- `airtable/test_data/` — Test CSVs + README with expected trigger results
+### Archive
+| Location | What It Contains |
+|----------|-----------------|
+| `archive/README.md` | Index of all archived content |
+| `archive/pipeline_v1/` | Original Palm Beach pipeline (superseded by scrape/) |
+| `archive/florida_frank/` | Frank-specific docs |
+| `archive/docs_v1/` | Pre-consolidation docs |
+| `archive/research/` | Deep-dive research memos (Feb 2026) |
 
-### Important Technical Notes
-- Airtable API CANNOT create formula, rollup, createdTime, or lastModifiedTime fields
-- Airtable AI assistant CANNOT create views or automations
-- Financing trigger fields lack emoji prefixes (e.g., "Hard Money Flag" not "🚨 Hard Money Flag")
-- "Trigger County" on Properties is actually Trigger Count rollup (typo, needs rename)
-- Rollup aggregations show as "NONE" in API metadata — this is normal, they work
+---
 
-### How To Validate via API
-```python
-import os, requests
-API_TOKEN = os.getenv('AIRTABLE_API_TOKEN')  # stored in .env file
-BASE_ID = 'appJV7J1ZrNEBAWAm'
-headers = {'Authorization': f'Bearer {API_TOKEN}'}
-resp = requests.get(f'https://api.airtable.com/v0/meta/bases/{BASE_ID}/tables', headers=headers)
-data = resp.json()
-for table in data['tables']:
-    broken = sum(1 for f in table['fields'] if f['type'] in ('formula','rollup') and f.get('options',{}).get('result') is None)
-    print(f"{table['name']}: {len(table['fields'])} fields" + (f" ({broken} BROKEN)" if broken else ""))
+## Pipeline Architecture
+
+```
+01 Download Property Data    (state-specific)
+02 Parse & Standardize       (state-specific)
+03 Score & Filter by ICP     (config-driven)
+04 Entity Resolution         (state-specific: SoS registry)
+05 Contact Enrichment        (state-agnostic)
+08 Skip Trace (Tracerfy)     (state-agnostic)
+05b Merge Sources            (state-agnostic)
+06 Validate (phone/email)    (state-agnostic)
+07 Export Campaign-Ready     (state-agnostic)
+─────────────────────────────────────────────
+11 Clerk Mortgage Records    (county-specific)
+12 Purchase History          (state-specific)
+13 Rental Estimates          (state-agnostic: HUD)
+14 Wealth Signals            (state-agnostic: FEC/990)
+15 Network Mapping           (state-agnostic)
+16 Life Events               (county-specific)
+20 Build Dossier             (state-agnostic)
 ```
 
 ---
 
-## Key Files & Where to Find Things
+## Enrichment Stack (Tested & Verified)
 
-### Docs (all reference docs in `docs/`)
-- `docs/strategy.md` — Comprehensive data acquisition & outreach strategy
-- `docs/icp_definitions.md` — All 19 ICP segments with signals, sources, and classification logic
-- `docs/airtable_build_guide.md` — Complete Airtable CRM spec
-- `docs/e2e_execution_plan.md` — Step-by-step instructions to run the original pipeline
-- `docs/pipeline_runbook.md` — Data flow, troubleshooting, memory management, known issues
-- `docs/output_spec.md` — Final Excel format, column definitions, tab structure
-- `docs/verified_pricing.md` — Fact-checked vendor pricing
-- `docs/todo_for_frank.md` — Action items for Frank
-- `docs/data_sources.md` — Every data field mapped to its source
-- `docs/airtable/` — Airtable CRM setup guides (views, automations, interfaces)
-
-### Scrape Pipeline (Active Development)
-- `scrape/CLAUDE.md` — Full project specification, data schema, design principles
-- `scrape/PIPELINE.md` — Execution spec for all scripts (01-20)
-- `scrape/ICP_CRITERIA.md` — Scoring weights for scrape pipeline
-- `scrape/research/county_clerk_research.md` — PB/Broward clerk portal findings
-
-### Archived Research (Background Context)
-- `archive/DSCR_Research_Memo.md` — Core DSCR market intelligence, lender comparison
-- `archive/DSCR_Research_Memo_Part2.md` — Competitive landscape, referral ecosystem
-- `archive/Phase1_ICP_Sourcing_Playbook.md` — Tactical ICP sourcing guide
-- `archive/SAMPLE_VALIDATION_REPORT.md` — 50-lead validation results
-- `archive/research/01-05_*.md` — Deep-dive research (product mechanics, ICPs, competition, market sizing, vendors)
-
-### Original Pipeline Code
-- `pipeline/scripts/run_pipeline.py` — Master orchestrator (runs all steps)
-- `pipeline/scripts/01_chunked_filter.py` — Step 1: FDOR property filter (memory-efficient)
-- `pipeline/scripts/08_refi_simple.py` — Step 2: Refinance candidate detection
-- `pipeline/scripts/02_sunbiz_resolve.py` — Step 3: LLC-to-human resolution via SunBiz
-- `pipeline/scripts/03_dbpr_str.py` — Step 4: Vacation rental license tagging
-- `pipeline/scripts/04_sec_edgar.py` — Step 5: SEC fund manager identification
-- `pipeline/scripts/05_enrich_contacts.py` — Step 6: Phone/email enrichment
-- `pipeline/scripts/06_score_and_output.py` — Step 7: ICP scoring + Excel generation
-
-### Scrape Pipeline Code
-- `scrape/scripts/01_download_nal.py` — Download FDOR NAL files
-- `scrape/scripts/02_parse_nal.py` — Parse & standardize property data
-- `scrape/scripts/03_filter_icp.py` — Score and filter by ICP criteria
-- `scrape/scripts/04_sunbiz_llc_resolver.py` — Resolve LLCs to people via SunBiz
-- `scrape/scripts/05_enrich_contacts.py` — Multi-source contact enrichment + county filter
-- `scrape/scripts/05b_merge_enrichment.py` — Merge all enrichment sources
-- `scrape/scripts/06_validate_contacts.py` — Email/phone/DNC validation
-- `scrape/scripts/07_export_campaign_ready.py` — Export for outreach platforms
-- `scrape/scripts/08_tracerfy_skip_trace.py` — Tracerfy API skip trace + DNC scrub
-- `scrape/scripts/10_apollo_enrich.py` — Apollo.io API enrichment
-- `scrape/scripts/11-16, 20` — Phase 2 intelligence scripts (specced, not all built)
-
-### Pipeline Module Docs
-- `pipeline/01_fdor_property_data.md` through `pipeline/08_refi_candidates.md`
-- `pipeline/README.md` — Architecture overview
-- `pipeline/output_schema.md` — Output column schema
-
-### MVP (Current Focus)
-- `scrape/data/mvp/pilot_500_master.csv` — Clean master dataset (500 leads, 157 cols)
-- `scrape/data/mvp/dscr_mvp_sheets.xlsx` — Local backup of Google Sheets
-- `scrape/scripts/build_pilot_master.py` — Data cleanup + talking points generator
-- `scrape/scripts/build_google_sheets.py` — Google Sheets export (3 tabs)
-- Google Sheet: https://docs.google.com/spreadsheets/d/10Acu2VQHHkn_-LBRooytHpgC8FsfAeRNY1WT3DPM2RE/edit
-
-### Data Locations
-- `pipeline/data/` — Raw FDOR/DBPR source files (gitignored, large)
-- `scrape/data/enriched/` — Enrichment results (Tracerfy, Apollo, rent estimates)
-- `scrape/data/financing/` — Lender/mortgage data (ATTOM, clerk records)
-- `scrape/data/history/` — Purchase history (SDF data)
-- `scrape/data/signals/` — Wealth signals (FEC, SunBiz entities)
-- `scrape/data/validated/` — Phone/email validated leads
-- `scrape/data/mvp/` — MVP output files
-- `credentials/` — OAuth credentials (gitignored)
+| Vendor | Role | Cost | Verdict |
+|--------|------|------|---------|
+| Tracerfy | Skip trace | $0.02/match | PRIMARY — charges per match, not upload |
+| MillionVerifier | Email validation | $4.90/2K | USE — credits never expire |
+| Twilio v2 | Phone type | $0.008/lookup | USE — must use v2 API |
+| Apollo.io | B2B enrichment | $99/mo | CANCEL — returns nothing for RE investors |
+| Datazapp | Batch skip trace | $125 minimum | AVOID — terrible for small runs |
+| ATTOM | Mortgage data | $95-500/mo | OPTIONAL — 133/500 match rate |
 
 ---
 
-## Current Execution Flow (Scrape Pipeline)
-
-```
-Step 1: Select + filter PB/Broward leads    → scrape/data/enriched/top_leads_enriched.csv
-Step 2: Tracerfy skip trace ($0.02/lead)     → scrape/data/enriched/tracerfy_results.csv
-Step 3: Merge all enrichment sources         → scrape/data/enriched/merged_enriched.csv
-Step 4: Validate emails + phones + DNC       → scrape/data/validated/merged_validated.csv
-Step 5: Export campaign-ready lists          → scrape/data/campaign_ready/
-```
-
-```bash
-python scrape/scripts/05_enrich_contacts.py --counties "palm beach,broward"
-python scrape/scripts/08_tracerfy_skip_trace.py
-python scrape/scripts/05b_merge_enrichment.py
-python scrape/scripts/06_validate_contacts.py --county merged
-python scrape/scripts/07_export_campaign_ready.py --county merged
-```
-
----
-
-## Skip Trace & Enrichment Stack
-
-| Provider | Cost | Role | Status |
-|----------|------|------|--------|
-| Tracerfy | $0.02/match, no minimums | Primary skip trace | CONFIGURED — $57.84 spent |
-| Tracerfy DNC | $0.02/phone | Federal+State+DMA+TCPA litigator scrub | Optional |
-| Datazapp | $125 minimum/transaction | Second-pass on Tracerfy misses | $75 balance, unused |
-| Apollo.io | $99/mo | B2B enrichment | Returns nothing for LLC investors — cancel? |
-| FTC DNC | Free (4 area codes) | Federal DNC compliance | NEED TO REGISTER |
-| MillionVerifier | $4.90 one-time | Email validation | NEED API KEY |
-| Twilio | Free $15 trial | Phone type detection | NEED API KEY |
-
-**Total cost for full PB/Broward run (7,537 leads): $156-$226**
-
----
-
-## Critical Technical Notes
-
-### Memory Management
-- Palm Beach NAL file is 343MB / 654K rows — **MUST use chunked processing**
-- Use `01_chunked_filter.py` (NOT `01_fdor_download_filter.py`) to avoid OOM kills
-
-### Rate Limiting
-- SunBiz: 3-second delay between requests
-- Tracerfy: max 10 POST requests per 5 minutes
-- SEC EDGAR: 7 requests/second
-
-### Data Quality Known Issues
-- FDOR `SALE_YR1`/`SALE_PRC1` reflects most recent sale only
-- Equity ratio is estimated (JV vs. sale price); no mortgage balance from FDOR
-- SunBiz web scraping may hit Cloudflare blocks — uses session cookies + retry
-- DBPR matching is fuzzy (address normalization) — ~70-80% match rate
-- Apollo.io returns 0 contact data for private RE investors through LLCs
-- Datazapp has $125 minimum per transaction (not per-match as advertised)
+## Key Technical Notes
 
 ### Dependencies
 ```bash
 pip install pandas openpyxl requests beautifulsoup4 python-dotenv
 ```
 
+### API Keys (.env)
+```
+TRACERFY_API_KEY=        # Primary skip trace
+MILLIONVERIFIER_API_KEY= # Email validation
+TWILIO_ACCOUNT_SID=      # Phone validation
+TWILIO_AUTH_TOKEN=
+ATTOM_API_KEY=           # Optional: mortgage data
+TWOCAPTCHA_API_KEY=      # Optional: clerk portal CAPTCHA
+AIRTABLE_API_TOKEN=      # CRM
+FEC_API_KEY=DEMO_KEY     # Wealth signals (free)
+```
+
+### Data Quality Gotchas
+- Always load property CSVs with `dtype=str` (booleans are strings)
+- Entity names (LLC/Corp/Trust) → blank first/last for skip trace
+- Tracerfy charges per MATCH, not per upload (much cheaper than estimated)
+- MillionVerifier: if credits exhausted, API returns errors that look like "invalid"
+- Twilio: must use v2 API (v1 returns no carrier data on free trial)
+
 ---
 
 ## Contact & Ownership
 
-- **User**: Zack, Mortgage Loan Originator (DSCR specialist)
-- **Focus Market**: Palm Beach + Broward County, Florida
-- **Target Scale**: All 67 FL counties, then nationwide
-- **Pipeline Date**: March 2026
-- **GitHub**: https://github.com/raisedbywolves53/dscr_lead_gen.git
+- **Builder:** Zack (building system to sell to LOs)
+- **Current client:** Frank Christiano, CCM (FL, on hold)
+- **Next target:** NC loan originators (prospecting)
+- **Goal:** Portable system deployable in any U.S. market
+- **Repo:** https://github.com/raisedbywolves53/dscr_lead_gen.git
