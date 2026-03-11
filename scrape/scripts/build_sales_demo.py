@@ -938,91 +938,198 @@ def build_nc_sample(wb):
 # Tab 4: What You Get — deliverables and pricing
 # ---------------------------------------------------------------------------
 def build_pricing(wb):
-    """Build pricing/deliverables tab."""
+    """Build two-program pricing tab."""
     print("  Building Tab 4: What You Get...")
 
     ws = wb.create_sheet("What You Get", 3)
+    SPAN = 7  # total columns used
+
+    RED_FILL = PatternFill(start_color="b71c1c", end_color="b71c1c", fill_type="solid")
+    DARK_TEAL_FILL = PatternFill(start_color="00695c", end_color="00695c", fill_type="solid")
+    DARK_BLUE_FILL = PatternFill(start_color="0d47a1", end_color="0d47a1", fill_type="solid")
 
     # Title
-    ws.merge_cells("A1:F1")
-    ws["A1"].value = "DSCR Lead Intelligence — What You Get"
+    ws.merge_cells(f"A1:G1")
+    ws["A1"].value = "DSCR Lead Intelligence — Two Ways to Win"
     ws["A1"].font = Font(name="Arial", size=16, bold=True, color="1a237e")
     ws.row_dimensions[1].height = 40
 
-    # --- The Problem ---
+    # =====================================================================
+    # THE PROBLEM
+    # =====================================================================
     r = 3
-    write_section_header(ws, r, 1, "THE PROBLEM", PatternFill(start_color="b71c1c", end_color="b71c1c", fill_type="solid"), span=6)
+    write_section_header(ws, r, 1, "THE PROBLEM", RED_FILL, span=SPAN)
     r += 1
     problems = [
         "You're cold-calling random homeowners who don't own investment property",
         "Platforms like PropStream / BatchData cost $700+/mo and give you the same list everyone else has",
         "You have no idea which investors actually need DSCR financing right now",
         "You waste hours dialing wrong numbers and dead-end leads",
+        "Even when you find investors, you don't know their current lender, equity position, or refi urgency",
     ]
     for p in problems:
-        ws.cell(row=r, column=1, value="•").font = BOLD_FONT
-        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=6)
+        ws.cell(row=r, column=1, value="X").font = Font(name="Arial", size=10, bold=True, color="b71c1c")
+        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=SPAN)
         ws.cell(row=r, column=2, value=p).font = BODY_FONT
         r += 1
 
-    # --- The Solution ---
+    # =====================================================================
+    # THE SOLUTION — Two Programs
+    # =====================================================================
     r += 1
-    write_section_header(ws, r, 1, "THE SOLUTION", GREEN_FILL, span=6)
+    write_section_header(ws, r, 1, "TWO PROGRAMS — CHOOSE YOUR LEVEL", NAVY_FILL, span=SPAN)
+    r += 2
+
+    # --- PROGRAM 1: Deal Intelligence ---
+    write_section_header(ws, r, 1, "PROGRAM 1:  DEAL INTELLIGENCE PLATFORM", DARK_TEAL_FILL, span=SPAN)
     r += 1
-    solutions = [
-        ("Targeted investors only", "Every lead owns investment property — verified from public records, scored by DSCR opportunity"),
-        ("Scored & prioritized", "Each lead gets an ICP score (0-100) based on portfolio size, LLC ownership, absentee status, property value, and more"),
-        ("Contact-enriched", "Phone numbers (cell + landline), validated emails, skip-traced and verified"),
-        ("Financing intelligence", "Current lender, estimated equity, refi priority, cash-out potential, talking points"),
-        ("Your market, your data", "Built specifically for YOUR counties — not a generic national list"),
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=SPAN)
+    ws.cell(row=r, column=1, value="We deliver the investor dossiers. You make the calls.").font = Font(name="Arial", size=11, italic=True, color="00695c")
+    ws.row_dimensions[r].height = 25
+    r += 2
+
+    # What you get
+    ws.cell(row=r, column=1, value="What's Included:").font = Font(name="Arial", size=11, bold=True, color="00695c")
+    r += 1
+    p1_features = [
+        "Scored investor dossiers — portfolio size, property values, equity positions, LLC details",
+        "Verified contact data — mobile phone numbers + validated email addresses",
+        "Financing intelligence — current lender, interest rate, loan maturity, refi urgency flags",
+        "Personalized talking points — AI-generated pitch script tailored to each investor's situation",
+        "ICP scoring (0-100) — every lead ranked by DSCR opportunity strength",
+        "Monthly data refresh — new investors, new transactions, updated scores",
+        "Professional Google Sheet / CRM delivery — ready to work from day one",
     ]
-    for title, desc in solutions:
-        ws.cell(row=r, column=1, value="✓").font = Font(name="Arial", size=10, bold=True, color="2e7d32")
-        ws.cell(row=r, column=2, value=title).font = BOLD_FONT
-        ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=6)
-        ws.cell(row=r, column=3, value=desc).font = BODY_FONT
-        ws.cell(row=r, column=3).alignment = Alignment(wrap_text=True)
-        ws.row_dimensions[r].height = 30
+    for feat in p1_features:
+        ws.cell(row=r, column=1, value="-->").font = Font(name="Arial", size=10, bold=True, color="00695c")
+        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=SPAN)
+        ws.cell(row=r, column=2, value=feat).font = BODY_FONT
+        ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
+        ws.row_dimensions[r].height = 22
         r += 1
 
-    # --- What's Included ---
     r += 1
-    write_section_header(ws, r, 1, "WHAT'S INCLUDED", NAVY_FILL, span=6)
+
+    # Program 1 tiers
+    p1_headers = ["Tier", "Monthly", "Dossiers / Month", "Counties", "Refresh Cycle", "Best For"]
+    for i, h in enumerate(p1_headers, 1):
+        ws.cell(row=r, column=i, value=h)
+    apply_header_row(ws, r, DARK_TEAL_FILL, len(p1_headers))
     r += 1
-    deliverables = [
-        ("Scored Lead List", "500-1,000+ investment property owners in your target counties, scored and tiered"),
-        ("Contact Data", "Phone numbers (45%+ match rate) and validated email addresses"),
-        ("ICP Segments", "Portfolio Landlord, LLC Investor, STR Operator, Cash Buyer, Absentee Owner — each tagged"),
-        ("Financing Angles", "Estimated equity, current lender, refi priority, personalized talking points"),
-        ("Google Sheet / CRM", "Professional spreadsheet with call sheet, battlecards, and performance tracking"),
-        ("Monthly Refresh", "Updated data each month as new sales, LLCs, and transactions hit public records"),
+
+    p1_tiers = [
+        ("Starter", "$1,500/mo", "250 Tier 1", "2 counties", "Monthly", "Solo LO testing the system"),
+        ("Pro", "$3,000/mo", "750 Tier 1 + Tier 2", "5 counties", "Bi-weekly", "Active LO or small team"),
+        ("Enterprise", "$5,000+/mo", "Unlimited", "Full state", "Weekly", "Teams, brokerages, lender desks"),
     ]
-
-    ws.cell(row=r, column=1, value="Deliverable").font = HEADER_FONT
-    ws.cell(row=r, column=1).fill = NAVY_FILL
-    ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=6)
-    ws.cell(row=r, column=2, value="Details").font = HEADER_FONT
-    ws.cell(row=r, column=2).fill = NAVY_FILL
-    for c in range(1, 7):
-        ws.cell(row=r, column=c).fill = NAVY_FILL
-        ws.cell(row=r, column=c).border = THIN_BORDER
-    r += 1
-
-    for title, desc in deliverables:
-        ws.cell(row=r, column=1, value=title).font = BOLD_FONT
-        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=6)
-        ws.cell(row=r, column=2, value=desc).font = BODY_FONT
-        ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
-        for c in range(1, 7):
+    for tier_name, price, dossiers, counties, refresh, best_for in p1_tiers:
+        ws.cell(row=r, column=1, value=tier_name).font = BOLD_FONT
+        ws.cell(row=r, column=2, value=price).font = Font(name="Arial", size=11, bold=True, color="00695c")
+        ws.cell(row=r, column=3, value=dossiers).font = BODY_FONT
+        ws.cell(row=r, column=4, value=counties).font = BODY_FONT
+        ws.cell(row=r, column=5, value=refresh).font = BODY_FONT
+        ws.cell(row=r, column=6, value=best_for).font = Font(name="Arial", size=9, color="666666")
+        for c in range(1, len(p1_headers) + 1):
             ws.cell(row=r, column=c).border = THIN_BORDER
         ws.row_dimensions[r].height = 28
         r += 1
 
-    # --- Comparison ---
+    r += 2
+
+    # --- PROGRAM 2: Done-For-You Outbound ---
+    write_section_header(ws, r, 1, "PROGRAM 2:  DONE-FOR-YOU OUTBOUND ENGINE", DARK_BLUE_FILL, span=SPAN)
     r += 1
-    write_section_header(ws, r, 1, "VS. THE ALTERNATIVES", ORANGE_FILL, span=6)
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=SPAN)
+    ws.cell(row=r, column=1, value="We run the campaigns. You show up when investors respond.").font = Font(name="Arial", size=11, italic=True, color="0d47a1")
+    ws.row_dimensions[r].height = 25
+    r += 2
+
+    # What you get
+    ws.cell(row=r, column=1, value="Everything in Program 1, plus:").font = Font(name="Arial", size=11, bold=True, color="0d47a1")
     r += 1
-    comp_headers = ["", "This System", "PropStream", "BatchData", "Reonomy", "DIY / Cold Call"]
+    p2_features = [
+        "Multi-step email sequences — personalized outreach sent on your behalf to scored investors",
+        "Direct mail campaigns — targeted postcards/letters to highest-value leads",
+        "LinkedIn outreach — connection requests + messages to investor decision-makers",
+        "Response management — warm handoffs when investors reply, with full context",
+        "Campaign analytics — open rates, response rates, meetings booked, pipeline tracking",
+        "A/B testing — subject lines, messaging angles, channel mix optimization",
+        "You never touch a cold lead — only talk to investors who raised their hand",
+    ]
+    for feat in p2_features:
+        ws.cell(row=r, column=1, value="-->").font = Font(name="Arial", size=10, bold=True, color="0d47a1")
+        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=SPAN)
+        ws.cell(row=r, column=2, value=feat).font = BODY_FONT
+        ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
+        ws.row_dimensions[r].height = 22
+        r += 1
+
+    r += 1
+
+    # Program 2 tiers
+    p2_headers = ["Tier", "Monthly", "Leads / Month", "Channels", "Direct Mail", "Best For"]
+    for i, h in enumerate(p2_headers, 1):
+        ws.cell(row=r, column=i, value=h)
+    apply_header_row(ws, r, DARK_BLUE_FILL, len(p2_headers))
+    r += 1
+
+    p2_tiers = [
+        ("Launch", "$3,500/mo", "500", "Email + Direct Mail", "500 pieces/mo", "LO who wants hands-off lead gen"),
+        ("Growth", "$5,000/mo", "1,000", "Email + Mail + LinkedIn", "750 pieces/mo", "Growing team, multiple markets"),
+        ("Scale", "$7,500+/mo", "2,000+", "Full multi-channel", "1,000+ pieces/mo", "Brokerage or lender desk"),
+    ]
+    for tier_name, price, leads, channels, mail, best_for in p2_tiers:
+        ws.cell(row=r, column=1, value=tier_name).font = BOLD_FONT
+        ws.cell(row=r, column=2, value=price).font = Font(name="Arial", size=11, bold=True, color="0d47a1")
+        ws.cell(row=r, column=3, value=leads).font = BODY_FONT
+        ws.cell(row=r, column=4, value=channels).font = BODY_FONT
+        ws.cell(row=r, column=5, value=mail).font = BODY_FONT
+        ws.cell(row=r, column=6, value=best_for).font = Font(name="Arial", size=9, color="666666")
+        for c in range(1, len(p2_headers) + 1):
+            ws.cell(row=r, column=c).border = THIN_BORDER
+        ws.row_dimensions[r].height = 28
+        r += 1
+
+    # =====================================================================
+    # THE MATH — Why this is a no-brainer
+    # =====================================================================
+    r += 2
+    write_section_header(ws, r, 1, "THE MATH — WHY THIS PAYS FOR ITSELF", PatternFill(start_color="1b5e20", end_color="1b5e20", fill_type="solid"), span=SPAN)
+    r += 1
+
+    math_rows = [
+        ("Average DSCR loan size", "$400,000", ""),
+        ("Your commission (1.5%)", "$6,000 per funded deal", ""),
+        ("One repeat investor (5+ loans over time)", "$30,000+ lifetime value", ""),
+        ("", "", ""),
+        ("Program 1 Starter cost", "$1,500/mo", ""),
+        ("Deals needed to break even", "1 deal per quarter", "= $6,000 commission vs $4,500 in fees"),
+        ("", "", ""),
+        ("Program 2 Launch cost", "$3,500/mo", ""),
+        ("Deals needed to break even", "1 deal every 2 months", "= $6,000 commission vs $7,000 in fees"),
+        ("After breakeven, every deal is pure upside", "", "And DSCR investors come back — they buy 3-10+ properties"),
+    ]
+    for label, value, note in math_rows:
+        if not label and not value:
+            r += 1
+            continue
+        ws.cell(row=r, column=1, value=label).font = BOLD_FONT if label else BODY_FONT
+        ws.cell(row=r, column=2, value=value).font = Font(name="Arial", size=11, bold=True, color="1b5e20") if value else BODY_FONT
+        if note:
+            ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=SPAN)
+            ws.cell(row=r, column=3, value=note).font = Font(name="Arial", size=9, italic=True, color="666666")
+        for c in range(1, 3):
+            ws.cell(row=r, column=c).border = THIN_BORDER
+        r += 1
+
+    # =====================================================================
+    # VS. THE ALTERNATIVES
+    # =====================================================================
+    r += 2
+    write_section_header(ws, r, 1, "VS. WHAT YOU'RE PAYING NOW", ORANGE_FILL, span=SPAN)
+    r += 1
+
+    comp_headers = ["", "Our System", "PropStream", "Zillow", "Lead Gen Agency", "DIY Cold Call"]
     for i, h in enumerate(comp_headers, 1):
         ws.cell(row=r, column=i, value=h)
     apply_header_row(ws, r, ORANGE_FILL, len(comp_headers))
@@ -1030,39 +1137,66 @@ def build_pricing(wb):
 
     comparisons = [
         ("DSCR-specific scoring", "Yes", "No", "No", "No", "No"),
-        ("Investor-only leads", "Yes", "Partial", "Partial", "Yes", "No"),
-        ("Contact enrichment", "Included", "$$ extra", "$$ extra", "$$ extra", "Manual"),
-        ("Financing intelligence", "Yes", "Basic", "No", "Basic", "No"),
+        ("Investor-only leads", "Yes", "Partial", "No", "Partial", "No"),
+        ("Portfolio & equity intel", "Yes", "No", "No", "No", "No"),
+        ("Current lender + refi signals", "Yes", "No", "No", "No", "No"),
+        ("Verified mobile phone", "Included", "$$ extra", "Shared", "Shared", "Manual"),
         ("Personalized talking points", "Yes", "No", "No", "No", "No"),
+        ("Done-for-you outreach", "Program 2", "No", "No", "Yes", "No"),
+        ("Exclusive to you", "Yes", "No", "No", "Sometimes", "Yes"),
         ("Custom to your market", "Yes", "Generic", "Generic", "Generic", "N/A"),
-        ("Monthly cost", "Contact us", "$99/mo", "$200+/mo", "$500+/mo", "Your time"),
+        ("Monthly cost", "From $1,500", "$199+", "$1,000-4,000", "$1,500-5,000", "Your time"),
+        ("Cost per funded deal", "< $1,500", "Unknown", "$3,750+", "$2,000+", "Infinite hours"),
     ]
     for row_data in comparisons:
         for i, val in enumerate(row_data, 1):
             cell = ws.cell(row=r, column=i, value=val)
             cell.font = BODY_FONT
             cell.border = THIN_BORDER
-            if i == 2 and val == "Yes":
+            if i == 2 and val in ("Yes", "Included", "Program 2"):
                 cell.fill = LIGHT_GREEN_FILL
-                cell.font = BOLD_FONT
-            elif i == 2 and val == "Included":
-                cell.fill = LIGHT_GREEN_FILL
-                cell.font = BOLD_FONT
+                cell.font = Font(name="Arial", size=10, bold=True, color="1b5e20")
             elif val == "No":
                 cell.fill = LIGHT_RED_FILL
         ws.cell(row=r, column=1).font = BOLD_FONT
+        ws.row_dimensions[r].height = 22
         r += 1
 
-    # --- CTA ---
+    # =====================================================================
+    # PILOT OFFER
+    # =====================================================================
     r += 2
-    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
-    ws.cell(row=r, column=1).value = "Ready to see your market's data? Let's talk."
+    write_section_header(ws, r, 1, "START HERE — $500 PILOT", NAVY_FILL, span=SPAN)
+    r += 1
+
+    pilot_lines = [
+        ("What you get:", "100 Tier 1 investor dossiers in your target market — fully scored, skip-traced, contact-verified"),
+        ("Delivered as:", "Professional Google Sheet with dossiers, scoring breakdown, and talking points"),
+        ("Timeline:", "5 business days from kickoff"),
+        ("Risk:", "Zero. If the data isn't worth 10x what you paid, walk away."),
+        ("What happens next:", "If the leads work, we set you up on a monthly program. If they don't, you're out $500."),
+    ]
+    for label, value in pilot_lines:
+        ws.cell(row=r, column=1, value=label).font = BOLD_FONT
+        ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=SPAN)
+        ws.cell(row=r, column=2, value=value).font = BODY_FONT
+        ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
+        for c in range(1, SPAN + 1):
+            ws.cell(row=r, column=c).border = THIN_BORDER
+            ws.cell(row=r, column=c).fill = LIGHT_BLUE_FILL
+        ws.row_dimensions[r].height = 28
+        r += 1
+
+    # CTA
+    r += 2
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=SPAN)
+    ws.cell(row=r, column=1).value = "Ready to see what's in your market? Let's talk."
     ws.cell(row=r, column=1).font = Font(name="Arial", size=14, bold=True, color="1a237e")
     ws.cell(row=r, column=1).alignment = Alignment(horizontal="center")
-    ws.row_dimensions[r].height = 40
+    ws.row_dimensions[r].height = 45
 
     # Column widths
-    widths = [22, 18, 14, 14, 14, 14]
+    widths = [28, 22, 18, 18, 18, 18, 18]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
