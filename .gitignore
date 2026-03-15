@@ -32,6 +32,10 @@ archive/pipeline_v1/output/
 # Keep data structure in git via .gitkeep
 !scrape/data/**/.gitkeep
 
+# Sales demo (small, needed on all machines)
+!scrape/data/demo/
+!scrape/data/demo/dscr_sales_demo.xlsx
+
 # Images (reference screenshots, not code)
 *.jpg
 *.png
