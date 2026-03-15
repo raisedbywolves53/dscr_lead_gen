@@ -8,7 +8,10 @@ Everything in this directory is preserved for reference. It has been superseded 
 The original Palm Beach pipeline (scripts + docs). Built February-March 2026. Superseded by the `scrape/` pipeline which has all the same capabilities plus enrichment, skip trace, and intelligence layers.
 
 ### `florida_frank/`
-Frank Christiano-specific docs (action items, CRM setup instructions). Client-specific content moved out of system-level docs.
+FL client-specific docs (action items, CRM setup instructions). Client-specific content moved out of system-level docs.
+
+### `airtable_crm/`
+Airtable CRM integration scripts (build, upload, validate, refresh). Archived — CRM strategy TBD for future deployments.
 
 ### `docs_v1/`
 Original documentation files before consolidation. These were merged into 7 canonical docs:

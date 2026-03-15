@@ -149,7 +149,7 @@ NC-based mortgage loan officers who originate DSCR / non-QM investment property 
 |---|-------|---------|--------|
 | 1 | Sample Dossier PDF | Show prospects what they get | BUILD |
 | 2 | LinkedIn Profile Rewrite | Credibility + discovery | BUILD |
-| 3 | Frank Testimonial | Social proof | ASK FRANK |
+| 3 | Client Testimonial | Social proof | NEED FIRST CLIENT |
 | 4 | One-Pager PDF | Leave-behind for meetups + email | BUILD |
 | 5 | Cold Email Domain | Protect primary domain | BUY |
 | 6 | Prospect Tracker | Track outreach pipeline | BUILD (Airtable or Sheet) |
@@ -163,7 +163,7 @@ NC-based mortgage loan officers who originate DSCR / non-QM investment property 
 - [ ] Rewrite LinkedIn profile (headline, about, featured)
 - [ ] Build sample dossier PDF (3 demo leads)
 - [ ] Build one-pager PDF
-- [ ] Get Frank testimonial (video, quote, or reference permission)
+- [ ] Get first client testimonial (video, quote, or reference permission)
 - [ ] Start LinkedIn connection requests (50+)
 - [ ] Find 3+ REI meetups in Raleigh/Charlotte area
 

@@ -6,10 +6,10 @@ A portable, automated lead generation platform for **DSCR (Debt Service Coverage
 
 ## Active Deployments
 
-| Market | Counties | Client | Status |
-|--------|----------|--------|--------|
-| Florida | Palm Beach, Broward | Frank Christiano (CCM) | Pipeline built, 7,537 leads, ON HOLD |
-| North Carolina | Wake, Mecklenburg | TBD (prospecting LOs) | Research complete, not yet built |
+| Market | Counties | Status |
+|--------|----------|--------|
+| North Carolina | Wake, Mecklenburg | Primary — research complete, pipeline in progress |
+| Florida | Palm Beach, Broward | Pipeline built, 7,537 leads, on hold |
 
 ---
 
@@ -31,7 +31,7 @@ A portable, automated lead generation platform for **DSCR (Debt Service Coverage
 |-----|---------------|
 | `deployments/TEMPLATE.md` | Checklist for deploying in a new market |
 | `deployments/florida/CONFIG.md` | FL data sources: FDOR, SunBiz, DBPR, county codes, compliance |
-| `deployments/florida/frank/CLIENT.md` | Frank's deployment: CCM, PB+Broward, Airtable base, costs |
+| `deployments/florida/CLIENT.md` | FL deployment: CCM, PB+Broward, Airtable base, costs |
 | `deployments/north_carolina/CONFIG.md` | NC data sources: OneMap, SoS, Register of Deeds, compliance |
 
 ### Pipeline Code
@@ -43,19 +43,19 @@ A portable, automated lead generation platform for **DSCR (Debt Service Coverage
 | `scrape/CLAUDE.md` | Pipeline-specific context |
 | `scrape/PIPELINE.md` | Execution spec for scripts |
 
-### CRM & Output
+### Output & Export
 | Location | What It Contains |
 |----------|-----------------|
-| `airtable/` | CRM integration scripts (build, upload, validate) |
-| `docs/airtable/` | Step-by-step Airtable setup guides (views, automations, interfaces) |
 | `scrape/scripts/build_google_sheets.py` | Google Sheets export |
+| `archive/airtable_crm/` | Airtable CRM scripts (archived — may revisit later) |
+| `docs/airtable/` | Airtable setup guides (archived reference) |
 
 ### Archive
 | Location | What It Contains |
 |----------|-----------------|
 | `archive/README.md` | Index of all archived content |
 | `archive/pipeline_v1/` | Original Palm Beach pipeline (superseded by scrape/) |
-| `archive/florida_frank/` | Frank-specific docs |
+| `archive/florida_frank/` | FL client-specific docs |
 | `archive/docs_v1/` | Pre-consolidation docs |
 | `archive/research/` | Deep-dive research memos (Feb 2026) |
 
@@ -113,7 +113,7 @@ TWILIO_ACCOUNT_SID=      # Phone validation
 TWILIO_AUTH_TOKEN=
 ATTOM_API_KEY=           # Optional: mortgage data
 TWOCAPTCHA_API_KEY=      # Optional: clerk portal CAPTCHA
-AIRTABLE_API_TOKEN=      # CRM
+AIRTABLE_API_TOKEN=      # CRM (archived, optional)
 FEC_API_KEY=DEMO_KEY     # Wealth signals (free)
 ```
 
@@ -128,8 +128,8 @@ FEC_API_KEY=DEMO_KEY     # Wealth signals (free)
 
 ## Contact & Ownership
 
-- **Builder:** Zack (building system to sell to LOs)
-- **Current client:** Frank Christiano, CCM (FL, on hold)
-- **Next target:** NC loan originators (prospecting)
+- **Builder:** Zack
+- **Business model:** Source DSCR investor leads + sell to loan officers nationwide
+- **Current focus:** Raleigh / Wake County NC (first market)
 - **Goal:** Portable system deployable in any U.S. market
 - **Repo:** https://github.com/raisedbywolves53/dscr_lead_gen.git
