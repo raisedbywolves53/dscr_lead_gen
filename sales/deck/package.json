@@ -1,0 +1,12 @@
+{
+  "name": "dscr-pitchbook",
+  "version": "1.0.0",
+  "description": "DSCR Lead Intelligence pitchbook generator",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}

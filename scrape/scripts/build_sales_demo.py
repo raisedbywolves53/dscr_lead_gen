@@ -38,6 +38,10 @@ OUTPUT_DIR = DATA_DIR / "demo"
 XLSX_OUTPUT = OUTPUT_DIR / "dscr_sales_demo.xlsx"
 TOKEN_FILE = PROJECT_DIR / "google_token.json"
 
+# Enriched showcase data (from enrich_showcase_leads.py)
+SHOWCASE_ENRICHED = OUTPUT_DIR / "showcase_enriched.csv"
+SHOWCASE_PROPS = OUTPUT_DIR / "showcase_properties.csv"
+
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.file",
@@ -197,13 +201,31 @@ def write_dossier_field(ws, row, col, label, value, label_fill=None):
 
 
 # ---------------------------------------------------------------------------
-# Tab 1: Investor Dossiers (FL) — deep-dive showcase
+# Tab 1: Investor Dossiers (FL) — deep-dive showcase (UPGRADED)
 # ---------------------------------------------------------------------------
 def build_fl_proof(wb):
-    """Build deep dossiers for 5 showcase FL investors."""
+    """Build deep dossiers for 5 showcase FL investors.
+
+    If enriched data exists (from enrich_showcase_leads.py), uses:
+      - Per-property detail tables with individual values
+      - All phone numbers (up to 8)
+      - All emails (up to 5)
+      - Enhanced talking points with specific $ figures
+      - Human-readable property types
+    """
     print("  Building Tab 1: Investor Dossiers (FL)...")
 
     df = pd.read_csv(FL_INPUT, dtype=str)
+
+    # Load enriched data if available
+    enriched = None
+    props_detail = None
+    if SHOWCASE_ENRICHED.exists():
+        enriched = pd.read_csv(SHOWCASE_ENRICHED, dtype=str)
+        print("    Using enriched showcase data")
+    if SHOWCASE_PROPS.exists():
+        props_detail = pd.read_csv(SHOWCASE_PROPS, dtype=str)
+        print(f"    Loaded {len(props_detail)} per-property records")
 
     ws = wb.create_sheet("Investor Dossiers (FL)", 0)
 
@@ -233,6 +255,13 @@ def build_fl_proof(wb):
             continue
         lead = match.iloc[0]
 
+        # Check for enriched version of this lead
+        e_lead = None
+        if enriched is not None:
+            e_match = enriched[enriched["OWN_NAME"] == real_name]
+            if len(e_match) > 0:
+                e_lead = e_match.iloc[0]
+
         # --- Dossier Header ---
         write_section_header(ws, r, 1, f"INVESTOR {idx + 1}:  {anon_name}", NAVY_FILL, span=6)
         ws.row_dimensions[r].height = 30
@@ -242,7 +271,33 @@ def build_fl_proof(wb):
         write_section_header(ws, r, 1, "IDENTITY & CONTACT", PatternFill(start_color="1565c0", end_color="1565c0", fill_type="solid"), span=6)
         r += 1
 
-        # Two columns of fields side by side
+        # Collect all phones for display
+        phones_display = []
+        if e_lead is not None:
+            all_phones = str(e_lead.get("all_phones", "")).strip()
+            if all_phones and all_phones != "nan":
+                phones_display = [p.strip() for p in all_phones.split("|") if p.strip()]
+        if not phones_display:
+            p1 = safe_val(lead, "phone_1", "")
+            if p1:
+                phones_display = [p1]
+
+        # Collect all emails for display
+        emails_display = []
+        if e_lead is not None:
+            all_emails = str(e_lead.get("all_emails", "")).strip()
+            if all_emails and all_emails != "nan":
+                emails_display = [e.strip() for e in all_emails.split("|") if e.strip()]
+        if not emails_display:
+            e1 = safe_val(lead, "email_1", "")
+            if e1:
+                emails_display = [e1]
+
+        phone_str = phones_display[0] if phones_display else "Not yet enriched"
+        email_str = emails_display[0] if emails_display else "Not yet enriched"
+        phone_count_str = f" (+{len(phones_display)-1} more)" if len(phones_display) > 1 else ""
+        email_count_str = f" (+{len(emails_display)-1} more)" if len(emails_display) > 1 else ""
+
         fields_left = [
             ("Investor Type", safe_val(lead, "_icp")),
             ("ICP Score", f'{safe_val(lead, "_score")} / 100'),
@@ -252,9 +307,9 @@ def build_fl_proof(wb):
         ]
         fields_right = [
             ("Decision Maker", safe_val(lead, "contact_name", safe_val(lead, "resolved_person", "N/A"))),
-            ("Phone", safe_val(lead, "phone_1", "Not yet enriched")),
+            ("Phone", f"{phone_str}{phone_count_str}"),
             ("Phone Type", safe_val(lead, "phone_1_type", "—")),
-            ("Email", safe_val(lead, "email_1", "Not yet enriched")),
+            ("Email", f"{email_str}{email_count_str}"),
             ("Absentee?", "Yes — out of state" if safe_val(lead, "out_of_state") == "True" else "Yes — in state" if safe_val(lead, "is_absentee") == "True" else "No"),
         ]
 
@@ -264,22 +319,44 @@ def build_fl_proof(wb):
             ws.cell(row=r, column=2).fill = bg
             write_dossier_field(ws, r, 4, rl, rv, bg)
             ws.cell(row=r, column=5).fill = bg
-            # Highlight phone/email cells green if populated
-            if rl == "Phone" and rv != "Not yet enriched":
+            if rl == "Phone" and "Not yet" not in rv:
                 ws.cell(row=r, column=5).fill = LIGHT_GREEN_FILL
-            if rl == "Email" and rv != "Not yet enriched":
+            if rl == "Email" and "Not yet" not in rv:
                 ws.cell(row=r, column=5).fill = LIGHT_GREEN_FILL
             r += 1
 
+        # Show additional phones/emails if enriched
+        if len(phones_display) > 1:
+            write_dossier_field(ws, r, 4, "All Phones", " | ".join(phones_display), LIGHT_GREEN_FILL)
+            ws.cell(row=r, column=5).fill = LIGHT_GREEN_FILL
+            r += 1
+        if len(emails_display) > 1:
+            write_dossier_field(ws, r, 4, "All Emails", " | ".join(emails_display), LIGHT_GREEN_FILL)
+            ws.cell(row=r, column=5).fill = LIGHT_GREEN_FILL
+            r += 1
+
+        # LinkedIn placeholder
+        write_dossier_field(ws, r, 4, "LinkedIn", "[Manual lookup required]", WHITE_FILL)
         r += 1
 
-        # === PORTFOLIO ===
+        r += 1
+
+        # === PORTFOLIO (UPGRADED with per-property detail) ===
         write_section_header(ws, r, 1, "PORTFOLIO", PatternFill(start_color="00796b", end_color="00796b", fill_type="solid"), span=6)
         r += 1
 
-        prop_count = safe_val(lead, "property_count", "1")
-        addresses = str(lead.get("PHY_ADDR1", "")).split(" | ")
-        total_val = safe_val(lead, "total_portfolio_value")
+        # Use enriched counts if available
+        if e_lead is not None:
+            prop_count = safe_val(e_lead, "prop_count_verified", safe_val(lead, "property_count", "1"))
+            total_val = safe_val(e_lead, "total_value_verified", safe_val(lead, "total_portfolio_value"))
+            total_eq = safe_val(e_lead, "total_equity_verified", safe_val(lead, "est_portfolio_equity", safe_val(lead, "estimated_equity")))
+            eq_pct = safe_val(e_lead, "equity_pct_verified", safe_val(lead, "est_equity_pct", safe_val(lead, "equity_ratio", "0")))
+        else:
+            prop_count = safe_val(lead, "property_count", "1")
+            total_val = safe_val(lead, "total_portfolio_value")
+            total_eq = safe_val(lead, "est_portfolio_equity", safe_val(lead, "estimated_equity"))
+            eq_pct = safe_val(lead, "est_equity_pct", safe_val(lead, "equity_ratio", "0"))
+
         avg_val = safe_val(lead, "avg_property_value")
 
         portfolio_fields = [
@@ -287,8 +364,8 @@ def build_fl_proof(wb):
             ("Total Portfolio Value", fmt_currency(total_val)),
             ("Avg Property Value", fmt_currency(avg_val)),
             ("Property Types", safe_val(lead, "property_types")),
-            ("Estimated Portfolio Equity", fmt_currency(safe_val(lead, "est_portfolio_equity", safe_val(lead, "estimated_equity")))),
-            ("Equity %", f'{float(safe_val(lead, "est_equity_pct", safe_val(lead, "equity_ratio", "0"))):.1f}%' if safe_val(lead, "est_equity_pct") or safe_val(lead, "equity_ratio") else "—"),
+            ("Estimated Portfolio Equity", fmt_currency(total_eq)),
+            ("Equity %", f'{float(eq_pct):.1f}%' if eq_pct and str(eq_pct) not in ("", "nan", "0") else "—"),
             ("Max Cash-Out (75% LTV)", fmt_currency(safe_val(lead, "portfolio_cashout_75", safe_val(lead, "max_cashout_75")))),
         ]
         for i, (lbl, val) in enumerate(portfolio_fields):
@@ -297,35 +374,67 @@ def build_fl_proof(wb):
             ws.cell(row=r, column=2).fill = bg
             r += 1
 
-        # Property address table
+        # Per-property detail table (UPGRADED)
         r += 1
-        ws.cell(row=r, column=1, value="Property Addresses").font = Font(name="Arial", size=10, bold=True, color="00796b")
-        r += 1
-        addr_headers = ["#", "Address", "Est. Value"]
-        for i, h in enumerate(addr_headers, 1):
-            ws.cell(row=r, column=i, value=h)
-        apply_header_row(ws, r, TEAL_FILL, 3)
+        ws.cell(row=r, column=1, value="Per-Property Detail").font = Font(name="Arial", size=10, bold=True, color="00796b")
         r += 1
 
-        # Estimate per-property value (divide total evenly as approximation)
-        try:
-            per_prop_val = float(total_val) / max(len(addresses), 1)
-        except (ValueError, TypeError):
-            per_prop_val = 0
+        # Check if we have enriched per-property data
+        owner_props = None
+        if props_detail is not None:
+            owner_props = props_detail[props_detail["owner_real"] == real_name]
 
-        for pi, addr in enumerate(addresses):
-            addr = addr.strip()
-            if not addr:
-                continue
-            ws.cell(row=r, column=1, value=pi + 1).font = BODY_FONT
-            ws.cell(row=r, column=1).alignment = Alignment(horizontal="center")
-            ws.cell(row=r, column=2, value=f"{addr}, Palm Beach County, FL").font = BODY_FONT
-            ws.cell(row=r, column=3, value=fmt_currency(per_prop_val)).font = BODY_FONT
-            bg = LIGHT_GRAY_FILL if pi % 2 == 0 else WHITE_FILL
-            for c in range(1, 4):
-                ws.cell(row=r, column=c).fill = bg
-                ws.cell(row=r, column=c).border = THIN_BORDER
+        if owner_props is not None and len(owner_props) > 0:
+            # UPGRADED: Full per-property table with mortgage data
+            prop_headers = ["#", "Address", "Est. Value", "Type", "Lender", "Rate", "Est. Equity"]
+            for i, h in enumerate(prop_headers, 1):
+                ws.cell(row=r, column=i, value=h)
+            apply_header_row(ws, r, TEAL_FILL, len(prop_headers))
             r += 1
+
+            for pi, (_, prop) in enumerate(owner_props.iterrows()):
+                ws.cell(row=r, column=1, value=pi + 1).font = BODY_FONT
+                ws.cell(row=r, column=1).alignment = Alignment(horizontal="center")
+                ws.cell(row=r, column=2, value=str(prop.get("address", ""))).font = BODY_FONT
+                ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
+                ws.cell(row=r, column=3, value=fmt_currency(prop.get("est_value", 0))).font = BODY_FONT
+                ws.cell(row=r, column=4, value=str(prop.get("property_type", ""))).font = BODY_FONT
+                ws.cell(row=r, column=5, value=str(prop.get("lender", ""))).font = BODY_FONT
+                rate_val = str(prop.get("est_rate", "")).strip()
+                ws.cell(row=r, column=6, value=f"{rate_val}%" if rate_val and rate_val != "nan" else "—").font = BODY_FONT
+                ws.cell(row=r, column=7, value=fmt_currency(prop.get("est_equity", 0))).font = BODY_FONT
+                bg = LIGHT_GRAY_FILL if pi % 2 == 0 else WHITE_FILL
+                for c in range(1, len(prop_headers) + 1):
+                    ws.cell(row=r, column=c).fill = bg
+                    ws.cell(row=r, column=c).border = THIN_BORDER
+                r += 1
+        else:
+            # Fallback: old-style address list
+            addr_headers = ["#", "Address", "Est. Value"]
+            for i, h in enumerate(addr_headers, 1):
+                ws.cell(row=r, column=i, value=h)
+            apply_header_row(ws, r, TEAL_FILL, 3)
+            r += 1
+
+            addresses = str(lead.get("PHY_ADDR1", "")).split(" | ")
+            try:
+                per_prop_val = float(total_val) / max(len(addresses), 1)
+            except (ValueError, TypeError):
+                per_prop_val = 0
+
+            for pi, addr in enumerate(addresses):
+                addr = addr.strip()
+                if not addr:
+                    continue
+                ws.cell(row=r, column=1, value=pi + 1).font = BODY_FONT
+                ws.cell(row=r, column=1).alignment = Alignment(horizontal="center")
+                ws.cell(row=r, column=2, value=f"{addr}, Palm Beach County, FL").font = BODY_FONT
+                ws.cell(row=r, column=3, value=fmt_currency(per_prop_val)).font = BODY_FONT
+                bg = LIGHT_GRAY_FILL if pi % 2 == 0 else WHITE_FILL
+                for c in range(1, 4):
+                    ws.cell(row=r, column=c).fill = bg
+                    ws.cell(row=r, column=c).border = THIN_BORDER
+                r += 1
 
         r += 1
 
@@ -353,7 +462,6 @@ def build_fl_proof(wb):
             bg = LIGHT_GRAY_FILL if i % 2 == 0 else WHITE_FILL
             write_dossier_field(ws, r, 1, lbl, val, bg)
             ws.cell(row=r, column=2).fill = bg
-            # Highlight urgent items
             if "YES" in str(val):
                 ws.cell(row=r, column=2).fill = LIGHT_GREEN_FILL
                 ws.cell(row=r, column=2).font = Font(name="Arial", size=10, bold=True, color="2e7d32")
@@ -404,19 +512,29 @@ def build_fl_proof(wb):
 
         r += 1
 
-        # === TALKING POINTS ===
+        # === TALKING POINTS (UPGRADED) ===
         write_section_header(ws, r, 1, "TALKING POINTS (AI-GENERATED)", PatternFill(start_color="616161", end_color="616161", fill_type="solid"), span=6)
         r += 1
-        tp = safe_val(lead, "talking_points", "No talking points generated")
-        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+
+        # Use enhanced talking points if available
+        if e_lead is not None:
+            tp = safe_val(e_lead, "enhanced_talking_points", "")
+        else:
+            tp = ""
+        if not tp:
+            tp = safe_val(lead, "talking_points", "No talking points generated")
+
+        ws.merge_cells(start_row=r, start_column=1, end_row=r + 2, end_column=6)
         tp_cell = ws.cell(row=r, column=1, value=tp)
         tp_cell.font = Font(name="Arial", size=10, italic=True, color="333333")
         tp_cell.alignment = Alignment(wrap_text=True, vertical="top")
         tp_cell.border = THIN_BORDER
         ws.row_dimensions[r].height = 50
-        r += 2
+        ws.row_dimensions[r + 1].height = 50
+        ws.row_dimensions[r + 2].height = 50
+        r += 4
 
-        # Separator between dossiers — use a merged single-row bar
+        # Separator between dossiers
         if idx < len(SHOWCASE_LEADS) - 1:
             ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
             ws.cell(row=r, column=1).fill = PatternFill(start_color="1a237e", end_color="1a237e", fill_type="solid")
@@ -441,8 +559,8 @@ def build_fl_proof(wb):
         ws.cell(row=r, column=2).fill = bg
         r += 1
 
-    # Column widths
-    widths = [28, 35, 18, 28, 35, 18]
+    # Column widths (wider to accommodate per-property table)
+    widths = [28, 40, 18, 28, 40, 18]
     for i, w in enumerate(widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 

@@ -47,6 +47,11 @@ archive/pipeline_v1/pipeline/output/
 *.png
 *.jpeg
 
+# Generated sales assets (rebuild from scripts)
+sales/internal/cost_model.xlsx
+sales/deck/dscr_pitchbook.pptx
+sales/deck/node_modules/
+
 # Large files
 *.zip
 *.parquet
