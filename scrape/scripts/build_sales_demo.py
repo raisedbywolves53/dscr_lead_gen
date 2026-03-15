@@ -141,15 +141,17 @@ def apply_data_rows(ws, start_row, end_row, num_cols):
 
 
 def write_section_header(ws, row, col, text, fill, span=3):
-    """Write a colored section header spanning multiple columns."""
+    """Write a colored section header spanning multiple columns.
+
+    Merges FIRST, then writes only to the top-left cell to avoid
+    Excel repair warnings about content inside merged regions.
+    """
+    ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col + span - 1)
     cell = ws.cell(row=row, column=col, value=text)
     cell.font = HEADER_FONT
     cell.fill = fill
     cell.alignment = Alignment(horizontal="center", vertical="center")
-    for c in range(col, col + span):
-        ws.cell(row=row, column=c).fill = fill
-        ws.cell(row=row, column=c).border = THIN_BORDER
-    ws.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col + span - 1)
+    cell.border = THIN_BORDER
 
 
 # ---------------------------------------------------------------------------
@@ -407,16 +409,17 @@ def build_fl_proof(wb):
         r += 1
         tp = safe_val(lead, "talking_points", "No talking points generated")
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
-        ws.cell(row=r, column=1, value=tp).font = Font(name="Arial", size=10, italic=True, color="333333")
-        ws.cell(row=r, column=1).alignment = Alignment(wrap_text=True, vertical="top")
-        ws.cell(row=r, column=1).border = THIN_BORDER
+        tp_cell = ws.cell(row=r, column=1, value=tp)
+        tp_cell.font = Font(name="Arial", size=10, italic=True, color="333333")
+        tp_cell.alignment = Alignment(wrap_text=True, vertical="top")
+        tp_cell.border = THIN_BORDER
         ws.row_dimensions[r].height = 50
         r += 2
 
-        # Separator between dossiers
+        # Separator between dossiers — use a merged single-row bar
         if idx < len(SHOWCASE_LEADS) - 1:
-            for c in range(1, 7):
-                ws.cell(row=r, column=c).fill = PatternFill(start_color="1a237e", end_color="1a237e", fill_type="solid")
+            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=6)
+            ws.cell(row=r, column=1).fill = PatternFill(start_color="1a237e", end_color="1a237e", fill_type="solid")
             ws.row_dimensions[r].height = 4
             r += 2
 
@@ -532,28 +535,35 @@ def build_nc_market(wb):
     r += 1
 
     # Source
-    ws.cell(row=r, column=1, value="Data Source").font = BOLD_FONT
+    src_label = ws.cell(row=r, column=1, value="Data Source")
+    src_label.font = BOLD_FONT
+    src_label.border = THIN_BORDER
+    src_label.fill = LIGHT_BLUE_FILL
     ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=8)
-    ws.cell(row=r, column=2, value="NC OneMap — North Carolina's official statewide parcel database, maintained by the NC Center for Geographic Information & Analysis. Free, public record.").font = BODY_FONT
-    ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
-    for c in range(1, 9):
-        ws.cell(row=r, column=c).border = THIN_BORDER
-        ws.cell(row=r, column=c).fill = LIGHT_BLUE_FILL
+    src_val = ws.cell(row=r, column=2, value="NC OneMap — North Carolina's official statewide parcel database, maintained by the NC Center for Geographic Information & Analysis. Free, public record.")
+    src_val.font = BODY_FONT
+    src_val.alignment = Alignment(wrap_text=True)
+    src_val.border = THIN_BORDER
+    src_val.fill = LIGHT_BLUE_FILL
     ws.row_dimensions[r].height = 35
     r += 1
 
-    ws.cell(row=r, column=1, value="API Endpoint").font = BOLD_FONT
+    api_label = ws.cell(row=r, column=1, value="API Endpoint")
+    api_label.font = BOLD_FONT
+    api_label.border = THIN_BORDER
     ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=8)
-    ws.cell(row=r, column=2, value="services.nconemap.gov/secure/rest/services/NC1Map_Parcels/FeatureServer/1").font = Font(name="Arial", size=9, color="666666")
-    for c in range(1, 9):
-        ws.cell(row=r, column=c).border = THIN_BORDER
+    api_val = ws.cell(row=r, column=2, value="services.nconemap.gov/secure/rest/services/NC1Map_Parcels/FeatureServer/1")
+    api_val.font = Font(name="Arial", size=9, color="666666")
+    api_val.border = THIN_BORDER
     r += 1
 
-    ws.cell(row=r, column=1, value="Date Pulled").font = BOLD_FONT
+    date_label = ws.cell(row=r, column=1, value="Date Pulled")
+    date_label.font = BOLD_FONT
+    date_label.border = THIN_BORDER
     ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=8)
-    ws.cell(row=r, column=2, value="March 2026 — data refreshes as counties update their tax rolls").font = BODY_FONT
-    for c in range(1, 9):
-        ws.cell(row=r, column=c).border = THIN_BORDER
+    date_val = ws.cell(row=r, column=2, value="March 2026 — data refreshes as counties update their tax rolls")
+    date_val.font = BODY_FONT
+    date_val.border = THIN_BORDER
     r += 2
 
     # --- DATA FUNNEL ---
@@ -695,21 +705,19 @@ def build_nc_market(wb):
 
     for i, (value, label) in enumerate(kpis):
         col = (i * 2) + 1
-        # Merge 2 columns per KPI
+        # Merge 2 columns per KPI — merge first, then write only to top-left
         ws.merge_cells(start_row=kpi_row, start_column=col, end_row=kpi_row, end_column=col + 1)
         ws.merge_cells(start_row=kpi_row + 1, start_column=col, end_row=kpi_row + 1, end_column=col + 1)
         cell_val = ws.cell(row=kpi_row, column=col, value=value)
         cell_val.font = METRIC_FONT
         cell_val.alignment = Alignment(horizontal="center")
+        cell_val.fill = LIGHT_BLUE_FILL
+        cell_val.border = THIN_BORDER
         cell_lbl = ws.cell(row=kpi_row + 1, column=col, value=label)
         cell_lbl.font = METRIC_LABEL_FONT
         cell_lbl.alignment = Alignment(horizontal="center")
-        # Light background
-        for c in range(col, col + 2):
-            ws.cell(row=kpi_row, column=c).fill = LIGHT_BLUE_FILL
-            ws.cell(row=kpi_row + 1, column=c).fill = LIGHT_BLUE_FILL
-            ws.cell(row=kpi_row, column=c).border = THIN_BORDER
-            ws.cell(row=kpi_row + 1, column=c).border = THIN_BORDER
+        cell_lbl.fill = LIGHT_BLUE_FILL
+        cell_lbl.border = THIN_BORDER
 
     ws.row_dimensions[kpi_row].height = 40
     ws.row_dimensions[kpi_row + 1].height = 22
@@ -917,12 +925,12 @@ def build_nc_sample(wb):
     # Locked row at bottom
     lr = end_row + 2
     ws.merge_cells(start_row=lr, start_column=1, end_row=lr, end_column=11)
-    ws.cell(row=lr, column=1).value = (
+    lock_cell = ws.cell(row=lr, column=1, value=(
         "Contact data (phone, email, LinkedIn) is added via skip trace enrichment. "
         "That's the deliverable — scored leads with verified contact info, ready for outreach."
-    )
-    ws.cell(row=lr, column=1).font = Font(name="Arial", size=10, bold=True, color="e65100")
-    ws.cell(row=lr, column=1).alignment = Alignment(wrap_text=True)
+    ))
+    lock_cell.font = Font(name="Arial", size=10, bold=True, color="e65100")
+    lock_cell.alignment = Alignment(wrap_text=True)
     ws.row_dimensions[lr].height = 35
 
     # Column widths
@@ -984,7 +992,8 @@ def build_pricing(wb):
     write_section_header(ws, r, 1, "PROGRAM 1:  DEAL INTELLIGENCE PLATFORM", DARK_TEAL_FILL, span=SPAN)
     r += 1
     ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=SPAN)
-    ws.cell(row=r, column=1, value="We deliver the investor dossiers. You make the calls.").font = Font(name="Arial", size=11, italic=True, color="00695c")
+    p1_desc = ws.cell(row=r, column=1, value="We deliver the investor dossiers. You make the calls.")
+    p1_desc.font = Font(name="Arial", size=11, italic=True, color="00695c")
     ws.row_dimensions[r].height = 25
     r += 2
 
@@ -1040,7 +1049,8 @@ def build_pricing(wb):
     write_section_header(ws, r, 1, "PROGRAM 2:  DONE-FOR-YOU OUTBOUND ENGINE", DARK_BLUE_FILL, span=SPAN)
     r += 1
     ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=SPAN)
-    ws.cell(row=r, column=1, value="We run the campaigns. You show up when investors respond.").font = Font(name="Arial", size=11, italic=True, color="0d47a1")
+    p2_desc = ws.cell(row=r, column=1, value="We run the campaigns. You show up when investors respond.")
+    p2_desc.font = Font(name="Arial", size=11, italic=True, color="0d47a1")
     ws.row_dimensions[r].height = 25
     r += 2
 
@@ -1103,23 +1113,25 @@ def build_pricing(wb):
         ("One repeat investor (5+ loans over time)", "$30,000+ lifetime value", ""),
         ("", "", ""),
         ("Program 1 Starter cost", "$1,500/mo", ""),
-        ("Deals needed to break even", "1 deal per quarter", "= $6,000 commission vs $4,500 in fees"),
+        ("Deals needed to break even", "1 deal per quarter", "$6,000 commission vs $4,500 in fees"),
         ("", "", ""),
         ("Program 2 Launch cost", "$3,500/mo", ""),
-        ("Deals needed to break even", "1 deal every 2 months", "= $6,000 commission vs $7,000 in fees"),
+        ("Deals needed to break even", "1 deal every 2 months", "$6,000 commission vs $7,000 in fees"),
         ("After breakeven, every deal is pure upside", "", "And DSCR investors come back — they buy 3-10+ properties"),
     ]
     for label, value, note in math_rows:
         if not label and not value:
             r += 1
             continue
-        ws.cell(row=r, column=1, value=label).font = BOLD_FONT if label else BODY_FONT
-        ws.cell(row=r, column=2, value=value).font = Font(name="Arial", size=11, bold=True, color="1b5e20") if value else BODY_FONT
+        lbl_cell = ws.cell(row=r, column=1, value=label)
+        lbl_cell.font = BOLD_FONT if label else BODY_FONT
+        lbl_cell.border = THIN_BORDER
+        val_cell = ws.cell(row=r, column=2, value=value)
+        val_cell.font = Font(name="Arial", size=11, bold=True, color="1b5e20") if value else BODY_FONT
+        val_cell.border = THIN_BORDER
         if note:
             ws.merge_cells(start_row=r, start_column=3, end_row=r, end_column=SPAN)
             ws.cell(row=r, column=3, value=note).font = Font(name="Arial", size=9, italic=True, color="666666")
-        for c in range(1, 3):
-            ws.cell(row=r, column=c).border = THIN_BORDER
         r += 1
 
     # =====================================================================
@@ -1178,21 +1190,23 @@ def build_pricing(wb):
     ]
     for label, value in pilot_lines:
         ws.cell(row=r, column=1, value=label).font = BOLD_FONT
+        ws.cell(row=r, column=1).border = THIN_BORDER
+        ws.cell(row=r, column=1).fill = LIGHT_BLUE_FILL
         ws.merge_cells(start_row=r, start_column=2, end_row=r, end_column=SPAN)
-        ws.cell(row=r, column=2, value=value).font = BODY_FONT
-        ws.cell(row=r, column=2).alignment = Alignment(wrap_text=True)
-        for c in range(1, SPAN + 1):
-            ws.cell(row=r, column=c).border = THIN_BORDER
-            ws.cell(row=r, column=c).fill = LIGHT_BLUE_FILL
+        val_cell = ws.cell(row=r, column=2, value=value)
+        val_cell.font = BODY_FONT
+        val_cell.alignment = Alignment(wrap_text=True)
+        val_cell.border = THIN_BORDER
+        val_cell.fill = LIGHT_BLUE_FILL
         ws.row_dimensions[r].height = 28
         r += 1
 
     # CTA
     r += 2
     ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=SPAN)
-    ws.cell(row=r, column=1).value = "Ready to see what's in your market? Let's talk."
-    ws.cell(row=r, column=1).font = Font(name="Arial", size=14, bold=True, color="1a237e")
-    ws.cell(row=r, column=1).alignment = Alignment(horizontal="center")
+    cta_cell = ws.cell(row=r, column=1, value="Ready to see what's in your market? Let's talk.")
+    cta_cell.font = Font(name="Arial", size=14, bold=True, color="1a237e")
+    cta_cell.alignment = Alignment(horizontal="center")
     ws.row_dimensions[r].height = 45
 
     # Column widths
@@ -1312,8 +1326,59 @@ def main():
     build_nc_sample(wb)
     build_pricing(wb)
 
-    # Save XLSX
+    # Save XLSX (initial)
     wb.save(str(XLSX_OUTPUT))
+
+    # Post-save fixup: strip style/value attributes from cells inside merged ranges
+    # directly in the XML. openpyxl leaks theme styling into these cells which causes
+    # Excel to show a "found a problem with some content" repair warning.
+    import zipfile, shutil, re as _re
+    import xml.etree.ElementTree as ET
+    from openpyxl.utils import range_boundaries
+    from openpyxl.utils.cell import get_column_letter as _gcl
+
+    tmp_path = str(XLSX_OUTPUT) + ".tmp"
+    ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    ET.register_namespace("", ns)
+    # Also register common spreadsheet namespaces to avoid ns0/ns1 prefixes
+    ET.register_namespace("r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
+    ET.register_namespace("mc", "http://schemas.openxmlformats.org/markup-compatibility/2006")
+    ET.register_namespace("x14ac", "http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac")
+
+    with zipfile.ZipFile(str(XLSX_OUTPUT), "r") as zin, \
+         zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if _re.match(r"xl/worksheets/sheet\d+\.xml", item.filename):
+                tree = ET.parse(zin.open(item.filename))
+                root = tree.getroot()
+                # Build set of all cell refs inside merged ranges (excluding top-left)
+                merged_interior = set()
+                for mc_el in root.iter(f"{{{ns}}}mergeCell"):
+                    ref = mc_el.get("ref", "")
+                    if ":" not in ref:
+                        continue
+                    min_col, min_row, max_col, max_row = range_boundaries(ref)
+                    for r in range(min_row, max_row + 1):
+                        for c in range(min_col, max_col + 1):
+                            if r == min_row and c == min_col:
+                                continue
+                            merged_interior.add(f"{_gcl(c)}{r}")
+                # Strip style and value from cells inside merged ranges
+                for row_el in root.iter(f"{{{ns}}}row"):
+                    for c_el in list(row_el):
+                        ref = c_el.get("r", "")
+                        if ref in merged_interior:
+                            # Remove style index and any child elements (value, formula)
+                            if "s" in c_el.attrib:
+                                del c_el.attrib["s"]
+                            if "t" in c_el.attrib:
+                                del c_el.attrib["t"]
+                            for child in list(c_el):
+                                c_el.remove(child)
+                data = ET.tostring(root, xml_declaration=True, encoding="UTF-8")
+            zout.writestr(item, data)
+    shutil.move(tmp_path, str(XLSX_OUTPUT))
     size_kb = XLSX_OUTPUT.stat().st_size / 1024
     print(f"\n  SAVED: {XLSX_OUTPUT.name} ({size_kb:.0f} KB)")
 
