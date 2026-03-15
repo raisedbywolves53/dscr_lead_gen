@@ -28,6 +28,8 @@ scrape/google_token.json
 scrape/data/
 archive/pipeline_v1/data/
 archive/pipeline_v1/output/
+archive/pipeline_v1/pipeline/data/
+archive/pipeline_v1/pipeline/output/
 
 # Keep data structure in git via .gitkeep
 !scrape/data/**/.gitkeep
