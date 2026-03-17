@@ -1,0 +1,16 @@
+Cell,Market,Cohort,Cohort Name,Results,Email %,Phone %,LinkedIn %,Reachable %,Relevant %,Independent %,Composite
+pittsburgh_B,pittsburgh,B,DSCR Specialist LOs,25,76%,0%,100%,100%,100%,64%,84.6
+philadelphia_B,philadelphia,B,DSCR Specialist LOs,25,84%,0%,100%,100%,100%,60%,84.0
+indianapolis_B,indianapolis,B,DSCR Specialist LOs,25,84%,0%,100%,100%,100%,40%,81.0
+cleveland_B,cleveland,B,DSCR Specialist LOs,25,100%,0%,100%,100%,100%,32%,79.8
+kansas_city_B,kansas_city,B,DSCR Specialist LOs,25,68%,0%,100%,100%,100%,24%,78.6
+philadelphia_A,philadelphia,A,Branch Managers,25,80%,0%,100%,100%,96%,16%,76.0
+philadelphia_C,philadelphia,C,Wholesale Lender AEs,25,88%,0%,100%,100%,80%,40%,74.0
+pittsburgh_C,pittsburgh,C,Wholesale Lender AEs,25,88%,0%,100%,100%,80%,40%,74.0
+pittsburgh_A,pittsburgh,A,Branch Managers,25,92%,0%,100%,100%,84%,28%,73.6
+indianapolis_A,indianapolis,A,Branch Managers,25,80%,0%,100%,100%,92%,8%,73.4
+kansas_city_A,kansas_city,A,Branch Managers,25,92%,0%,100%,100%,84%,20%,72.4
+indianapolis_C,indianapolis,C,Wholesale Lender AEs,25,72%,0%,100%,100%,64%,52%,70.2
+cleveland_A,cleveland,A,Branch Managers,25,88%,0%,100%,100%,80%,12%,69.8
+kansas_city_C,kansas_city,C,Wholesale Lender AEs,25,80%,0%,100%,100%,68%,32%,68.6
+cleveland_C,cleveland,C,Wholesale Lender AEs,25,92%,0%,100%,100%,44%,32%,60.2
