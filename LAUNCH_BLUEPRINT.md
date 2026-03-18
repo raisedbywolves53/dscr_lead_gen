@@ -80,44 +80,76 @@ We find the investor → We reach out → Investor responds
 
 ## Pricing Strategy
 
-### Pilot: Prove Concept ($500 / 5 Warm Introductions)
+Two product tiers, flat per-lead pricing, volume discounts. Semi-exclusive (each lead sold to a limited number of buyers per market). Going for volume.
 
-| Element | Detail |
-|---------|--------|
-| Deliverable | 5 qualified warm introductions (investor expressed interest in DSCR lending options) |
-| What the LO gets | Investor name, full dossier (portfolio, financing, scoring), and a warm handoff ("I'd like to connect you with [LO]") |
-| Cost per intro | $100 |
-| Our COGS | ~$5-10 total (~$1-2/lead enrichment + email sending costs) |
-| Margin | 95%+ |
+### Tier 1: Semi-Enriched Lead — $10/lead
 
-**Why $500/5 intros works:**
-- One closed deal on a $400K DSCR loan = $4K-10K commission = 8-20x ROI
-- These aren't cold names — the investor already replied "yes, I'm interested"
-- Small enough they can't reverse-engineer our process
-- Large enough to prove value and likely close at least 1 deal
+What the LO gets:
+- Validated contact info (phone verified mobile/landline, email verified)
+- Number of investment properties owned
+- Estimated portfolio value
+- Estimated debt-to-equity ratio
+- AI-generated talking points (purchase history analysis, trends, refi angles)
 
-### Scale Pricing (Post-Pilot)
+**This is what most competitors charge $15-55 for — except theirs are consumer form-fills, not scored investor profiles.**
 
-| Tier | Warm intros/mo | Monthly | Per intro | Notes |
-|------|---------------|---------|-----------|-------|
-| Growth | 10 | $1,500/mo | $150 | 1-2 counties |
-| Pro | 25 | $3,000/mo | $120 | Full metro area |
-| Enterprise | 50+ | $5,000+/mo | $100+ | Multi-county, priority routing |
+| Volume | Per lead | Total | Discount |
+|--------|----------|-------|----------|
+| 1-24 | $10.00 | — | List price |
+| 25 | $9.00 | $225 | 10% off |
+| 50 | $8.00 | $400 | 20% off |
+| 100 | $7.00 | $700 | 30% off |
+| 250+ | $6.00 | $1,500+ | 40% off |
 
-### Revenue Share (Endgame)
+### Tier 2: Fully Enriched Dossier — $75/lead
 
-Once trust is established:
-- Base subscription + **$500-1,000 per verified funded deal**
-- Verified via county clerk mortgage recordings (public record, they can't hide it)
-- We introduced the parties → we have the email thread → public record confirms the closing
-- "We noticed a new mortgage recorded on a property we connected you with — congrats! Performance bonus applies."
+Everything in Tier 1, plus a complete investor dossier — professionally designed PDF + structured data:
+- Every property in portfolio with details (type, beds, baths, sqft, value, address)
+- Financing per property (lender, loan amount, origination date, rate type, estimated balance)
+- Entity ownership details (LLC/Corp/Trust → officers, registered agent, filing dates)
+- Equity analysis per property and portfolio-wide
+- Refi opportunity scoring with specific signals
+- Wealth signals (FEC donations, IRS 990 filings, board seats)
+- Acquisition timeline and investment behavior patterns
+- Detailed AI-generated talking points and recommended approach
+
+**No one sells this. The closest alternative is PropStream ($199/mo) where the LO does all the work themselves — and still can't get this level of analysis.**
+
+| Volume | Per lead | Total | Discount |
+|--------|----------|-------|----------|
+| 1-4 | $75.00 | — | List price |
+| 5 | $65.00 | $325 | 13% off |
+| 10 | $55.00 | $550 | 27% off |
+| 25 | $45.00 | $1,125 | 40% off |
+| 50+ | $35.00 | $1,750+ | 53% off |
+
+### Unit Economics
+
+| Metric | Semi-Enriched | Fully Enriched |
+|--------|---------------|----------------|
+| Our COGS/lead | ~$1.00 | ~$2.00 |
+| List price | $10.00 | $75.00 |
+| Margin (list) | 90% | 97% |
+| Deepest bulk price | $6.00 | $35.00 |
+| Margin (deepest bulk) | 83% | 94% |
+
+### Revenue Scenarios
+
+| Scenario | Monthly revenue | COGS | Net |
+|----------|----------------|------|-----|
+| 3 LOs buy 25 semi-enriched each | $675 | ~$75 + $400 fixed | +$200 |
+| 5 LOs buy 50 semi-enriched each | $2,000 | ~$250 + $400 fixed | +$1,350 |
+| 2 LOs buy 10 full dossiers each | $1,100 | ~$40 + $400 fixed | +$660 |
+| 5 LOs buy 25 semi + 2 buy 10 full | $2,225 + $1,100 = $3,325 | ~$290 + $400 | +$2,635 |
+| Volume play: 10 LOs × 100 semi | $7,000 | ~$1,000 + $400 | +$5,600 |
 
 ### Moat Protection
 
 - No source attribution anywhere — dossiers show WHAT we know, never HOW
 - Entity resolution (LLC → person) takes 6+ sources to replicate
 - ICP scoring logic is proprietary
-- **The real moat: we own the investor relationship.** The LO can't cut us out because they didn't find the investor — we did, and we stay in the loop through concierge follow-up.
+- Semi-exclusive model: limited buyers per market prevents lead fatigue
+- Full dossier depth is the differentiator — no one can buy this anywhere else
 
 ---
 
