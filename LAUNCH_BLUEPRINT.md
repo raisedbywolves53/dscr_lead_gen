@@ -46,9 +46,19 @@ Public records → Pipeline (score, enrich, validate) → Two product tiers
 
 ## Pricing Strategy
 
-Two product tiers, flat per-lead pricing, volume discounts. Semi-exclusive (each lead sold to a limited number of buyers per market). Going for volume.
+Two quality tiers (Hot / Warm), two products (Semi-Enriched / Full Dossier), volume discounts at 5% increments. Semi-exclusive (limited buyers per market). Minimum order: 10 leads.
 
-### Tier 1: Semi-Enriched Lead — $10/lead
+Tier 3 (Nurture) leads are NOT listed for sale. They exist in the pipeline as proof of depth — "We identified 36,000+ additional prospects in Wake County alone" — and are available only on a negotiated basis at volume.
+
+### Lead Quality Tiers
+
+| Tier | ICP Score | What it means |
+|------|-----------|---------------|
+| **Tier 1 — Hot** | 40+ pts | Multiple strong signals: portfolio landlord, LLC-owned, out-of-state, recent acquisitions, high equity |
+| **Tier 2 — Warm** | 25-39 pts | Moderate signals: absentee owner, some equity, investment property confirmed |
+| **Tier 3 — Nurture** | 10-24 pts | Weak signals. Not listed for sale. Used to demonstrate pipeline depth. Available negotiated only. |
+
+### Product: Semi-Enriched Lead
 
 What the LO gets:
 - Validated contact info (phone verified mobile/landline, email verified)
@@ -57,19 +67,13 @@ What the LO gets:
 - Estimated debt-to-equity ratio
 - AI-generated talking points (purchase history analysis, trends, refi angles)
 
-**This is what most competitors charge $15-55 for — except theirs are consumer form-fills, not scored investor profiles.**
+| | Tier 1 (Hot) | Tier 2 (Warm) |
+|---|---|---|
+| **List price** | **$15/lead** | **$10/lead** |
 
-| Volume | Per lead | Total | Discount |
-|--------|----------|-------|----------|
-| 1-24 | $10.00 | — | List price |
-| 25 | $9.00 | $225 | 10% off |
-| 50 | $8.00 | $400 | 20% off |
-| 100 | $7.00 | $700 | 30% off |
-| 250+ | $6.00 | $1,500+ | 40% off |
+### Product: Full Dossier
 
-### Tier 2: Fully Enriched Dossier — $75/lead
-
-Everything in Tier 1, plus a complete investor dossier — professionally designed PDF + structured data:
+Everything in Semi-Enriched, plus a complete investor dossier — professionally designed PDF + structured data:
 - Every property in portfolio with details (type, beds, baths, sqft, value, address)
 - Financing per property (lender, loan amount, origination date, rate type, estimated balance)
 - Entity ownership details (LLC/Corp/Trust → officers, registered agent, filing dates)
@@ -79,35 +83,48 @@ Everything in Tier 1, plus a complete investor dossier — professionally design
 - Acquisition timeline and investment behavior patterns
 - Detailed AI-generated talking points and recommended approach
 
-**No one sells this. The closest alternative is PropStream ($199/mo) where the LO does all the work themselves — and still can't get this level of analysis.**
+| | Tier 1 (Hot) | Tier 2 (Warm) |
+|---|---|---|
+| **List price** | **$100/lead** | **$60/lead** |
 
-| Volume | Per lead | Total | Discount |
-|--------|----------|-------|----------|
-| 1-4 | $75.00 | — | List price |
-| 5 | $65.00 | $325 | 13% off |
-| 10 | $55.00 | $550 | 27% off |
-| 25 | $45.00 | $1,125 | 40% off |
-| 50+ | $35.00 | $1,750+ | 53% off |
+**No one sells this.** The closest alternative is PropStream ($199/mo) where the LO does all the work themselves — and still can't get this level of analysis. The dossier upsell ratio (6-6.7x) is designed to make the upgrade attractive at both tiers.
+
+### Volume Discounts (5% increments, caps at 35%)
+
+| Volume | Discount |
+|--------|----------|
+| 1-10 | Minimum order = 10 leads |
+| 11-25 | List price |
+| 26-50 | 5% off |
+| 51-100 | 10% off |
+| 101-150 | 15% off |
+| 151-200 | 20% off |
+| 201-250 | 25% off |
+| 251-300 | 30% off |
+| 301-350 | 35% off |
+| 350+ | Negotiable |
 
 ### Unit Economics
 
-| Metric | Semi-Enriched | Fully Enriched |
-|--------|---------------|----------------|
-| Our COGS/lead | ~$1.00 | ~$2.00 |
-| List price | $10.00 | $75.00 |
-| Margin (list) | 90% | 97% |
-| Deepest bulk price | $6.00 | $35.00 |
-| Margin (deepest bulk) | 83% | 94% |
+| Metric | Semi-Enriched | Full Dossier |
+|--------|---------------|--------------|
+| COGS/lead | ~$1.00 | ~$2.00 |
+| Best price (Tier 1 list) | $15.00 | $100.00 |
+| Best margin | $14.00 (93%) | $98.00 (98%) |
+| Worst price (Tier 2 @ 35% off) | $6.50 | $39.00 |
+| Worst margin | $5.50 (85%) | $37.00 (95%) |
+
+**Floor: $5.50 profit/lead, 85% margin. Every cell is profitable.**
 
 ### Revenue Scenarios
 
-| Scenario | Monthly revenue | COGS | Net |
-|----------|----------------|------|-----|
-| 3 LOs buy 25 semi-enriched each | $675 | ~$75 + $350 fixed | +$250 |
-| 5 LOs buy 50 semi-enriched each | $2,000 | ~$250 + $350 fixed | +$1,400 |
-| 2 LOs buy 10 full dossiers each | $1,100 | ~$40 + $350 fixed | +$710 |
-| 5 LOs buy 25 semi + 2 buy 10 full | $3,325 | ~$290 + $350 | +$2,685 |
-| Volume play: 10 LOs × 100 semi | $7,000 | ~$1,000 + $350 | +$5,650 |
+| Scenario | Revenue | Profit |
+|----------|---------|--------|
+| LO buys 25 Tier 1 semi-enriched | $375 | $350 |
+| LO buys 10 Tier 1 dossiers | $1,000 | $980 |
+| LO buys 50 Tier 2 semi (5% off) | $475 | $425 |
+| LO buys 25 Tier 1 semi + 10 Tier 1 dossier | $1,375 | $1,330 |
+| 5 LOs each buy 100 Tier 2 semi (10% off) | $4,500 | $4,000 |
 
 ### Moat Protection
 
@@ -115,6 +132,7 @@ Everything in Tier 1, plus a complete investor dossier — professionally design
 - Entity resolution (LLC → person) takes 6+ sources to replicate
 - ICP scoring logic is proprietary
 - Semi-exclusive model: limited buyers per market prevents lead fatigue
+- Tier 3 leads withheld from sale — demonstrates depth without giving away inventory
 - Full dossier depth is the differentiator — no one can buy this anywhere else
 
 ---
