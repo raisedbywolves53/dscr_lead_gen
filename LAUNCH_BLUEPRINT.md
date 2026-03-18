@@ -16,19 +16,26 @@ Public records → Pipeline (score, enrich, validate) → Two product tiers
 
 ---
 
-## Progress (Last updated: 2026-03-17)
+## Progress (Last updated: 2026-03-18)
 
 | Phase | Status | Key Output |
 |-------|--------|------------|
 | **Phase 1: Infrastructure** | In progress | Tracerfy key configured. ATTOM free tier confirmed. Domains/email warming = Zack's action items (see `sales/PHASE1_SETUP_GUIDE.md`). |
-| **Phase 2A: Wake County** | 80% complete | 373K properties parsed, 74K Tier 1 scored, 33 samples selected. Blocked on ATTOM paid tier decision + Tracerfy skip trace. |
-| **Phase 2B: Cuyahoga OH** | Not started | Needs data source research + deployment config. |
-| **Phase 2C: Marion IN** | Not started | Needs data source research + deployment config. |
-| **Phase 3: Sales Assets** | Not started | Blocked on Phase 2 enrichment. |
+| **Phase 2A: Wake County** | **90% complete** | 373K properties parsed → 74K Tier 1 scored → 33 samples selected → Tracerfy skip trace done (17/33 matches, $0.34) → ATTOM building enrichment done (26/33 matches) → merged enriched dataset ready. **Blocked on ATTOM paid tier for mortgage data.** |
+| **Phase 2B: Cuyahoga OH** | Research in progress | Data source research underway. |
+| **Phase 2C: Marion IN** | Research in progress | Data source research underway. |
+| **Phase 3: Sales Assets** | Not started | Needs enriched samples from all 3 markets. |
 | **Phase 4: LO Outbound** | Not started | Blocked on Phase 3. |
 
 ### Open Decision
-**ATTOM paid tier ($95/mo):** Free tier returns building details (beds, baths, sqft) but NOT mortgage/lender data. Mortgage data is a key differentiator for the full dossier product ($100/lead Tier 1). Decision: activate paid plan now or defer until first client?
+**ATTOM paid tier ($95/mo):** Zack contacting ATTOM to activate. Free tier returns baths, sqft, property type but NOT beds or mortgage/lender data. Paid plan needed for full dossier mortgage fields (lender name, loan amount, rate type, maturity date). This is the key differentiator for the $100/lead Tier 1 dossier product.
+
+### Wake County Enrichment Results (33 samples)
+| Source | Matches | Data returned |
+|--------|---------|---------------|
+| Tracerfy skip trace | 17/33 (53%) | 7 phones, 14 emails. Cost: $0.34 |
+| ATTOM free tier | 26/33 (79%) | Baths, sqft, property type. No beds, no mortgage. |
+| Combined | 17/33 with contact info | Ready for dossier generation once ATTOM paid tier adds mortgage data |
 
 ---
 
