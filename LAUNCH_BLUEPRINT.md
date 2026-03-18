@@ -2,49 +2,17 @@
 
 ## Mission
 
-Build an investor-to-lender matching platform across 3 U.S. markets. We identify investment property owners, enrich them with deep portfolio intelligence, initiate conversations on behalf of our LO clients, and deliver warm introductions — not cold data. We own the investor relationship from first touch through post-close.
+Build and sell enriched DSCR investor leads across 3 U.S. markets. Two product tiers (semi-enriched and full dossier), flat per-lead pricing, volume discounts. We build the leads, LOs buy them, they do their own outreach. Going for volume.
 
 ## The Model
 
 ```
-We find the investor → We reach out → Investor responds
-    → We qualify + warm intro to LO client
-        → LO works the deal
-            → We follow up with investor (concierge QC)
-                → Deal closes → verified via public records
-                    → Rev share triggered
+Public records → Pipeline (score, enrich, validate) → Two product tiers
+    → Semi-Enriched ($10/lead): contacts + portfolio summary + talking points
+    → Full Dossier ($75/lead): complete PDF with every property, financing, wealth signals
+        → Sell to LOs/branch managers via outbound prospecting
+            → They do their own outreach to investors
 ```
-
-**Why this beats selling dossiers:**
-- We own the funnel — LO can't cut us out
-- Warm intro > cold list (10x more valuable to the LO)
-- We see every conversation, know which leads convert
-- Rev share is enforceable — we introduced the parties and verify via public records
-- The investor is OUR client — if the LO drops the ball, we re-route to another LO
-
----
-
-## Two Brands, Two Audiences
-
-### 1. Still Mind Creative (LO-Facing — existing)
-- **Domain:** stillmindcreative.com (+ 1-2 lookalikes for cold email volume protection)
-- **Purpose:** Sell the service to loan officers. "We generate warm investor introductions in your market."
-- **Outreach from:** zack@stillmindcreative.com (warm), lookalike domain (cold sequences)
-
-### 2. Investor-Facing Brand (NEW — needs to be created)
-- **Domain:** TBD — something that positions as advisory/marketplace, not a lead gen company
-  - Examples: dscrcapitaladvisors.com, investorlendingadvisors.com, [something]capital.com
-  - Should feel trustworthy to a real estate investor receiving a cold email
-- **Purpose:** Reach out to investors. "We help investment property owners find optimal DSCR lending terms for their portfolio."
-- **Landing page:** Simple one-page site explaining the value prop. Gives legitimacy when investor Googles the domain.
-- **Outreach from:** zack@[investor-brand].com or team@[investor-brand].com
-- **This is the brand investors interact with.** The LO's name comes in at the warm introduction stage, not before.
-
-### Why Two Brands
-- Investors seeing "Still Mind Creative" (a creative agency) reaching out about lending would be confusing
-- The investor-facing brand needs to feel like an advisory/marketplace — someone who helps them find the best deal
-- Keeps the B2B sales operation (selling to LOs) separate from the B2C operation (talking to investors)
-- If an LO Googles us, they see our sales brand. If an investor Googles us, they see the advisory brand. Clean separation.
 
 ---
 
@@ -60,21 +28,19 @@ We find the investor → We reach out → Investor responds
 
 ## What We're Building (End State)
 
-### Per Market — LO Sales Assets
-1. **3 fully enriched sample dossiers** (1 per ICP segment) — redacted, proves depth
-2. **Market TAM one-pager** — total properties, Tier 1 leads, market stats
-3. **25 LO battlecards** — decision-maker profiles with personalized outreach angles
-4. **LO outbound sequences** — email + LinkedIn, personalized per battlecard
+### Per Market — Product
+1. **Enriched investor database** — scored, contact-verified, DNC-scrubbed
+2. **Semi-enriched lead export** — structured data ready to sell (Tier 1 product)
+3. **Full dossier PDFs** — code-generated, professionally designed (Tier 2 product)
 
-### Per Market — Investor Pipeline
-5. **Enriched investor database** — scored, contact-verified, DNC-scrubbed
-6. **Investor outreach sequences** — personalized by ICP segment and portfolio signals
-7. **Concierge follow-up templates** — post-introduction QC touchpoints
+### Per Market — Sales Assets
+4. **3 redacted sample dossiers** (1 per ICP segment) — proves depth to LO prospects
+5. **Market TAM one-pager** — total properties, Tier 1 leads, market stats
+6. **25 LO battlecards** — decision-maker profiles with personalized outreach angles
 
 ### Platform Infrastructure
-8. **Investor-facing brand + landing page** — legitimacy for cold outreach
-9. **Dossier generation script** — code-generated PDFs from enriched data
-10. **Pipeline tracker** — tracks every investor from first touch through deal close
+7. **Dossier generation script** — code-generated PDFs from enriched data
+8. **LO outbound sequences** — email + LinkedIn, personalized per battlecard
 
 ---
 
@@ -137,11 +103,11 @@ Everything in Tier 1, plus a complete investor dossier — professionally design
 
 | Scenario | Monthly revenue | COGS | Net |
 |----------|----------------|------|-----|
-| 3 LOs buy 25 semi-enriched each | $675 | ~$75 + $400 fixed | +$200 |
-| 5 LOs buy 50 semi-enriched each | $2,000 | ~$250 + $400 fixed | +$1,350 |
-| 2 LOs buy 10 full dossiers each | $1,100 | ~$40 + $400 fixed | +$660 |
-| 5 LOs buy 25 semi + 2 buy 10 full | $2,225 + $1,100 = $3,325 | ~$290 + $400 | +$2,635 |
-| Volume play: 10 LOs × 100 semi | $7,000 | ~$1,000 + $400 | +$5,600 |
+| 3 LOs buy 25 semi-enriched each | $675 | ~$75 + $350 fixed | +$250 |
+| 5 LOs buy 50 semi-enriched each | $2,000 | ~$250 + $350 fixed | +$1,400 |
+| 2 LOs buy 10 full dossiers each | $1,100 | ~$40 + $350 fixed | +$710 |
+| 5 LOs buy 25 semi + 2 buy 10 full | $3,325 | ~$290 + $350 | +$2,685 |
+| Volume play: 10 LOs × 100 semi | $7,000 | ~$1,000 + $350 | +$5,650 |
 
 ### Moat Protection
 
@@ -150,70 +116,6 @@ Everything in Tier 1, plus a complete investor dossier — professionally design
 - ICP scoring logic is proprietary
 - Semi-exclusive model: limited buyers per market prevents lead fatigue
 - Full dossier depth is the differentiator — no one can buy this anywhere else
-
----
-
-## The Concierge QC Loop
-
-This is the piece that locks the model together. It's investor experience management AND deal verification in one.
-
-### Why It Matters
-1. **Maintains visibility after handoff** — we stay in the conversation
-2. **Verifies deal progress** without relying on LO self-reporting
-3. **Builds direct relationship with investor** — they're OUR client, not the LO's
-4. **Creates upsell opportunities** — "Glad the refi went well. We're seeing strong acquisition opportunities in your market — want us to keep you posted?"
-5. **Generates feedback data** — which LOs close? Which ones ghost? This determines who we keep routing to.
-
-### The Flow
-
-```
-Warm Introduction Made (Day 0)
-    ↓
-Concierge Check-In #1 (Day 7-10)
-    "Hi [Investor], we connected you with [LO] regarding your portfolio
-     last week. Wanted to make sure the conversation was valuable and
-     that [LO] was a good fit for what you're looking for. If you'd like
-     to explore other options, we're here."
-    ↓
-    → Positive response → note in pipeline, monitor for closing
-    → Negative/no response from LO → offer to re-route to different LO
-    → No response from investor → one more touch at Day 14, then pause
-    ↓
-Concierge Check-In #2 (Day 21-30)
-    "Just checking in — how are things progressing with [LO]?
-     We want to make sure you're getting the attention your
-     portfolio deserves."
-    ↓
-    → Deal in progress → note estimated close date
-    → Deal fell through → "Would you like us to connect you with
-       another specialist in your market?"
-    → Deal closed → congratulations + stay in relationship
-    ↓
-Public Record Verification (Day 30-60)
-    Automated check: new mortgage recorded on properties we flagged?
-    → Lender matches LO's company = verified close → rev share triggered
-    → No recording → deal may still be in process, check again next month
-    ↓
-Ongoing Relationship (Quarterly)
-    "Hi [Investor], we've identified some new opportunities in your
-     market — [specific insight about their portfolio]. Would you like
-     an updated analysis?"
-    → Keeps investor in our ecosystem for future LO clients
-    → Generates repeat introductions from same investor pool
-```
-
-### Tone Guidelines
-- **Concierge, not surveillance.** We're the investor's advocate, not the LO's spy.
-- **Specific, not generic.** Reference their portfolio, their market, the specific conversation.
-- **Helpful, not pushy.** The follow-up should feel like a service, not a sales tactic.
-- **Always offer alternatives.** If the LO isn't performing, we route to someone who will. This is our leverage.
-
-### LO Accountability (Internal)
-Track per LO:
-- Response time to warm intro (did they actually reach out?)
-- Investor feedback (positive/negative/no contact)
-- Deals closed vs. intros received (conversion rate)
-- LOs with low conversion get fewer intros. LOs who perform get priority routing.
 
 ---
 
@@ -226,36 +128,11 @@ Track per LO:
 | Twilio | ~$15 | Variable — phone validation |
 | MillionVerifier | ~$5 | Variable — email validation (credits don't expire) |
 | DNC (FTC + Tracerfy) | ~$35-50 | Variable — compliance |
-| LO-facing sending domains (1-2 lookalikes) | ~$2 | Fixed — ~$24/yr |
-| Investor-facing domain + hosting | ~$5 | Fixed — domain + simple landing page |
+| Sending domains (1-2 lookalikes) | ~$2 | Fixed — ~$24/yr |
 | Email warmup tool | $30-50 | Fixed — Instantly or similar |
-| **Total** | **~$390-425/mo** |
+| **Total** | **~$385-420/mo** |
 
-### Cost Per Fully Enriched Lead (3 Markets Blended)
-
-| Volume | Variable/lead | Fixed/lead | Total/lead |
-|--------|---------------|------------|------------|
-| 15 (pilot) | ~$1.50 | $27.00 | ~$28.50 |
-| 75 (5 pilots) | ~$1.50 | $5.40 | ~$6.90 |
-| 150 (subscriptions) | ~$1.50 | $2.70 | ~$4.20 |
-| 300+ | ~$1.50 | $1.35 | ~$2.85 |
-
-Not every enriched lead becomes a warm intro — assume 10-20% response rate from investor outreach. So cost per warm intro is roughly 5-10x the cost per enriched lead:
-
-| Warm intros/mo | Cost per warm intro | Revenue per intro (pilot) | Margin |
-|----------------|--------------------|-----------------------------|--------|
-| 5 | ~$28-57 | $100 | 65-80% |
-| 25 | ~$14-28 | $120 | 77-88% |
-| 50 | ~$10-20 | $100 | 80-90% |
-
-### Breakeven
-
-| Scenario | Revenue | Total cost | Net |
-|----------|---------|------------|-----|
-| 1 pilot/month | $500 | ~$425 fixed + ~$50 variable = $475 | +$25 |
-| 2 pilots/month | $1,000 | ~$425 + ~$100 = $525 | +$475 |
-| 1 pilot + 1 Growth sub | $2,000 | ~$425 + ~$200 = $625 | +$1,375 |
-| 3 Growth subs | $4,500 | ~$425 + ~$400 = $825 | +$3,675 |
+Rounds to **~$350/mo fixed** once you remove one-time setup costs.
 
 ---
 
@@ -263,34 +140,24 @@ Not every enriched lead becomes a warm intro — assume 10-20% response rate fro
 
 ### Phase 1: Infrastructure & Email Warming
 **Branch:** `phase1/infrastructure`
-**Effort:** ~3-5 hours of setup, then 2-3 weeks of passive warming
-**Goal:** Both brands live and warming in background
+**Effort:** ~2-3 hours of setup, then 2-3 weeks of passive warming
+**Goal:** Sending infrastructure warming while we build product
 
-#### LO-Facing (Still Mind Creative)
-- [ ] **1.1** Buy 1-2 lookalike sending domains (stillmindcreative.co, etc.) — ~$24/yr
+#### Email Domain Strategy
+- **Primary (warm conversations):** zack@stillmindcreative.com — for replies, follow-ups, and conversations that started on LinkedIn
+- **Cold outreach (volume protection):** 1-2 lookalike domains (stillmindcreative.co, etc.) to protect primary domain reputation
+
+#### Tasks
+- [ ] **1.1** Buy 1-2 lookalike sending domains (~$24/yr total)
 - [ ] **1.2** Set up mailboxes with Google Workspace or Zoho
 - [ ] **1.3** Configure SPF, DKIM, DMARC
 - [ ] **1.4** Start email warmup (Instantly.ai or similar) — runs passively
+- [ ] **1.5** Confirm ATTOM API access and tier ($95/mo plan)
+- [ ] **1.6** Verify Tracerfy API key is active, credits loaded
+- [ ] **1.7** Verify MillionVerifier credits available
+- [ ] **1.8** Set up FTC DNC registry account (free, first 5 area codes)
 
-#### Investor-Facing (New Brand)
-- [ ] **1.5** Choose brand name and buy domain
-  - Check availability for top candidates
-  - Needs to feel advisory/trustworthy, not "lead gen"
-- [ ] **1.6** Set up mailboxes (zack@[brand].com, team@[brand].com)
-- [ ] **1.7** Configure SPF, DKIM, DMARC
-- [ ] **1.8** Start email warmup for investor-facing domain
-- [ ] **1.9** Build simple landing page (one-page, code-generated or static HTML)
-  - Value prop: "We help investment property owners find optimal DSCR lending terms"
-  - Brief explanation of service
-  - Professional, clean, minimal — just enough for legitimacy when someone Googles the domain
-
-#### API & Compliance
-- [ ] **1.10** Confirm ATTOM API access and tier ($95/mo plan)
-- [ ] **1.11** Verify Tracerfy API key is active, credits loaded
-- [ ] **1.12** Verify MillionVerifier credits available
-- [ ] **1.13** Set up FTC DNC registry account (free, first 5 area codes)
-
-**Deliverable:** Both brands live, domains warming, APIs verified.
+**Deliverable:** Domains warming, APIs verified.
 
 ---
 
@@ -330,28 +197,33 @@ Not every enriched lead becomes a warm intro — assume 10-20% response rate fro
 
 ---
 
-### Phase 3: Sales Assets
+### Phase 3: Sales Assets & Product Build
 **Branch:** `phase3/sales-assets`
 **Effort:** ~10-15 hours (dossier template is the heaviest lift)
-**Goal:** Everything needed to sell to LOs AND reach out to investors
+**Goal:** Sellable product + materials to sell it with
 
-#### 3A: Sample Dossiers (3 per market = 9 total)
-- [ ] **3A.1** Select 3 real leads per market representing each ICP:
+#### 3A: Dossier Generation Script (The Product)
+- [ ] **3A.1** Build dossier generation script — code-generated PDF (Python)
+  - Use WeasyPrint (HTML/CSS → PDF) or ReportLab for programmatic generation
+  - Professional, clean layout — think consulting report, not spreadsheet dump
+  - Find 2-3 visual reference PDFs to guide design
+  - **Full version** (Tier 2 product): all data, all contacts, all property addresses
+  - **Redacted version** (sales sample): shows depth but no identifying info
+  - Same script generates both — redaction is a flag, not a separate template
+- [ ] **3A.2** Build semi-enriched export (Tier 1 product):
+  - Structured CSV/Google Sheet with: contact info, property count, portfolio value, D/E ratio, AI talking points
+  - Clean, well-labeled columns, ready for LO to import into their CRM
+
+#### 3B: Sample Dossiers (3 per market = 9 total)
+- [ ] **3B.1** Select 3 real leads per market representing each ICP:
   - **Portfolio Landlord** (5+ properties, LLC-owned, out-of-state)
   - **Growing Investor** (2-4 properties, individual, recent acquisitions)
   - **Entity/High Net Worth** (trust/corp, multi-county, wealth signals)
-- [ ] **3A.2** Fully enrich each lead — every property, all financing, wealth signals
-- [ ] **3A.3** Build dossier generation script — code-generated PDF (Python)
-  - Use WeasyPrint (HTML/CSS → PDF) or ReportLab for programmatic generation
-  - Professional, clean layout — think consulting report, not spreadsheet dump
-  - Find 2-3 visual reference PDFs (investor reports, property analysis sheets) to guide design
-  - **Full version** (paid): all data, all contacts, all property addresses
-  - **Redacted version** (sample): shows depth but no identifying info
-  - Same script generates both — redaction is a flag, not a separate template
-- [ ] **3A.4** Generate 9 redacted sample dossier PDFs (3 markets × 3 ICPs)
+- [ ] **3B.2** Fully enrich each lead — every property, all financing, wealth signals
+- [ ] **3B.3** Generate 9 redacted sample dossier PDFs (3 markets × 3 ICPs)
 
-#### 3B: Market TAM One-Pagers (1 per market = 3 total)
-- [ ] **3B.1** For each market, compile:
+#### 3C: Market TAM One-Pagers (1 per market = 3 total)
+- [ ] **3C.1** For each market, compile:
   - Total investment properties in county
   - Total identified as investor-owned (mailing ≠ property address)
   - Tier 1 leads identified (ICP score threshold)
@@ -359,117 +231,81 @@ Not every enriched lead becomes a warm intro — assume 10-20% response rate fro
   - Average portfolio size, value, equity
   - DSCR market stats (median home price, rental yield, vacancy rate)
   - Top lenders in market (from ATTOM data)
-- [ ] **3B.2** Design one-pager template (code-generated PDF, branded)
-- [ ] **3B.3** Generate 3 market one-pagers
+- [ ] **3C.2** Design one-pager template (code-generated PDF, branded)
+- [ ] **3C.3** Generate 3 market one-pagers
 
-#### 3C: LO Battlecards (25 per market = 75 total)
-- [ ] **3C.1** Use Apollo (remaining credits) to build hit lists:
+#### 3D: LO Battlecards (25 per market = 75 total)
+- [ ] **3D.1** Use Apollo (remaining credits) to build hit lists:
   - Search: DSCR loan officers, branch managers, mortgage brokers in each metro
   - Cohort B (DSCR Specialist LOs) performed best in experiment — weight toward these
   - Pull: name, title, company, email, phone, LinkedIn URL, company size
-- [ ] **3C.2** Enrich beyond Apollo:
+- [ ] **3D.2** Enrich beyond Apollo:
   - NMLS Consumer Access — license history, production volume, active states
   - LinkedIn profile review — recent posts, activity, DSCR mentions
   - Company website — team page, specialties, lender relationships
   - REIA membership — speaking at or attending local investor meetups?
-- [ ] **3C.3** Build battlecard template per LO:
+- [ ] **3D.3** Build battlecard template per LO:
   - Name, title, company, NMLS#, years licensed
   - Contact: email, phone, LinkedIn
   - Production signals: states licensed, company size, DSCR focus indicators
   - Personalization hooks: recent LinkedIn posts, REIA involvement, lender relationships
-  - Outreach angle: why OUR platform matters for THIS person
+  - Outreach angle: why OUR leads matter for THIS person
   - Objection pre-handles based on their profile
-- [ ] **3C.4** Generate 75 battlecards (stored as structured data)
+- [ ] **3D.4** Generate 75 battlecards (stored as structured data)
 
-#### 3D: Investor Outreach Templates
-- [ ] **3D.1** Build outreach sequences per ICP segment:
-  - **Portfolio Landlord:** angle on portfolio-level DSCR optimization, cash-out potential
-  - **Growing Investor:** angle on scaling strategy, next acquisition financing
-  - **Entity/HNW:** angle on sophisticated lending options, rate optimization
-- [ ] **3D.2** Build concierge QC follow-up templates (see QC Loop section above)
-- [ ] **3D.3** Build re-routing templates (for when an LO underperforms)
-
-**Deliverable:** 9 sample dossier PDFs, 3 market one-pagers, 75 LO battlecards, investor outreach + QC templates.
+**Deliverable:** Working dossier generator, 9 sample PDFs, 3 market one-pagers, 75 LO battlecards.
 
 ---
 
-### Phase 4: Outbound — Two Tracks (Manual First)
+### Phase 4: LO Outbound Prospecting (Manual First)
 **Branch:** `phase4/outbound`
-**Effort:** ~3-5 hours to write sequences, then ~45 min/day for manual sends across both tracks
-**Goal:** Land first LO client AND start investor conversations
+**Effort:** ~2-3 hours to write sequences, then ~30 min/day for manual sends
+**Goal:** Start selling leads to LOs
 
-#### Track A: LO Prospecting (via Still Mind Creative)
-- [ ] **4A.1** LO sequence design (per prospect):
+- [ ] **4.1** LO sequence design (per prospect):
   - **Day 0:** LinkedIn connection request (personalized from battlecard)
   - **Day 1:** If accepted → LinkedIn DM #1 (value-first, reference their market)
   - **Day 3:** Cold email #1 (attach market one-pager PDF)
   - **Day 5:** LinkedIn DM #2 (share a specific insight about their market)
-  - **Day 7:** Cold email #2 (attach sample dossier PDF, redacted)
-  - **Day 10:** LinkedIn DM #3 (direct ask — "want to see qualified investors in your market?")
+  - **Day 7:** Cold email #2 (attach redacted sample dossier PDF)
+  - **Day 10:** LinkedIn DM #3 (direct ask — "want to see 5 real leads in your market?")
   - **Day 14:** Cold email #3 (case study / social proof once available)
-- [ ] **4A.2** Write messaging templates using battlecard fields
-  - Tone: peer-to-peer. "I built a platform that identifies investors ready for DSCR lending — you're someone who'd actually use this."
-  - Key differentiator: "We don't sell you a list. We send you investors who already raised their hand."
-- [ ] **4A.3** Send manually to first 10-15 Wake County LOs
-- [ ] **4A.4** Iterate based on responses
+- [ ] **4.2** Write messaging templates using battlecard fields
+  - Tone: peer-to-peer. "I built a system that identifies investors ready for DSCR lending — you're someone who'd actually use this."
+  - Key differentiator: "Scored, enriched investor profiles with validated contacts and financing intel. Not a recycled list."
+- [ ] **4.3** Start with Wake County (local advantage) — first 10-15 LOs manually
+- [ ] **4.4** Iterate based on responses, then expand to Cleveland + Indianapolis
+- [ ] **4.5** Track everything in outreach tracker spreadsheet
 
-#### Track B: Investor Outreach (via Investor-Facing Brand)
-- [ ] **4B.1** Begin ONLY after at least 1 LO is signed (even as pilot)
-  - We need someone to route warm intros TO before we start generating them
-  - Exception: can start 5-10 test sends earlier to validate messaging/response rates
-- [ ] **4B.2** Investor sequence design (per ICP):
-  - **Email 1:** Value-first. Reference their specific portfolio signals (without being creepy). "We've been analyzing investment property portfolios in [market] and noticed some interesting refinancing opportunities..."
-  - **Email 2 (Day 5):** Specific insight. "Properties acquired in 2021-2022 with rates above 7% are strong candidates for DSCR refi at current rates..."
-  - **Email 3 (Day 10):** Direct offer. "Would it be helpful if we connected you with a DSCR lending specialist who focuses on [their market]? No cost, no obligation."
-- [ ] **4B.3** Send manually, track response rates per ICP segment and market
-- [ ] **4B.4** For respondents: qualify, then warm intro to LO client
-
-#### Track C: Concierge QC (Begins After First Warm Intro)
-- [ ] **4C.1** Day 7-10 after each intro: concierge check-in with investor
-- [ ] **4C.2** Track all feedback in pipeline tracker
-- [ ] **4C.3** Flag non-responsive LOs — follow up with LO first, re-route if needed
-
-**Deliverable:** Active LO pipeline, first investor conversations, QC loop running.
+**Deliverable:** Active LO pipeline, first lead sales.
 
 ---
 
 ### Phase 5: Automation (N8N)
 **Branch:** `phase5/n8n-automation`
-**Effort:** ~8-12 hours to build workflows (after manual outreach validates messaging)
-**Goal:** Automate the repeatable parts of both outbound tracks + QC loop
+**Effort:** ~6-10 hours to build workflows (after manual outreach validates messaging)
+**Goal:** Automate the repeatable parts of LO outbound
 
 #### Why N8N Fits
-Three distinct workflows with conditional logic, API integrations, and timing:
-1. **LO outbound:** battlecard → personalize → send → follow up → track
-2. **Investor outreach:** enriched lead → personalize by ICP → send → qualify responses → warm intro
-3. **Concierge QC:** intro made → schedule check-in → send → process feedback → alert if action needed
+LO outbound has conditional steps that benefit from orchestration:
+1. Pull battlecard data → 2. Generate personalized message (Claude API) → 3. Send via email → 4. Wait X days → 5. Check for reply → 6. If no reply → different follow-up angle → 7. If reply → notify Zack → 8. Track status
 
 #### Implementation
 - [ ] **5.1** Install N8N (self-hosted or cloud)
 - [ ] **5.2** Build LO outbound workflow:
   - Trigger: new LO added to battlecard sheet
   - Claude API generates personalized email from battlecard
-  - Human review checkpoint → send → schedule follow-ups
-- [ ] **5.3** Build investor outreach workflow:
-  - Trigger: new enriched lead batch ready
-  - Claude API generates personalized email from dossier data + ICP segment
-  - Human review checkpoint → send from investor-facing domain → track responses
-  - On reply: notify Zack, qualify, prepare warm intro
-- [ ] **5.4** Build concierge QC workflow:
-  - Trigger: warm intro made (logged in tracker)
-  - Auto-schedule Day 7 and Day 21 check-ins
-  - Generate personalized follow-up referencing the specific LO and conversation
-  - Human review → send → log feedback
-  - Alert if negative feedback → suggest re-route
-- [ ] **5.5** Build LinkedIn daily digest:
+  - Human review checkpoint → send via warmed domain → schedule follow-ups
+- [ ] **5.3** Build LinkedIn daily digest:
   - N8N can't automate LinkedIn (TOS violation risk)
   - Instead: daily summary of "send these messages today" with pre-written copy
-- [ ] **5.6** Build public record monitoring:
-  - Monthly check: new mortgages recorded on properties we flagged?
-  - Cross-reference lender with LO's company
-  - Auto-notify when deal verified
+- [ ] **5.4** Build response handling:
+  - Monitor reply inbox
+  - On reply: notify Zack, pull battlecard context, suggest response
+- [ ] **5.5** Build pipeline tracking:
+  - Auto-update outreach tracker when emails sent/replies received
 
-**Deliverable:** Semi-automated three-track engine. Zack reviews/approves, N8N handles timing, personalization, and tracking.
+**Deliverable:** Semi-automated LO outbound engine. Zack reviews/approves, N8N handles timing and personalization.
 
 ---
 
@@ -487,28 +323,11 @@ This phase is intentionally open — content strategy TBD after outreach reveals
 - [ ] **6.2** Insight pieces for LOs:
   - "5 Signals That a Landlord Is Ready to Refi"
   - "Why [Market] Investors Are Shifting from Hard Money to DSCR"
-- [ ] **6.3** Case studies (once pilots close):
-  - "LO closed $450K DSCR deal from a warm intro in 18 days"
+- [ ] **6.3** Case studies (once sales close):
+  - "LO closed $450K DSCR deal in 18 days using our intel"
   - Anonymized but specific
 
 **Format:** Code-generated PDFs. Professional, clean, 1-2 pages max.
-
----
-
-### Phase 7: Pricing Finalization
-**Effort:** Informed by first 3-5 pilot conversations
-**Goal:** Lock pricing based on real market feedback
-
-- [ ] **7.1** Test pilot pricing ($500/5 warm intros) in first LO conversations
-  - Track: objections, counter-offers, willingness to pay
-  - Note: do they want more intros? Different data? Ongoing?
-- [ ] **7.2** Refine based on feedback:
-  - If "too expensive" → warm intros aren't converting, fix investor outreach quality
-  - If "too cheap" → raise price or add premium tier
-  - If "I want ongoing" → subscription model validated
-  - If "what about performance?" → rev share conversation opens naturally
-- [ ] **7.3** Finalize pricing tiers and update all collateral
-- [ ] **7.4** Build pilot → subscription → rev share upgrade path
 
 ---
 
@@ -525,8 +344,7 @@ master (production — stable)
 ├── phase3/sales-assets
 ├── phase4/outbound
 ├── phase5/n8n-automation
-├── phase6/collateral
-└── phase7/pricing
+└── phase6/collateral
 ```
 
 ### Workflow
@@ -548,46 +366,39 @@ master (production — stable)
 
 ```
 Phase 1 (Infrastructure)  ←── START FIRST (email warming is the only hard blocker)
-    ↓ runs passively            Both LO + investor domains warming simultaneously
+    ↓ runs passively
 Phase 2 (Pipeline)         ←── can start same day as Phase 1
     ↓ produces enriched data
-Phase 3 (Sales Assets)     ←── needs Phase 2 data to build real dossiers + outreach templates
-    ↓ produces dossiers, battlecards, investor sequences
-Phase 4 Track A (LO Sales) ←── needs Phase 3 assets + Phase 1 warm LO domain
-Phase 4 Track B (Investor) ←── needs Phase 3 + Phase 1 warm investor domain + at least 1 LO signed
-Phase 4 Track C (QC Loop)  ←── needs first warm intro made
-    ↓ validates messaging
+Phase 3 (Sales Assets)     ←── needs Phase 2 data to build product + samples
+    ↓ produces sellable product + sales materials
+Phase 4 (LO Outbound)     ←── needs Phase 3 assets + Phase 1 warm domains
+    ↓ validates messaging, generates revenue
 Phase 5 (N8N Automation)   ←── needs Phase 4 learnings (what messages work)
 Phase 6 (Collateral)       ←── ongoing, informed by Phase 4 conversations
-Phase 7 (Pricing)          ←── informed by Phase 4 pilot feedback
 ```
 
-**Hard blockers:**
-- Email domain warming (~2-3 weeks passive) — start immediately
-- Investor outreach requires at least 1 LO client to route intros to
+**Hard blocker:** Email domain warming (~2-3 weeks passive) — start immediately.
 
-**LinkedIn outreach to LOs can start as soon as battlecards are ready**, independent of email warming. That's the fastest path to first LO client.
+**LinkedIn outreach to LOs can start as soon as battlecards are ready**, independent of email warming. That's the fastest path to first sale.
 
-**Total estimated effort to first LO outreach:** ~25-35 hours of active work (Phases 1-4A)
-**Total estimated effort to first investor outreach:** +5-8 hours on top (Phase 4B), but gated by having an LO to route to
+**Total estimated effort to first LO outreach:** ~25-30 hours of active work (Phases 1-4)
 
 ---
 
 ## Open Questions
 
-1. **Investor-facing brand name** — needs to be chosen and domain purchased. Should feel advisory/trustworthy.
-2. **CRM** — CSV/Google Sheets tracker for now. Revisit when 10+ active conversations across both tracks.
-3. **NC SoS paid subscription** — worth investigating for entity resolution quality. Contact subscriptions@sosnc.gov. Not blocking.
-4. **ATTOM tier** — $95/mo to start. Monitor API usage as 3 markets ramp.
-5. **Landing page complexity** — single static HTML page is fine to start. Can evolve later.
+1. **CRM** — CSV/Google Sheets tracker for now. Revisit when 10+ active conversations.
+2. **NC SoS paid subscription** — worth investigating for entity resolution quality. Contact subscriptions@sosnc.gov. Not blocking.
+3. **ATTOM tier** — $95/mo to start. Monitor API usage as 3 markets ramp.
 
 ## Resolved Decisions
 
-- **LO outreach domain:** Still Mind Creative lookalikes for cold volume protection. Primary conversations from zack@stillmindcreative.com.
-- **Investor outreach:** Separate brand/domain. We own the investor relationship. LO gets warm intros, not raw data.
-- **Concierge QC:** Post-introduction follow-up with investors. Builds trust, verifies deals, enables re-routing.
+- **Business model:** Build leads, sell leads. Two tiers, flat pricing, volume discounts. LOs do their own outreach to investors.
+- **Sending domains:** Still Mind Creative lookalikes for cold volume protection. Primary conversations from zack@stillmindcreative.com.
+- **No investor-facing brand.** We don't contact investors. We sell data to LOs.
 - **Collateral format:** Code-generated PDFs via Python (WeasyPrint or ReportLab). No Canva.
 - **Timelines:** No calendar dates. Phases gated by dependencies. Effort estimates in hours.
+- **Pricing:** $10/lead semi-enriched, $75/lead full dossier, bulk discounts up to 40-53% off.
 
 ---
 
@@ -596,15 +407,13 @@ Phase 7 (Pricing)          ←── informed by Phase 4 pilot feedback
 | Metric | Target | Gate |
 |--------|--------|------|
 | Markets with enriched data | 3 | Before any outreach |
+| Dossier generator working | Yes | Before any outreach |
 | Sample dossiers created | 9 | Before any LO outreach |
 | LO battlecards created | 75 | Before any LO outreach |
 | LO outreach sent | 25+ | After assets complete |
-| LO conversations started | 5+ | After LO outreach begins |
-| First LO pilot signed | 1 | Before investor outreach at scale |
-| Investor outreach sent | 50+ | After LO signed |
-| Warm intros delivered | 5+ | After investor responses |
-| Concierge QC sent | 5+ | After warm intros made |
-| First verified deal close | 1 | After pipeline matures |
+| LO conversations started | 5+ | After outreach begins |
+| First lead sale | 1 | After conversations |
+| Monthly revenue | $1,000+ | After first few sales |
 
 ---
 
@@ -627,20 +436,13 @@ sales/
 │   ├── wake_county_tam.pdf
 │   ├── cuyahoga_county_tam.pdf
 │   └── marion_county_tam.pdf
-├── investor_outreach/
-│   ├── sequences/               # Email templates per ICP segment
-│   └── qc_templates/            # Concierge follow-up templates
 ├── collateral/                  # Existing — one-pager, sample dossier
 ├── outreach/                    # Existing — LO sequences, tracker
-└── prospects/                   # Existing — LO lists, experiment data
+├── prospects/                   # Existing — LO lists, experiment data
+└── pricing_research/            # Competitive pricing landscape
 
 deployments/
 ├── north_carolina/CONFIG.md     # Existing
 ├── ohio/CONFIG.md               # NEW
 └── indiana/CONFIG.md            # NEW
-
-investor-brand/
-├── index.html                   # Landing page
-├── styles.css
-└── assets/                      # Logo, images
 ```
