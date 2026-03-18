@@ -30,8 +30,13 @@ Usage:
 
 import argparse
 import json
+import sys
 from datetime import date
 from pathlib import Path
+
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 import pandas as pd
 
