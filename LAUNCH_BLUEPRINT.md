@@ -16,6 +16,22 @@ Public records → Pipeline (score, enrich, validate) → Two product tiers
 
 ---
 
+## Progress (Last updated: 2026-03-17)
+
+| Phase | Status | Key Output |
+|-------|--------|------------|
+| **Phase 1: Infrastructure** | In progress | Tracerfy key configured. ATTOM free tier confirmed. Domains/email warming = Zack's action items (see `sales/PHASE1_SETUP_GUIDE.md`). |
+| **Phase 2A: Wake County** | 80% complete | 373K properties parsed, 74K Tier 1 scored, 33 samples selected. Blocked on ATTOM paid tier decision + Tracerfy skip trace. |
+| **Phase 2B: Cuyahoga OH** | Not started | Needs data source research + deployment config. |
+| **Phase 2C: Marion IN** | Not started | Needs data source research + deployment config. |
+| **Phase 3: Sales Assets** | Not started | Blocked on Phase 2 enrichment. |
+| **Phase 4: LO Outbound** | Not started | Blocked on Phase 3. |
+
+### Open Decision
+**ATTOM paid tier ($95/mo):** Free tier returns building details (beds, baths, sqft) but NOT mortgage/lender data. Mortgage data is a key differentiator for the full dossier product ($100/lead Tier 1). Decision: activate paid plan now or defer until first client?
+
+---
+
 ## Target Markets
 
 | # | Market | County | Why |
@@ -185,14 +201,24 @@ Rounds to **~$350/mo fixed** once you remove one-time setup costs.
 **Goal:** Enriched investor databases for all 3 markets
 
 #### 2A: Wake County, NC (Adapt Existing Pipeline)
-- [ ] **2A.1** Download Wake County property data (tax records + OneMap parcels)
-- [ ] **2A.2** Adapt `02_parse_nal.py` for NC data format (columns differ from FL FDOR)
-- [ ] **2A.3** Run `03_filter_icp.py` — score and filter to Tier 1
-- [ ] **2A.4** Entity resolution via owner name parsing (skip NC SoS initially)
-- [ ] **2A.5** Run Tracerfy skip trace
-- [ ] **2A.6** Run ATTOM mortgage enrichment
-- [ ] **2A.7** Validate contacts (MillionVerifier + Twilio)
-- [ ] **2A.8** DNC scrub (FTC + Tracerfy comprehensive)
+- [x] **2A.1** Download Wake County property data — 468,336 rows from services.wake.gov
+  - Scripts: `01_download_wake.py` (XLSX + qualified sales)
+  - Source: Wake County Tax Admin daily extract (87 columns, free)
+- [x] **2A.2** Parse to standard schema — 373,372 residential properties
+  - Script: `02_parse_wake.py` (handles NC mailing address format, use codes, no homestead)
+  - Key stats: 50,621 LLC-owned, 57,263 absentee, 19,385 portfolio 5+
+- [x] **2A.3** ICP score & filter — 74,626 Tier 1 (Hot), 256,564 Tier 2 (Warm), 36,457 Tier 3 (Nurture)
+  - Used existing `03_filter_icp.py --state NC` with nc_scoring_weights.json
+- [x] **2A.4** Select 33 sample leads for sales collateral
+  - 3 segments × 2 tiers × 5 leads = 30 sellable + 3 Tier 3 depth proofs
+  - Segments: Portfolio Landlord, Growing Portfolio, Self-Employed/LLC
+  - Government entities filtered out, deduplicated by owner
+- [x] **2A.5** Test ATTOM API — free tier returns building details (beds, baths, sqft)
+  - **DECISION PENDING:** Free tier does NOT include mortgage/lender data. Paid plan ($95/mo) needed for full dossier mortgage fields.
+- [ ] **2A.6** Run Tracerfy skip trace on 33 samples (~$0.30 cost)
+- [ ] **2A.7** Run ATTOM enrichment on 33 samples (building details via free tier; mortgage data requires paid tier decision)
+- [ ] **2A.8** Validate contacts (MillionVerifier + Twilio)
+- [ ] **2A.9** DNC scrub (FTC + Tracerfy comprehensive)
 
 #### 2B: Cuyahoga County, OH (New Market)
 - [ ] **2B.1** Research OH property data sources (County Fiscal Officer, OH GIS)
@@ -232,13 +258,19 @@ Rounds to **~$350/mo fixed** once you remove one-time setup costs.
   - Structured CSV/Google Sheet with: contact info, property count, portfolio value, D/E ratio, AI talking points
   - Clean, well-labeled columns, ready for LO to import into their CRM
 
-#### 3B: Sample Dossiers (3 per market = 9 total)
-- [ ] **3B.1** Select 3 real leads per market representing each ICP:
-  - **Portfolio Landlord** (5+ properties, LLC-owned, out-of-state)
-  - **Growing Investor** (2-4 properties, individual, recent acquisitions)
-  - **Entity/High Net Worth** (trust/corp, multi-county, wealth signals)
-- [ ] **3B.2** Fully enrich each lead — every property, all financing, wealth signals
-- [ ] **3B.3** Generate 9 redacted sample dossier PDFs (3 markets × 3 ICPs)
+#### 3B: Sample Dossiers (33 per market = 99 total)
+
+Only enrich leads needed for sales collateral — don't spend on enrichment until there's a buyer.
+
+Per market: 3 ICP segments × 2 sellable tiers × 5 leads = 30 sellable samples + 3 Tier 3 depth proofs = **33 leads**
+
+- [ ] **3B.1** Select 33 real leads per market (DONE for Wake County):
+  - **Portfolio Landlord (5+)** — LLC-owned, multi-property, often out-of-state
+  - **Growing Portfolio (2-4)** — scaling investors, recent acquisitions
+  - **Self-Employed / LLC Investor** — entity-owned, sophisticated
+  - Each segment × Tier 1 (Hot) + Tier 2 (Warm) × 5 leads + 1 Tier 3 depth proof
+- [ ] **3B.2** Enrich each lead — skip trace (Tracerfy), building details (ATTOM), validation
+- [ ] **3B.3** Generate redacted sample PDFs for each tier × segment combination
 
 #### 3C: Market TAM One-Pagers (1 per market = 3 total)
 - [ ] **3C.1** For each market, compile:
