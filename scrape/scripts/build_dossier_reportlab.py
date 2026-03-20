@@ -565,16 +565,25 @@ def generate_dossier(row, output_path, is_redacted=False):
 
     portfolio_val = fc(row.get("total_portfolio_value", ""))
     avg_val = fc(row.get("avg_property_value", ""))
-    equity_pct_raw = _safe_float(row.get("est_equity_pct", row.get("equity_ratio", 0)))
-    equity_pct_str = fp(row.get("est_equity_pct", "")) or fp(row.get("equity_ratio", ""))
+    equity_pct_raw = _safe_float(row.get("derived_equity_pct", row.get("est_equity_pct", row.get("equity_ratio", 0))))
+    equity_pct_str = fp(row.get("derived_equity_pct", "")) or fp(row.get("est_equity_pct", "")) or fp(row.get("equity_ratio", ""))
 
-    # Portfolio equity (use est_portfolio_equity first, fall back to estimated_equity)
-    portfolio_equity = _safe_float(row.get("est_portfolio_equity", row.get("estimated_equity", 0)))
-    debt_val = _safe_float(row.get("est_remaining_balance", 0))
-    # If we have equity pct and portfolio value but no debt, derive debt
-    pval_num = _safe_float(row.get("total_portfolio_value", 0))
-    if portfolio_equity > 0 and debt_val == 0 and pval_num > 0:
-        debt_val = pval_num - portfolio_equity
+    # Portfolio equity — prefer ATTOM-derived portfolio totals when available
+    attom_portfolio_avm = _safe_float(row.get("attom_portfolio_avm", 0))
+    attom_portfolio_loan = _safe_float(row.get("attom_portfolio_loan", 0))
+    attom_portfolio_equity = _safe_float(row.get("attom_portfolio_equity", 0))
+
+    if attom_portfolio_avm > 0:
+        # Use ATTOM-derived portfolio totals (most accurate)
+        portfolio_equity = attom_portfolio_equity
+        debt_val = attom_portfolio_loan
+        pval_num = attom_portfolio_avm
+    else:
+        portfolio_equity = _safe_float(row.get("est_portfolio_equity", row.get("estimated_equity", 0)))
+        debt_val = _safe_float(row.get("est_remaining_balance", 0))
+        pval_num = _safe_float(row.get("total_portfolio_value", 0))
+        if portfolio_equity > 0 and debt_val == 0 and pval_num > 0:
+            debt_val = pval_num - portfolio_equity
 
     dscr_num = _safe_float(row.get("est_dscr", 0))
     rent_num = _safe_float(row.get("est_annual_rent", 0))
