@@ -344,14 +344,25 @@ def extract_rental(data: dict) -> dict:
     if not props:
         return {}
     prop = props[0]
-    rental = prop.get("avm", {})
+    # ATTOM returns "rentalAvm" with flat fields, NOT nested under "avm"
+    rental = prop.get("rentalAvm", {})
+    # Fallback to old path in case API format varies
+    if not rental:
+        rental = prop.get("avm", {})
+        return {
+            "attom_rent_estimate": rental.get("amount", {}).get("value", ""),
+            "attom_rent_high": rental.get("amount", {}).get("high", ""),
+            "attom_rent_low": rental.get("amount", {}).get("low", ""),
+            "attom_rent_confidence": rental.get("amount", {}).get("scr", ""),
+            "attom_rent_date": rental.get("eventDate", ""),
+        }
 
     return {
-        "attom_rent_estimate": rental.get("amount", {}).get("value", ""),
-        "attom_rent_high": rental.get("amount", {}).get("high", ""),
-        "attom_rent_low": rental.get("amount", {}).get("low", ""),
-        "attom_rent_confidence": rental.get("amount", {}).get("scr", ""),
-        "attom_rent_date": rental.get("eventDate", ""),
+        "attom_rent_estimate": rental.get("estimatedRentalValue", ""),
+        "attom_rent_high": rental.get("estimatedMaxRentalValue", ""),
+        "attom_rent_low": rental.get("estimatedMinRentalValue", ""),
+        "attom_rent_confidence": "",
+        "attom_rent_date": rental.get("valuationDate", ""),
     }
 
 
@@ -410,14 +421,14 @@ def extract_assessment(data: dict) -> dict:
     market = assess.get("market", {})
 
     return {
-        "attom_assessed_total": assessed.get("assdTtlValue", ""),
-        "attom_assessed_improvement": assessed.get("assdImprValue", ""),
-        "attom_assessed_land": assessed.get("assdLandValue", ""),
-        "attom_market_total": market.get("mktTtlValue", ""),
-        "attom_market_improvement": market.get("mktImprValue", ""),
-        "attom_market_land": market.get("mktLandValue", ""),
-        "attom_annual_tax": tax.get("taxAmt", ""),
-        "attom_tax_year": tax.get("taxYear", ""),
+        "attom_assessed_total": assessed.get("assdttlvalue", assessed.get("assdTtlValue", "")),
+        "attom_assessed_improvement": assessed.get("assdimprvalue", assessed.get("assdImprValue", "")),
+        "attom_assessed_land": assessed.get("assdlandvalue", assessed.get("assdLandValue", "")),
+        "attom_market_total": market.get("mktttlvalue", market.get("mktTtlValue", "")),
+        "attom_market_improvement": market.get("mktimprvalue", market.get("mktImprValue", "")),
+        "attom_market_land": market.get("mktlandvalue", market.get("mktLandValue", "")),
+        "attom_annual_tax": tax.get("taxamt", tax.get("taxAmt", "")),
+        "attom_tax_year": tax.get("taxyear", tax.get("taxYear", "")),
     }
 
 
@@ -514,6 +525,13 @@ def build_fl_lookups(lead_names: list, master_df: pd.DataFrame) -> list:
             print(f"  WARNING: '{name}' not found in FL master data")
             continue
         row = match.iloc[0]
+
+        # Skip condo-only leads (property_types == "004") — ATTOM returns no data
+        prop_types = str(row.get("property_types", "")).strip()
+        if prop_types == "004":
+            print(f"  SKIP (condo-only): '{name}'")
+            continue
+
         co_no = str(row.get("CO_NO", "60")).strip()
 
         # Parse pipe-delimited addresses
@@ -639,6 +657,10 @@ def enrich_properties(lookups: list, dry_run: bool = False) -> pd.DataFrame:
                     # Already confirmed no data — skip
                     total_cached += 1
                     continue
+                elif "SuccessWithoutResult" in str(cached_data.get("_error", "")):
+                    # ATTOM returned success but no data — skip, don't re-call
+                    total_cached += 1
+                    continue
 
             if dry_run:
                 print(f"    WOULD CALL: {ep_name} ({ep['description']})")
@@ -719,6 +741,165 @@ def enrich_properties(lookups: list, dry_run: bool = False) -> pd.DataFrame:
     print(f"  {'='*60}")
 
     return pd.DataFrame(all_rows)
+
+
+# ---------------------------------------------------------------------------
+# Derived Signal Computation — LO-focused intelligence columns
+# ---------------------------------------------------------------------------
+from datetime import datetime, date
+
+def compute_derived_signals(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add LO-focused derived columns to the enriched property DataFrame.
+    These signals turn raw ATTOM fields into actionable intelligence
+    that an LO can use to prioritize calls and open conversations.
+    """
+    def _float(val, default=0.0):
+        try:
+            v = float(str(val).replace(",", "").replace("$", "").strip() or 0)
+            return default if pd.isna(v) else v
+        except (ValueError, TypeError):
+            return default
+
+    today = date.today()
+    rows = []
+
+    for _, row in df.iterrows():
+        r = row.to_dict()
+
+        avm = _float(r.get("attom_avm_value"))
+        loan = _float(r.get("attom_loan_amount"))
+        last_sale_price = _float(r.get("attom_last_sale_price"))
+        rent_monthly = _float(r.get("attom_rent_estimate"))
+        interest_rate = _float(r.get("attom_interest_rate"))
+        annual_tax = _float(r.get("attom_annual_tax"))
+        lender = str(r.get("attom_lender_name", "") or "").strip()
+        due_date_str = str(r.get("attom_due_date", "") or "").strip()
+        last_sale_date_str = str(r.get("attom_last_sale_date", "") or "").strip()
+        lender_type = str(r.get("attom_lender_type", "") or "").strip()
+
+        # --- Equity ---
+        is_cash = (avm > 0 and loan == 0 and not lender)
+        equity = avm - loan if avm > 0 else 0
+        equity_pct = (equity / avm * 100) if avm > 0 else 0
+
+        r["derived_equity"] = equity if equity > 0 else ""
+        r["derived_equity_pct"] = round(equity_pct, 1) if equity_pct > 0 else ""
+        r["derived_cash_buyer"] = is_cash
+
+        # --- Appreciation ---
+        if avm > 0 and last_sale_price > 0:
+            appreciation = (avm - last_sale_price) / last_sale_price * 100
+            r["derived_appreciation"] = round(appreciation, 1)
+        else:
+            r["derived_appreciation"] = ""
+
+        # --- Hold years ---
+        hold_years = ""
+        if last_sale_date_str and last_sale_date_str not in ("", "nan", "None"):
+            for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y-%m-%dT%H:%M:%S"):
+                try:
+                    sale_dt = datetime.strptime(last_sale_date_str[:10], fmt).date()
+                    hold_years = round((today - sale_dt).days / 365.25, 1)
+                    break
+                except ValueError:
+                    continue
+        r["derived_hold_years"] = hold_years
+
+        # --- Rental / DSCR ---
+        annual_rent = rent_monthly * 12 if rent_monthly > 0 else 0
+        r["derived_annual_rent"] = annual_rent if annual_rent > 0 else ""
+
+        # Estimate annual debt service (P&I on 30yr at stated rate)
+        annual_debt_service = 0
+        if loan > 0 and interest_rate > 0:
+            monthly_rate = interest_rate / 100 / 12
+            n_payments = 360  # 30-year
+            if monthly_rate > 0:
+                monthly_pmt = loan * (monthly_rate * (1 + monthly_rate)**n_payments) / ((1 + monthly_rate)**n_payments - 1)
+                annual_debt_service = monthly_pmt * 12
+
+        dscr = 0
+        if annual_rent > 0 and annual_debt_service > 0:
+            dscr = annual_rent / annual_debt_service
+        elif annual_rent > 0 and is_cash:
+            dscr = 99.0  # Cash buyer — infinite DSCR (display as "N/A — Cash")
+        r["derived_dscr"] = round(dscr, 2) if dscr > 0 and dscr < 99 else ("CASH" if is_cash and annual_rent > 0 else "")
+
+        # --- Cash-out at 75% LTV ---
+        cashout_75 = (avm * 0.75) - loan if avm > 0 else 0
+        r["derived_cashout_75"] = round(cashout_75) if cashout_75 > 0 else ""
+
+        # --- Months to maturity ---
+        months_to_maturity = ""
+        if due_date_str and due_date_str not in ("", "nan", "None"):
+            for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
+                try:
+                    due_dt = datetime.strptime(due_date_str[:10], fmt).date()
+                    months_to_maturity = round((due_dt - today).days / 30.44)
+                    break
+                except ValueError:
+                    continue
+        r["derived_months_to_maturity"] = months_to_maturity
+
+        # --- Refi Priority ---
+        priority = "LOW"
+        reasons = []
+        if is_cash and equity > 200_000:
+            priority = "HIGH"
+            reasons.append("Cash buyer, high equity")
+        if lender_type == "hard_money":
+            priority = "HIGH"
+            reasons.append("Hard money — needs refi")
+        if isinstance(months_to_maturity, (int, float)) and 0 < months_to_maturity <= 12:
+            priority = "HIGH"
+            reasons.append("Maturity <12mo")
+        if interest_rate > 8:
+            if priority != "HIGH":
+                priority = "HIGH"
+            reasons.append(f"High rate ({interest_rate}%)")
+        if equity_pct > 50 and not is_cash and equity > 100_000:
+            if priority == "LOW":
+                priority = "MEDIUM"
+            reasons.append("Significant equity")
+
+        r["derived_refi_priority"] = priority
+        r["derived_refi_reasons"] = "; ".join(reasons) if reasons else ""
+
+        # --- Call Opener ---
+        opener = ""
+        if is_cash and avm > 0:
+            equity_fmt = f"${equity:,.0f}" if equity >= 1000 else f"${equity:.0f}"
+            opener = f"You purchased this property with cash — you're sitting on {equity_fmt} in equity. Have you considered a cash-out refi to redeploy that capital?"
+        elif lender_type == "hard_money" and lender:
+            opener = f"I see you're financed through {lender} — I can help you exit into a long-term DSCR loan at a much better rate."
+        elif interest_rate > 7.5:
+            opener = f"Your current rate is {interest_rate}% — I can likely save you hundreds per month with a DSCR refi."
+        elif isinstance(months_to_maturity, (int, float)) and 0 < months_to_maturity <= 18:
+            opener = f"Your loan matures in about {months_to_maturity} months — let's get ahead of that with a DSCR refi."
+        elif equity > 200_000:
+            equity_fmt = f"${equity:,.0f}" if equity >= 1000 else f"${equity:.0f}"
+            opener = f"You have about {equity_fmt} in equity — a cash-out refi could free up capital for your next investment."
+        elif avm > 0:
+            opener = f"I work with investors in your area and can offer competitive DSCR financing for your portfolio."
+        r["derived_call_opener"] = opener
+
+        rows.append(r)
+
+    result = pd.DataFrame(rows)
+    print(f"\n  Derived signals computed: {len(result)} properties")
+
+    # Summary stats
+    cash_count = sum(1 for _, r in result.iterrows() if r.get("derived_cash_buyer") == True)
+    high_pri = sum(1 for _, r in result.iterrows() if r.get("derived_refi_priority") == "HIGH")
+    has_rent = sum(1 for _, r in result.iterrows() if r.get("derived_annual_rent") not in ("", 0))
+    has_tax = sum(1 for _, r in result.iterrows() if r.get("attom_annual_tax") not in ("", None, 0))
+    print(f"    Cash buyers: {cash_count}")
+    print(f"    HIGH priority: {high_pri}")
+    print(f"    With rent estimate: {has_rent}")
+    print(f"    With tax data: {has_tax}")
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -827,6 +1008,9 @@ def main():
     result_df = enrich_properties(lookups, dry_run=args.dry_run)
 
     if not args.dry_run and len(result_df) > 0:
+        # Compute derived LO-focused signals
+        result_df = compute_derived_signals(result_df)
+
         # Save output
         output_file = DEMO_DIR / f"showcase_7ep_{args.market}.csv"
         result_df.to_csv(output_file, index=False)

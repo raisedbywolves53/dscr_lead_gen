@@ -346,13 +346,13 @@ def tab_name(index, name_raw):
 # ════════════════════════════════════════════════════════════════════
 
 PIPELINE_HEADERS = [
-    "Priority", "Score", "Investor", "Phone", "Type", "Properties",
-    "Portfolio $", "Equity", "DSCR", "Cash-Out 75%", "ICP Segment",
-    "Financing Angle", "Email", "Call Status", "Call Date",
-    "Follow-Up", "Notes",
+    "Priority", "Investor", "Phone", "Cash?", "Equity", "Call Opener",
+    "Score", "Properties", "Appreciation", "Hold Yrs",
+    "Rent Est.", "DSCR", "Cash-Out 75%",
+    "Email", "Call Status", "Call Date", "Follow-Up", "Notes",
 ]
 
-PIPELINE_WIDTHS = [12, 8, 28, 16, 10, 10, 16, 14, 8, 14, 20, 40, 26, 14, 12, 12, 36]
+PIPELINE_WIDTHS = [12, 28, 16, 8, 16, 44, 8, 10, 12, 10, 14, 8, 14, 26, 14, 12, 12, 36]
 
 
 def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
@@ -400,14 +400,15 @@ def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
         owner = display_name(owner_raw)
         score = safe_float(row.get("score", row.get("_score", 0)), 0)
         phone1 = fphone(row.get("phone_1", ""))
-        phone1_type = s(row.get("phone_1_type", "")).capitalize()
         props = safe_int(row.get("props", row.get("property_count", 0)))
-        portfolio = safe_float(row.get("total_portfolio_value"), 0)
-        equity = safe_float(row.get("estimated_equity"), 0)
-        dscr = safe_float(row.get("est_dscr"))
-        cashout = safe_float(row.get("max_cashout_75", row.get("portfolio_cashout_75", 0)), 0)
-        segment = s(row.get("_icp", row.get("selling_segment", "")))
-        angle = generate_financing_angle(row)
+        equity = safe_float(row.get("derived_equity", row.get("estimated_equity", 0)), 0)
+        dscr = s(row.get("derived_dscr", "")) or (f"{safe_float(row.get('est_dscr')):.2f}" if safe_float(row.get("est_dscr")) else "")
+        cashout = safe_float(row.get("derived_cashout_75", row.get("max_cashout_75", row.get("portfolio_cashout_75", 0))), 0)
+        call_opener = s(row.get("derived_call_opener", ""))
+        is_cash = s(row.get("derived_cash_buyer", "")).upper() == "TRUE"
+        appreciation = s(row.get("derived_appreciation", ""))
+        hold_years = s(row.get("derived_hold_years", ""))
+        rent_est = safe_float(row.get("attom_rent_estimate", 0), 0)
         email1 = s(row.get("email_1", ""))
 
         if is_redacted:
@@ -416,12 +417,17 @@ def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
             owner = redact(owner)
 
         values = [
-            priority_label, score, owner,
-            phone1, phone1_type, props,
-            portfolio, equity,
-            dscr if dscr is not None else "",
+            priority_label, owner, phone1,
+            "CASH" if is_cash else "",
+            equity,
+            call_opener,
+            score, props,
+            f"{appreciation}%" if appreciation and appreciation != "nan" else "",
+            hold_years if hold_years and hold_years != "nan" else "",
+            rent_est if rent_est > 0 else "",
+            dscr,
             cashout if cashout else "",
-            segment, angle, email1,
+            email1,
             "", "", "", "",  # Call Status, Call Date, Follow-Up, Notes
         ]
 
@@ -445,8 +451,35 @@ def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
         else:
             pri_cell.fill = PatternFill("solid", fgColor="D8D8D8")
 
-        # ── Score fill (col B) ────────────────────────────────────
-        score_cell = ws.cell(row=r, column=2)
+        # ── Investor name bold + hyperlink to detail tab (col B) ──
+        inv_cell = ws.cell(row=r, column=2)
+        inv_cell.font = Font(bold=True, size=10, name="Calibri", color=ACCENT)
+        tab = investor_tabs.get(i)
+        if tab and not is_redacted:
+            safe_tab = tab.replace("'", "''")
+            inv_cell.hyperlink = f"#'{safe_tab}'!A1"
+
+        # ── Cash buyer fill (col D) ──────────────────────────────
+        cash_cell = ws.cell(row=r, column=4)
+        cash_cell.alignment = center_center
+        if is_cash:
+            cash_cell.fill = PatternFill("solid", fgColor=LIGHT_GREEN)
+            cash_cell.font = Font(bold=True, size=9, color=GREEN, name="Calibri")
+
+        # ── Equity formatting (col E) ────────────────────────────
+        eq_cell = ws.cell(row=r, column=5)
+        eq_cell.number_format = "$#,##0"
+        eq_cell.alignment = right_center
+        if equity >= 200000:
+            eq_cell.font = green_bold_10
+        elif equity < 0:
+            eq_cell.font = red_bold_10
+
+        # ── Call Opener wrap (col F) ─────────────────────────────
+        ws.cell(row=r, column=6).alignment = wrap_top
+
+        # ── Score fill (col G) ────────────────────────────────────
+        score_cell = ws.cell(row=r, column=7)
         score_cell.alignment = center_center
         score_cell.font = bold_10
         if score >= 50:
@@ -454,68 +487,55 @@ def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
         elif score >= 30:
             score_cell.fill = PatternFill("solid", fgColor=LIGHT_YELLOW)
 
-        # ── Investor name bold + hyperlink to detail tab (col C) ──
-        inv_cell = ws.cell(row=r, column=3)
-        inv_cell.font = Font(bold=True, size=10, name="Calibri", color=ACCENT)
-        tab = investor_tabs.get(i)
-        if tab and not is_redacted:
-            safe_tab = tab.replace("'", "''")
-            inv_cell.hyperlink = f"#'{safe_tab}'!A1"
+        # ── Rent formatting (col K) ──────────────────────────────
+        rent_cell = ws.cell(row=r, column=11)
+        if rent_est > 0:
+            rent_cell.number_format = "$#,##0"
+            rent_cell.alignment = right_center
 
-        # ── Phone type fill (col E) ───────────────────────────────
-        type_cell = ws.cell(row=r, column=5)
-        if phone1_type.lower() == "mobile":
-            type_cell.fill = PatternFill("solid", fgColor=LIGHT_GREEN)
-
-        # ── Currency formatting ───────────────────────────────────
-        for c in [7, 8, 10]:  # Portfolio $, Equity, Cash-Out
-            ws.cell(row=r, column=c).number_format = "$#,##0"
-            ws.cell(row=r, column=c).alignment = right_center
-
-        # ── DSCR formatting (col I) ──────────────────────────────
-        dscr_cell = ws.cell(row=r, column=9)
-        if dscr is not None:
-            dscr_cell.number_format = "0.00"
-            if dscr >= 1.0:
-                dscr_cell.font = green_bold_10
-            else:
-                dscr_cell.font = red_bold_10
+        # ── DSCR formatting (col L) ──────────────────────────────
+        dscr_cell = ws.cell(row=r, column=12)
         dscr_cell.alignment = center_center
+        dscr_f = safe_float(dscr)
+        if dscr_f is not None:
+            if dscr_f >= 1.0:
+                dscr_cell.font = green_bold_10
+            elif dscr_f > 0:
+                dscr_cell.font = red_bold_10
 
-        # ── Equity color (col H) ─────────────────────────────────
-        eq_cell = ws.cell(row=r, column=8)
-        if equity >= 200000:
-            eq_cell.font = green_bold_10
-        elif equity < 0:
-            eq_cell.font = red_bold_10
+        # ── Cash-Out formatting (col M) ──────────────────────────
+        cashout_cell = ws.cell(row=r, column=13)
+        if cashout > 0:
+            cashout_cell.number_format = "$#,##0"
+            cashout_cell.alignment = right_center
 
     nr = len(rows_data) + 2  # last data row
 
     # ── Data bars ─────────────────────────────────────────────────
-    # Score (col B)
+    # Score (col G)
     ws.conditional_formatting.add(
-        f"B3:B{nr}",
+        f"G3:G{nr}",
         DataBarRule(start_type="num", start_value=0,
                     end_type="num", end_value=100,
                     color=GREEN),
     )
-    # Properties (col F)
+    # Equity (col E)
     ws.conditional_formatting.add(
-        f"F3:F{nr}",
+        f"E3:E{nr}",
+        DataBarRule(start_type="min", end_type="max", color=GREEN),
+    )
+    # Rent Est. (col K)
+    ws.conditional_formatting.add(
+        f"K3:K{nr}",
         DataBarRule(start_type="min", end_type="max", color=TEAL),
     )
-    # Portfolio $ (col G)
+    # Cash-Out (col M)
     ws.conditional_formatting.add(
-        f"G3:G{nr}",
-        DataBarRule(start_type="min", end_type="max", color=NAVY),
-    )
-    # Cash-Out (col J)
-    ws.conditional_formatting.add(
-        f"J3:J{nr}",
+        f"M3:M{nr}",
         DataBarRule(start_type="min", end_type="max", color=ACCENT),
     )
 
-    # ── Call Status dropdown (col N) ──────────────────────────────
+    # ── Call Status dropdown (col O) ──────────────────────────────
     dv = DataValidation(
         type="list",
         formula1='"Not Called,VM Left,Connected,Interested,Scheduled,DNC"',
@@ -523,7 +543,7 @@ def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
     )
     dv.error = "Select from dropdown"
     ws.add_data_validation(dv)
-    dv.add(f"N3:N{nr}")
+    dv.add(f"O3:O{nr}")
 
     # ── Call Status conditional formatting ────────────────────────
     for label, fill in [
@@ -532,18 +552,18 @@ def build_pipeline_tab(wb, df, investor_tabs, is_redacted=False):
         ("DNC", cond_red),
     ]:
         ws.conditional_formatting.add(
-            f"N3:N{nr}",
+            f"O3:O{nr}",
             CellIsRule(operator="equal", formula=[f'"{label}"'], fill=fill),
         )
 
-    # ── Date formatting (cols O, P) ──────────────────────────────
-    for c in [15, 16]:
+    # ── Date formatting (cols P, Q) ──────────────────────────────
+    for c in [16, 17]:
         for r in range(3, nr + 1):
             ws.cell(row=r, column=c).number_format = "MMM DD, YYYY"
 
-    # ── Notes wrap (col Q) ────────────────────────────────────────
+    # ── Notes wrap (col R) ────────────────────────────────────────
     for r in range(3, nr + 1):
-        ws.cell(row=r, column=17).alignment = wrap_top
+        ws.cell(row=r, column=18).alignment = wrap_top
 
     # ── Freeze panes + auto-filter ────────────────────────────────
     ws.freeze_panes = "D3"
@@ -768,6 +788,11 @@ def build_investor_tab(wb, row, index, is_redacted=False):
 
     # Signals
     signals = []
+    if s(row.get("derived_cash_buyer")).upper() == "TRUE":
+        signals.append(("CASH BUYER", TEAL))
+    derived_refi_pri = s(row.get("derived_refi_priority", "")).upper()
+    if derived_refi_pri == "HIGH":
+        signals.append(("HIGH PRIORITY", RED))
     if s(row.get("brrrr_exit_candidate")).upper() == "TRUE":
         signals.append(("BRRRR EXIT", AMBER))
     if s(row.get("equity_harvest_candidate")).upper() == "TRUE":
@@ -1040,11 +1065,33 @@ def build_investor_tab(wb, row, index, is_redacted=False):
     table_row += 2
 
     # ════════════════════════════════════════════════════════════
-    # ACT 3: "HOW TO WIN THE BUSINESS"
+    # CALL OPENER (green-tinted callout)
+    # ════════════════════════════════════════════════════════════
+    call_opener = s(row.get("derived_call_opener", ""))
+    if call_opener:
+        ws.merge_cells(start_row=table_row, start_column=1, end_row=table_row, end_column=12)
+        ws.cell(row=table_row, column=1, value="CALL OPENER").font = Font(bold=True, size=9, color=GREEN, name="Calibri")
+        for c in range(1, 13):
+            ws.cell(row=table_row, column=c).fill = PatternFill("solid", fgColor=LIGHT_GREEN)
+            ws.cell(row=table_row, column=c).border = Border(top=Side(style="medium", color=GREEN))
+        table_row += 1
+
+        ws.merge_cells(start_row=table_row, start_column=1, end_row=table_row, end_column=12)
+        opener_cell = ws.cell(row=table_row, column=1, value=call_opener)
+        opener_cell.font = Font(size=9, name="Calibri")
+        opener_cell.alignment = Alignment(wrap_text=True, vertical="top")
+        for c in range(1, 13):
+            ws.cell(row=table_row, column=c).fill = PatternFill("solid", fgColor=LIGHT_GREEN)
+        ws.row_dimensions[table_row].height = 32
+        table_row += 1
+        table_row += 1  # spacer
+
+    # ════════════════════════════════════════════════════════════
+    # CONVERSATION GUIDE
     # ════════════════════════════════════════════════════════════
 
     ws.merge_cells(start_row=table_row, start_column=1, end_row=table_row, end_column=12)
-    ws.cell(row=table_row, column=1, value="HOW TO WIN THE BUSINESS").font = navy_bold_10
+    ws.cell(row=table_row, column=1, value="CONVERSATION GUIDE").font = navy_bold_10
     for c in range(1, 13):
         ws.cell(row=table_row, column=c).border = Border(
             top=Side(style="medium", color=TEAL),

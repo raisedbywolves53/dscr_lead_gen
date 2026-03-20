@@ -604,8 +604,26 @@ def generate_dossier(row, output_path, is_redacted=False):
     status = fv(row.get("sunbiz_status", row.get("entity_status", "")))
     contact_name = fv(row.get("contact_name", row.get("resolved_person", "")))
 
+    # Derived signals (from attom_7endpoint_showcase.py compute_derived_signals)
+    derived_equity = _safe_float(row.get("derived_equity", 0))
+    derived_equity_pct = _safe_float(row.get("derived_equity_pct", 0))
+    derived_appreciation = _safe_float(row.get("derived_appreciation", 0))
+    derived_hold_years = _safe_float(row.get("derived_hold_years", 0))
+    derived_annual_rent = _safe_float(row.get("derived_annual_rent", 0))
+    derived_dscr = fv(row.get("derived_dscr", ""))
+    derived_cash_buyer = str(row.get("derived_cash_buyer", "")).upper() == "TRUE"
+    derived_cashout_75 = _safe_float(row.get("derived_cashout_75", 0))
+    derived_refi_priority = fv(row.get("derived_refi_priority", ""))
+    derived_call_opener = fv(row.get("derived_call_opener", ""))
+    attom_rent_estimate = _safe_float(row.get("attom_rent_estimate", 0))
+    attom_annual_tax = _safe_float(row.get("attom_annual_tax", 0))
+
     # Signals
     signals = []
+    if derived_cash_buyer:
+        signals.append(("CASH BUYER", TEAL))
+    if derived_refi_priority == "HIGH":
+        signals.append(("HIGH PRIORITY", RED_CLR))
     if str(row.get("brrrr_exit_candidate", "")).upper() == "TRUE":
         signals.append(("BRRRR EXIT", AMBER_CLR))
     if str(row.get("equity_harvest_candidate", "")).upper() == "TRUE":
@@ -699,17 +717,31 @@ def generate_dossier(row, output_path, is_redacted=False):
 
     # Determine which KPI cards to show (suppress empty ones)
     kpi_items = []
-    if portfolio_val:
+    # Use derived equity if available, fall back to portfolio-level
+    if derived_equity > 0:
+        kpi_items.append((fc(derived_equity), "Equity", GREEN_CLR))
+    elif portfolio_val:
         kpi_items.append((portfolio_val, "Portfolio Value", TEAL))
-    if equity_pct_str and portfolio_equity > 0:
+    if derived_equity_pct > 0:
+        kpi_items.append((f"{derived_equity_pct:.0f}%", "Equity Ratio", GREEN_CLR))
+    elif equity_pct_str and portfolio_equity > 0:
         kpi_items.append((equity_pct_str, "Equity Ratio", GREEN_CLR))
-    elif fc(portfolio_equity):
-        kpi_items.append((fc(portfolio_equity), "Total Equity", GREEN_CLR))
-    if dscr_num > 0:
+    if attom_rent_estimate > 0:
+        kpi_items.append((f"${attom_rent_estimate:,.0f}/mo", "Rent Est.", ACCENT))
+    if derived_dscr and derived_dscr != "CASH":
+        dscr_f = _safe_float(derived_dscr, 0)
+        if dscr_f > 0:
+            kpi_items.append((f"{dscr_f:.2f}", "Est. DSCR",
+                              GREEN_CLR if dscr_f >= 1.25 else (AMBER_CLR if dscr_f >= 1.0 else RED_CLR)))
+    elif derived_cash_buyer:
+        kpi_items.append(("CASH", "No Debt", TEAL))
+    elif dscr_num > 0:
         kpi_items.append((f"{dscr_num:.2f}", "Est. DSCR",
                           GREEN_CLR if dscr_num >= 1.25 else (AMBER_CLR if dscr_num >= 1.0 else RED_CLR)))
-    if avg_val:
-        kpi_items.append((avg_val, "Avg Prop Value", ACCENT))
+    if attom_annual_tax > 0:
+        kpi_items.append((f"${attom_annual_tax:,.0f}", "Annual Tax", AMBER_CLR))
+    if derived_cashout_75 > 0:
+        kpi_items.append((fc(derived_cashout_75), "Cash-Out 75%", ACCENT))
 
     # Always show at least 3 cards
     if not kpi_items:
@@ -964,10 +996,54 @@ def generate_dossier(row, output_path, is_redacted=False):
         table_bottom = table_top
 
     # ══════════════════════════════════════════════════════════════
-    # ACT 3: HOW TO WIN THE BUSINESS
+    # ACT 3: CALL OPENER + CONVERSATION GUIDE
     # ══════════════════════════════════════════════════════════════
-    box_top = table_bottom - 8
-    box_top = max(box_top, 68)  # Don't overlap footer
+
+    # --- CALL OPENER box (prominent, above conversation guide) ---
+    call_opener = derived_call_opener or ""
+    act3_top = table_bottom - 8
+    act3_top = max(act3_top, 68)
+
+    if call_opener:
+        opener_h = 32
+        opener_y = act3_top - opener_h
+
+        # Green-tinted background with thick left border
+        c.setFillColor(colors.Color(232/255, 245/255, 233/255))
+        c.rect(MARGIN_L, opener_y, USABLE, opener_h, fill=1, stroke=0)
+        c.setFillColor(GREEN_CLR)
+        c.rect(MARGIN_L, opener_y, 3, opener_h, fill=1, stroke=0)
+
+        # Label
+        c.setFont(FONT_BOLD, 7.5)
+        c.setFillColor(GREEN_CLR)
+        c.drawString(MARGIN_L + 10, opener_y + opener_h - 12, "CALL OPENER")
+
+        # Opener text (wrapped)
+        c.setFont(FONT_REGULAR, 7)
+        c.setFillColor(BLACK_SOFT)
+        opener_text_obj = c.beginText(MARGIN_L + 10, opener_y + opener_h - 24)
+        opener_text_obj.setFont(FONT_REGULAR, 7)
+        opener_text_obj.setLeading(9)
+        o_words = call_opener.split()
+        o_line = ""
+        o_max_w = USABLE - 20
+        for word in o_words:
+            test = f"{o_line} {word}".strip()
+            if c.stringWidth(test, FONT_REGULAR, 7) > o_max_w:
+                opener_text_obj.textLine(o_line)
+                o_line = word
+            else:
+                o_line = test
+        if o_line:
+            opener_text_obj.textLine(o_line)
+        c.drawText(opener_text_obj)
+
+        act3_top = opener_y - 6
+
+    # --- CONVERSATION GUIDE box ---
+    box_top = act3_top
+    box_top = max(box_top, 68)
 
     talking = build_talking_points(row)
 
@@ -978,19 +1054,18 @@ def generate_dossier(row, output_path, is_redacted=False):
 
     # Calculate box height
     c.setFont(FONT_REGULAR, 7.5)
-    # Rough line wrapping estimate
     chars_per_line = int((USABLE - 24) / 3.5)
     num_lines = max(2, len(talking) // chars_per_line + 1)
     box_h = 18 + num_lines * 10
 
-    # Refi signals line
-    refi_signals = fv(row.get("est_refi_signals", row.get("refi_signals", "")))
+    # Refi signals/reasons line
+    refi_signals = fv(row.get("derived_refi_reasons", "")) or fv(row.get("est_refi_signals", row.get("refi_signals", "")))
 
     if refi_signals:
         box_h += 12
 
     # Cap box
-    max_box_h = box_top - 42  # leave room for footer
+    max_box_h = box_top - 42
     if box_h > max_box_h:
         box_h = max_box_h
         max_chars = int((box_h - 22) / 10 * chars_per_line)
@@ -1008,7 +1083,7 @@ def generate_dossier(row, output_path, is_redacted=False):
     # Title
     c.setFont(FONT_BOLD, 8.5)
     c.setFillColor(NAVY)
-    c.drawString(MARGIN_L + 12, box_y + box_h - 14, "HOW TO WIN THE BUSINESS")
+    c.drawString(MARGIN_L + 12, box_y + box_h - 14, "CONVERSATION GUIDE")
 
     # Talking points text (wrapped)
     text_obj = c.beginText(MARGIN_L + 12, box_y + box_h - 28)
