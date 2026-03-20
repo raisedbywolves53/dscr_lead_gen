@@ -18,12 +18,17 @@
 | **Apollo.io** | B2B enrichment | $99/mo | **CANCEL** | Returns near-zero contact data for LLC-based RE investors. 8 emails out of 500 leads. Wrong population. |
 | **Datazapp** | Batch skip trace | $125 minimum/transaction | **AVOID** | $125 minimum regardless of match count. 25 leads = $125 = $17.86/match. Only use if 2,000+ leads. |
 
+### Central (Core Product Differentiator)
+
+| Vendor | Role | Cost | Verdict | Notes |
+|--------|------|------|---------|-------|
+| **ATTOM** | Property + mortgage + AVM + rental + sales + tax + permits | 7 calls/lead ($0.019/call post-trial) | **CENTRAL** | 7 endpoints per fully enriched lead. 1,000 trial credits (new key from Christine Woo). 210 allocated for 30 showcase leads, 790 reserved for paying customers. APN + FIPS as primary lookup, address as fallback. |
+
 ### Optional
 
 | Vendor | Role | Cost | When To Use |
 |--------|------|------|------------|
 | **Tracerfy DNC** | Comprehensive DNC scrub | $0.02/phone | Covers Federal + State + DMA + TCPA litigators. Better than FTC-only. |
-| **ATTOM** | Property + mortgage data | $95-500/mo | When you need actual lender names/loan amounts beyond clerk records. 133/500 match rate in our test. |
 | **Datazapp** | Second-pass skip trace | $125 minimum | For Tracerfy misses only, when you have 2,000+ unmatched leads. |
 
 ---
@@ -46,12 +51,12 @@
 | Secretary of State business registry | LLC officers, registered agents, filing dates, entity status | Free |
 | SEC EDGAR | Fund managers, Form D filings, syndication partners | Free (10 req/sec) |
 
-### Financing Intelligence (Varies by County)
+### Financing Intelligence
 
 | Source | What It Provides | Cost |
 |--------|-----------------|------|
+| **ATTOM API (7 endpoints)** | Lender, loan amount, rate, AVM, rental estimate, sales history, tax, permits | $95/mo starter (5K calls), free trial (1,000 credits) |
 | County Clerk / Register of Deeds | Mortgages, liens, lis pendens, satisfactions, deeds | Free to $600/yr |
-| ATTOM API | Lender name, loan amount, rate type, due date | $95-500/mo |
 | CoreLogic / Black Knight | Most comprehensive mortgage data | Enterprise pricing |
 
 ### Contact Enrichment
@@ -93,11 +98,11 @@
 - We loaded $75, couldn't even run a single batch. Lost $75.
 - Never use for small runs. Only for 2,000+ leads as a Tracerfy second-pass.
 
-### Apollo.io
+### Apollo.io (CANCELLED — Do Not Use)
 - Returns near-zero contact data for private RE investors through LLCs.
 - 17/17 name matches but 0 contact data returned.
 - It's a B2B tool — RE investors don't have LinkedIn/company profiles.
-- **Verdict: Cancel the $99/mo subscription.**
+- **Subscription cancelled. Do not use for any future deployments.**
 
 ### MillionVerifier
 - If credits run out mid-run, API returns error responses that **look like "invalid" results**.
@@ -111,8 +116,12 @@
 - Only 197/1,800 returned carrier data from Twilio — Tracerfy phone_type filled the rest.
 
 ### ATTOM
-- 133/500 leads had lender data. Many showed $0 loan amounts.
-- Mixed results — useful as supplement, not primary source.
+- The initial 133/500 match rate was from a single endpoint (detailmortgageowner only) using address-based lookup.
+- Now using all 7 endpoints with APN + FIPS as primary lookup — much richer data per lead.
+- 7 endpoints: detailmortgageowner, expandedprofile, attomavm/detail, rentalavm, saleshistory, assessment, buildingpermits.
+- 1,000 trial credits available. Each fully enriched lead = 7 credits. Budget: 210 for showcase (30 leads), 790 reserved.
+- Post-trial: Starter tier at $95/mo gives 5,000 calls/mo = ~714 fully enriched leads/mo.
+- **ATTOM is the core product differentiator** — it provides the financing intel, AVM, rental estimates, and permit data that no competitor bundles into a single dossier.
 
 ---
 
@@ -143,7 +152,7 @@
 | Item | Cost | When |
 |------|------|------|
 | Tracerfy DNC scrub | ~$60 per 3,000 phones | If using Tracerfy comprehensive DNC |
-| ATTOM mortgage data | $95-500/mo | When clerk records insufficient |
+| ATTOM paid subscription | $95/mo starter (5K calls) | Post-trial — if showcase converts to sales |
 | Second-pass skip trace (Datazapp) | $125 one-time | For Tracerfy misses, 2,000+ leads |
 | MillionVerifier top-up | $11.90/5K credits | As email volume grows |
 
@@ -152,6 +161,9 @@
 ## API Configuration (.env)
 
 ```bash
+# ATTOM — 7-endpoint property enrichment (CENTRAL)
+ATTOM_API_KEY=
+
 # Skip Trace (PRIMARY)
 TRACERFY_API_KEY=
 
@@ -162,23 +174,20 @@ MILLIONVERIFIER_API_KEY=
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 
-# Property + Mortgage Data (OPTIONAL)
-ATTOM_API_KEY=
-
-# County Clerk CAPTCHA Solving (OPTIONAL)
-TWOCAPTCHA_API_KEY=
-
 # Wealth Signals (Free)
 FEC_API_KEY=DEMO_KEY
 
 # Google Sheets Export
 GOOGLE_OAUTH_CREDENTIALS=
 
-# CRM
-AIRTABLE_API_TOKEN=
+# CRM (archived, optional)
+AIRTABLE_PAT=
+
+# County Clerk CAPTCHA Solving (OPTIONAL)
+TWOCAPTCHA_API_KEY=
 
 # DO NOT USE (waste of money for this population):
-# APOLLO_API_KEY=
+# APOLLO_API_KEY= — CANCELLED, returns nothing for RE investors
 # DATAZAPP — web portal only, $125 minimum
 ```
 

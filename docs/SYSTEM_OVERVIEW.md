@@ -2,26 +2,29 @@
 
 ## What This Is
 
-An automated lead generation platform for **DSCR (Debt Service Coverage Ratio) mortgage loans** targeting real estate investors. Built to be deployed in any U.S. market for any loan originator.
+A data product company that produces enriched investor intelligence dossiers from public property records. Built to be deployed in any U.S. market and sold to four buyer types: loan officers, branch managers, RE agents, and RE brokers (NOT wholesale lenders).
 
 DSCR loans qualify borrowers based on the property's rental income rather than personal income — making them ideal for investors, self-employed borrowers, LLC owners, and anyone who struggles with traditional income documentation.
+
+**Active markets:** South Florida (Palm Beach + Broward), Wake County NC (Raleigh)
+**Canonical pricing:** $10-15/lead semi-enriched, $60-100/lead full dossier, $300-2,500/mo subscription
 
 ## What It Produces
 
 For a given market (state + counties), the system produces:
 1. **Scored lead lists** — every investment property owner ranked 0-100 by DSCR opportunity
-2. **Investor dossiers** — portfolio, financing, purchase behavior, wealth signals, network
-3. **Campaign-ready exports** — formatted for email, SMS, dialer, and direct mail platforms
-4. **CRM integration** — Airtable base with 7 tables, 191 fields, full lead scoring
-5. **Google Sheets MVP** — call sheet, battlecards, and performance tracking
+2. **Investor dossiers / tear sheets** — one-page PDF per lead with portfolio, financing (ATTOM 7-endpoint), purchase behavior, wealth signals, contact info, outreach angle
+3. **CRM-ready CSV exports** — import-ready for HubSpot, GoHighLevel, Follow Up Boss, Salesforce
+4. **Two product versions:** LO version (with financing intel) and Agent version (DSCR/mortgage fields stripped per RESPA)
+5. **Google Sheets MVP** — call sheet and performance tracking
 
 ## How It Compares
 
-| Feature | This System | PropStream ($99/mo) | BatchData ($299/mo) | Reonomy ($249/mo) |
+| Feature | This System | PropStream ($199/mo) | BatchData ($299/mo) | Reonomy ($249/mo) |
 |---------|------------|--------------------|--------------------|-------------------|
 | Property ownership | Yes | Yes | Yes | Yes |
 | LLC resolution to person | Yes (SunBiz/SoS) | No | No | Partial |
-| Financing intelligence | Yes (clerk records) | No | Partial | No |
+| Financing intelligence | Yes (ATTOM 7-endpoint + clerk records) | No | Partial | No |
 | Purchase behavior analysis | Yes (SDF data) | Limited | No | No |
 | Wealth signals (FEC, 990) | Yes | No | No | No |
 | Network mapping | Yes | No | No | No |
@@ -53,7 +56,7 @@ For a given market (state + counties), the system produces:
 │                    PHASE 3: INTELLIGENCE                     │
 ├─────────────────────────────────────────────────────────────┤
 │ 11 Clerk Records  12 Purchase History  13 Rent Estimates    │
-│ 14 Wealth Signals 15 Network Mapping   16 Life Events       │
+│ 14 Wealth Signals 15 Network Mapping   16 ATTOM Enrichment  │
 │ 20 Build Dossier                                            │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -76,7 +79,7 @@ For a given market (state + counties), the system produces:
 | Skip trace | Tracerfy API ($0.02/match) | Per-use |
 | Email validation | MillionVerifier ($4.90/2K credits) | Per-use |
 | Phone validation | Twilio Lookup v2 ($0.008/lookup) | Per-use |
-| CRM | Airtable (Team plan, $20/seat/mo) | Monthly |
+| CRM | Google Sheets MVP (Airtable archived) | Free |
 | Output | Google Sheets (free) | Free |
 | Hosting | Local machine / any Python environment | Free |
 

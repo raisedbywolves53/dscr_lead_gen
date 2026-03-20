@@ -1,10 +1,13 @@
-# CRM Setup — Airtable + Google Sheets
+# CRM & Delivery Setup
 
 ## Overview
 
-Two output targets:
-1. **Airtable** — Full CRM with 7 tables, 191 fields, automations, and views
-2. **Google Sheets** — Lightweight MVP with call sheet, battlecards, and performance tracking
+**Current delivery format:**
+1. **PDF tear sheets** — One-page dossier per lead (the actual product). Two versions: LO (with financing intel) and Agent (DSCR/mortgage fields stripped per RESPA).
+2. **CRM-ready CSV** — Import-ready for HubSpot, GoHighLevel, Follow Up Boss, Salesforce
+3. **Google Sheets MVP** — Lightweight call sheet, battlecards, and performance tracking
+
+**Archived:** Airtable CRM (7 tables, 191 fields) — built but Frank hasn't activated it. Scripts in `archive/airtable_crm/`. May revisit if a customer specifically needs Airtable delivery.
 
 ---
 
