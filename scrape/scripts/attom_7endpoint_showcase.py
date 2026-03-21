@@ -566,8 +566,9 @@ def build_fl_lookups(lead_names: list, master_df: pd.DataFrame) -> list:
 def build_wake_lookups(lead_names: list, wake_df: pd.DataFrame) -> list:
     """
     Build property lookup list for Wake County showcase leads.
-    Uses parcel_id + FIPS for APN-based lookup (preferred method).
-    Returns list of dicts with APN+FIPS lookup params.
+    Uses address-based lookup as primary (most reliable for Wake County),
+    with APN+FIPS as fallback.
+    Returns list of dicts with address lookup params.
     """
     lookups = []
     for name in lead_names:
@@ -584,24 +585,48 @@ def build_wake_lookups(lead_names: list, wake_df: pd.DataFrame) -> list:
 
             prop_street = str(row.get("prop_street", "")).strip()
             prop_city = str(row.get("prop_city", "")).strip()
+            prop_state = str(row.get("sstate", "NC")).strip()
             prop_zip = str(row.get("prop_zip", "")).strip()
 
-            # APN + FIPS lookup (preferred)
+            # Clean up nan values
+            if prop_city in ("nan", ""):
+                prop_city = ""
+            if prop_state in ("nan", ""):
+                prop_state = "NC"
+            if prop_zip in ("nan", ""):
+                prop_zip = ""
+
+            if not prop_street or prop_street == "nan":
+                print(f"  WARNING: No street address for parcel {parcel_id}, skipping")
+                continue
+
+            # Build address2: "City, ST" or "City, ST ZIP" (ATTOM requires this)
+            if prop_city and prop_zip:
+                address2 = f"{prop_city}, {prop_state} {prop_zip}"
+            elif prop_city:
+                address2 = f"{prop_city}, {prop_state}"
+            else:
+                # No city — use county as fallback
+                address2 = f"Wake County, {prop_state}"
+
+            # Address-based lookup (primary — more reliable for Wake County
+            # since Wake parcel_id format may not match ATTOM's APN format)
             lookups.append({
                 "owner_name": name,
                 "co_no": "183",
-                "address": f"{prop_street}, {prop_city}, NC",
-                "lookup_type": "apn",
+                "address": f"{prop_street}, {address2}",
+                "lookup_type": "address",
                 "params": {
+                    "address1": prop_street,
+                    "address2": address2,
+                },
+                "cache_key": f"wake|addr|{prop_street.upper().replace(' ', '')}|{prop_city.upper()}",
+                # Fallback: APN + FIPS if address lookup fails
+                "fallback_params": {
                     "apn": parcel_id,
                     "fips": "37183",
                 },
-                "cache_key": f"wake|{parcel_id}",
-                # Fallback address params if APN fails
-                "fallback_params": {
-                    "address1": prop_street,
-                    "address2": prop_zip if prop_zip and prop_zip != "nan" else "",
-                },
+                "fallback_cache_key": f"wake|apn|{parcel_id}",
             })
 
     return lookups
@@ -677,12 +702,12 @@ def enrich_properties(lookups: list, dry_run: bool = False) -> pd.DataFrame:
                 rate_limited = True
                 break
 
-            # Handle errors — try fallback for APN lookups
-            if "_error" in result and lookup["lookup_type"] == "apn" and "fallback_params" in lookup:
+            # Handle errors — try fallback params if available
+            if "_error" in result and "fallback_params" in lookup:
                 error_type = result["_error"]
                 if error_type not in ("not_found",):
-                    # Try address fallback
-                    print(f"    {ep_name}: APN failed ({error_type}), trying address fallback...")
+                    fallback_type = "APN" if lookup["lookup_type"] == "address" else "address"
+                    print(f"    {ep_name}: {lookup['lookup_type']} failed ({error_type}), trying {fallback_type} fallback...")
                     fallback = lookup["fallback_params"].copy()
                     result = call_attom(ep_path, fallback, session)
                     total_credits += 1
@@ -919,7 +944,11 @@ def main():
     )
     parser.add_argument(
         "--leads", type=str, default="",
-        help="Comma-separated list of owner names to enrich (overrides defaults)"
+        help="Pipe-separated list of owner names to enrich (use | delimiter to support names with commas). Legacy comma-separation still works for names without commas."
+    )
+    parser.add_argument(
+        "--leads-file", type=str, default="",
+        help="Path to JSON file with leads (reads all names from 'segments' dict)"
     )
     parser.add_argument(
         "--max-props", type=int, default=0,
@@ -937,8 +966,25 @@ def main():
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     # Parse lead names
-    if args.leads:
-        lead_names = [n.strip() for n in args.leads.split(",") if n.strip()]
+    if args.leads_file:
+        # Load leads from JSON file (supports names with commas)
+        leads_path = Path(args.leads_file)
+        if not leads_path.exists():
+            print(f"\n  ERROR: Leads file not found: {leads_path}")
+            sys.exit(1)
+        with open(leads_path) as f:
+            leads_data = json.load(f)
+        lead_names = []
+        for segment_names in leads_data.get("segments", {}).values():
+            lead_names.extend(segment_names)
+        print(f"  Loaded {len(lead_names)} leads from {leads_path.name}")
+    elif args.leads:
+        # Support pipe-delimited (preferred, handles commas in names) or
+        # fall back to comma-delimited for backward compatibility
+        if "|" in args.leads:
+            lead_names = [n.strip() for n in args.leads.split("|") if n.strip()]
+        else:
+            lead_names = [n.strip() for n in args.leads.split(",") if n.strip()]
     else:
         lead_names = None  # Will use all leads from the data
 

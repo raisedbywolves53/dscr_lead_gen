@@ -49,6 +49,7 @@ PARSED_DIR = PROJECT_DIR / "data" / "parsed"
 FILTERED_DIR = PROJECT_DIR / "data" / "filtered"
 CONFIG_FILE = PROJECT_DIR / "config" / "scoring_weights.json"
 NC_CONFIG_FILE = PROJECT_DIR / "config" / "nc_scoring_weights.json"
+AGENT_CONFIG_FILE = PROJECT_DIR / "config" / "agent_scoring_weights.json"
 
 # US state codes — used to detect out-of-state vs foreign owners
 US_STATES = {
@@ -282,6 +283,268 @@ def assign_tier(score: int, tiers: dict) -> str:
         return "Discard"
 
 
+# =========================================================================
+# AGENT / BROKER SCORING — separate channel, different priorities
+# =========================================================================
+
+def load_agent_config():
+    """Load agent-specific scoring weights."""
+    if AGENT_CONFIG_FILE.exists():
+        with open(AGENT_CONFIG_FILE) as f:
+            return json.load(f)
+    return None
+
+
+def agent_score_record(row, config: dict, today: date, home_state: str = "FL") -> tuple:
+    """
+    Score a record for RE agent/broker relevance.
+    Prioritizes: transaction velocity, portfolio scale, absentee status,
+    cash buyer, development signals, geographic spread.
+
+    Returns:
+        (total_score, list_of_matched_signal_names)
+    """
+    prop_s = config["property_signals"]
+    own_s = config["owner_signals"]
+    txn_s = config["transaction_signals"]
+    enrich_s = config.get("enrichment_signals", {})
+
+    score = 0
+    matched = []
+
+    # --- PROPERTY SIGNALS ---
+
+    # Investment property (no homestead)
+    is_no_hmstd = safe_str(row.get("is_no_homestead", ""))
+    hmstd_flag = safe_str(row.get("homestead_flag", ""))
+    if is_no_hmstd in ("TRUE", "1", "YES") or hmstd_flag in ("N", "", "0"):
+        score += prop_s["no_homestead"]["points"]
+        matched.append("no_homestead")
+
+    # Property value — agents care more about higher value (bigger commission)
+    just_value = 0
+    try:
+        just_value = int(float(str(row.get("just_value", 0))))
+    except (ValueError, TypeError):
+        pass
+
+    if just_value >= 1_000_000:
+        score += prop_s["value_1m_plus"]["points"]
+        matched.append("value_1m_plus")
+    elif 500_000 < just_value < 1_000_000:
+        score += prop_s["value_500k_1m"]["points"]
+        matched.append("value_500k_1m")
+    elif 150_000 <= just_value <= 500_000:
+        score += prop_s["value_150k_500k"]["points"]
+        matched.append("value_150k_500k")
+
+    # Multi-family
+    use_code = safe_str(row.get("use_code", "")).zfill(2) if safe_str(row.get("use_code", "")) else ""
+    use_desc = safe_str(row.get("use_description", ""))
+    mf_config = prop_s["multi_family"]
+    if use_code in mf_config.get("use_codes", []):
+        score += mf_config["points"]
+        matched.append("multi_family")
+    elif any(kw in use_desc for kw in mf_config.get("use_keywords", [])):
+        score += mf_config["points"]
+        matched.append("multi_family")
+
+    # New construction (built within last 3 years)
+    year_built = 0
+    try:
+        year_built = int(float(str(row.get("year_built", 0))))
+    except (ValueError, TypeError):
+        pass
+    if year_built >= today.year - 3 and year_built > 0:
+        score += prop_s["new_construction"]["points"]
+        matched.append("new_construction")
+
+    # High land ratio (land > 60% of total value = development potential)
+    land_value = 0
+    try:
+        land_value = int(float(str(row.get("land_value", 0))))
+    except (ValueError, TypeError):
+        pass
+    if just_value > 0 and land_value > 0 and (land_value / just_value) > 0.60:
+        score += prop_s["high_land_ratio"]["points"]
+        matched.append("high_land_ratio")
+
+    # --- OWNER SIGNALS ---
+
+    mail_state = safe_str(row.get("mail_state", ""))[:2]
+    mail_zip = safe_str(row.get("mail_zip", ""))[:5]
+    prop_zip = safe_str(row.get("prop_zip", ""))[:5]
+    is_absentee = safe_str(row.get("is_absentee", ""))
+    is_llc = safe_str(row.get("is_llc", ""))
+
+    # Absentee — out-of-state is GOLD for agents (needs local representation)
+    if mail_state and mail_state != home_state and mail_state in US_STATES:
+        score += own_s["absentee_out_of_state"]["points"]
+        matched.append("absentee_out_of_state")
+    elif mail_state and mail_state != home_state and mail_state not in US_STATES:
+        score += own_s["absentee_out_of_state"]["points"]
+        matched.append("foreign_owner")
+    elif is_absentee in ("TRUE", "1", "YES") or (mail_zip and prop_zip and mail_zip != prop_zip):
+        score += own_s["absentee_in_state"]["points"]
+        matched.append("absentee_in_state")
+
+    # LLC
+    if is_llc in ("TRUE", "1", "YES"):
+        score += own_s["llc_corp_owned"]["points"]
+        matched.append("llc_corp_owned")
+
+    # Portfolio size — more granular tiers for agents
+    portfolio_count = 1
+    try:
+        portfolio_count = int(float(str(row.get("portfolio_count", 1))))
+    except (ValueError, TypeError):
+        pass
+
+    if portfolio_count >= 10:
+        score += own_s["portfolio_10_plus"]["points"]
+        matched.append("portfolio_10_plus")
+    elif portfolio_count >= 5:
+        score += own_s["portfolio_5_to_9"]["points"]
+        matched.append("portfolio_5_to_9")
+    elif portfolio_count >= 2:
+        score += own_s["portfolio_2_to_4"]["points"]
+        matched.append("portfolio_2_to_4")
+
+    # --- TRANSACTION SIGNALS ---
+
+    # Purchase recency — agents need FINER granularity (6mo vs 12mo matters)
+    sale_date_str = safe_str(row.get("sale_date", ""))
+    sale_year = 0
+    sale_month = 0
+    if sale_date_str:
+        try:
+            sale_year = int(sale_date_str[:4])
+            if len(sale_date_str) >= 7:
+                sale_month = int(sale_date_str[5:7])
+        except (ValueError, IndexError):
+            pass
+
+    if sale_year > 0:
+        # Calculate approximate months ago
+        months_ago = (today.year - sale_year) * 12 + (today.month - (sale_month or 6))
+
+        if months_ago <= 6:
+            score += txn_s["recent_purchase_0_6mo"]["points"]
+            matched.append("recent_purchase_0_6mo")
+        elif months_ago <= 12:
+            score += txn_s["recent_purchase_6_12mo"]["points"]
+            matched.append("recent_purchase_6_12mo")
+        elif months_ago <= 24:
+            score += txn_s["recent_purchase_12_24mo"]["points"]
+            matched.append("recent_purchase_12_24mo")
+
+        # Long hold with large portfolio = disposition candidate
+        years_ago = today.year - sale_year
+        if years_ago >= 5 and portfolio_count >= 5:
+            score += txn_s["long_hold_large_portfolio"]["points"]
+            matched.append("long_hold_large_portfolio")
+
+    # Cash buyer
+    is_cash = safe_str(row.get("is_cash_buyer", ""))
+    if is_cash in ("TRUE", "1", "YES"):
+        score += txn_s["cash_buyer"]["points"]
+        matched.append("cash_buyer")
+
+    return score, matched
+
+
+def assign_agent_segment(matched_signals: list, portfolio_count: int = 1) -> str:
+    """Assign agent-relevant segment based on matched signals."""
+    signals = set(matched_signals)
+
+    # Serial Acquirer — highest value
+    if "portfolio_10_plus" in signals:
+        if "recent_purchase_0_6mo" in signals or "recent_purchase_6_12mo" in signals:
+            return "Serial Acquirer (10+)"
+        return "Serial Acquirer (10+)"
+
+    # Active Developer
+    if "new_construction" in signals and ("high_land_ratio" in signals or "llc_corp_owned" in signals):
+        return "Active Developer"
+
+    # Out-of-State Investor
+    if "absentee_out_of_state" in signals or "foreign_owner" in signals:
+        if portfolio_count >= 5:
+            return "Out-of-State Investor"
+        return "Out-of-State Investor"
+
+    # High-Velocity Buyer
+    if "recent_purchase_0_6mo" in signals and portfolio_count >= 3:
+        return "High-Velocity Buyer"
+
+    # Portfolio Builder
+    if "portfolio_5_to_9" in signals:
+        return "Portfolio Builder (5-9)"
+
+    # Cash Buyer
+    if "cash_buyer" in signals and ("recent_purchase_0_6mo" in signals or "recent_purchase_6_12mo" in signals):
+        return "Cash Buyer"
+
+    # Growing Investor
+    if "portfolio_2_to_4" in signals:
+        if "recent_purchase_0_6mo" in signals or "recent_purchase_6_12mo" in signals:
+            return "Growing Investor (2-4)"
+        return "Growing Investor (2-4)"
+
+    # Long-Hold Disposition
+    if "long_hold_large_portfolio" in signals:
+        return "Long-Hold / Disposition Candidate"
+
+    # General
+    if "no_homestead" in signals:
+        return "General Investor"
+
+    return "Unclassified"
+
+
+def agent_score_dataframe(df: pd.DataFrame, home_state: str = "FL") -> pd.DataFrame:
+    """
+    Score every row for agent/broker channel. Adds columns:
+      agent_score, agent_tier, agent_signals, agent_segment
+    Does NOT modify existing icp_* (LO) columns.
+    """
+    agent_config = load_agent_config()
+    if agent_config is None:
+        print("  WARNING: agent_scoring_weights.json not found. Skipping agent scoring.")
+        return df
+
+    tiers = agent_config["tiers"]
+    today = date.today()
+
+    print(f"  Agent scoring {len(df):,} records...")
+
+    scores = []
+    all_signals = []
+    segments = []
+    tier_labels = []
+
+    for _, row in df.iterrows():
+        portfolio_count = 1
+        try:
+            portfolio_count = int(float(str(row.get("portfolio_count", 1))))
+        except (ValueError, TypeError):
+            pass
+
+        a_score, a_matched = agent_score_record(row, agent_config, today, home_state)
+        scores.append(a_score)
+        all_signals.append(", ".join(a_matched))
+        segments.append(assign_agent_segment(a_matched, portfolio_count))
+        tier_labels.append(assign_tier(a_score, tiers))
+
+    df = df.copy()
+    df["agent_score"] = scores
+    df["agent_signals"] = all_signals
+    df["agent_segment"] = segments
+    df["agent_tier"] = tier_labels
+
+    return df
+
+
 def score_dataframe(df: pd.DataFrame, config: dict, home_state: str = "FL") -> pd.DataFrame:
     """
     Score every row in the DataFrame. Adds columns:
@@ -469,10 +732,13 @@ def main():
             print("  WARNING: File is empty. Skipping.")
             continue
 
-        # Score every record
+        # Score every record — LO channel (existing)
         scored = score_dataframe(df, config, home_state)
 
-        # Sort by score descending (best leads first)
+        # Score every record — Agent/Broker channel (new, additive)
+        scored = agent_score_dataframe(scored, home_state)
+
+        # Sort by LO score descending (best leads first)
         scored = scored.sort_values("icp_score", ascending=False)
 
         # Save — qualified leads only (Tier 1 + Tier 2 + Tier 3)

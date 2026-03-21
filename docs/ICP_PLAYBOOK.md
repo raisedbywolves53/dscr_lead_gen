@@ -1,6 +1,116 @@
-# ICP Playbook — Ideal Customer Profiles for DSCR Lending
+# ICP Playbook — Dual-Channel Scoring
 
-## How This Works
+## Two Channels, One Pipeline
+
+Every investment property owner gets **two scores**: one for loan officers (LO channel) and one for real estate agents/brokers (Agent channel). Same data pipeline, different priorities.
+
+| Channel | Optimized For | Config File | Score Columns |
+|---------|--------------|-------------|---------------|
+| **LO** | DSCR lending — refi candidates, cash-out opportunities, rate reduction | `scoring_weights.json` / `nc_scoring_weights.json` | `icp_score`, `icp_tier`, `icp_segment`, `icp_signals` |
+| **Agent** | Transaction likelihood — active buyers, portfolio scale, absentee status, development signals | `agent_scoring_weights.json` | `agent_score`, `agent_tier`, `agent_segment`, `agent_signals` |
+
+The scoring script (`03_filter_icp.py`) produces both sets of columns in a single pass.
+
+---
+
+## Agent / Broker Scoring Model
+
+### What Agents Care About (in priority order)
+
+1. **Is this person actively buying?** → Transaction recency (6mo vs 12mo granularity), acquisition velocity
+2. **Are they about to buy again?** → Equity position, cash buyer pattern, portfolio growth trajectory
+3. **What do they buy?** → Price range, property type, geographic concentration
+4. **Do they need ME?** → Out-of-state/absentee = needs local agent representation
+5. **How big is the relationship?** → Portfolio size, multi-city presence, repeat transaction potential
+
+### Agent Scoring Matrix (0-100+)
+
+**Property Signals**
+
+| Signal | Points | Why Agent Cares |
+|--------|--------|-----------------|
+| No homestead (investment property) | +5 | Confirms non-owner-occupied |
+| Value $150K-$500K | +8 | Core investment range, high volume |
+| Value $500K-$1M | +10 | Premium deals, higher commission |
+| Value $1M+ | +12 | Significant commission opportunity |
+| Multi-family (2-4 units) | +8 | Complex deal, higher value |
+| New construction (built within 3 years) | +6 | Builder/developer, high deal flow |
+| High land ratio (land >60% of total) | +5 | Development/tear-down potential |
+
+**Owner Signals**
+
+| Signal | Points | Why Agent Cares |
+|--------|--------|-----------------|
+| Out-of-state absentee | +15 | NEEDS local agent — gold for representation |
+| In-state absentee | +8 | May need local market agent |
+| LLC/Corp owned | +5 | Sophisticated, repeat transactor |
+| Portfolio 10+ properties | +25 | Highest relationship value — Serial Acquirer |
+| Portfolio 5-9 properties | +18 | Established, proven buyer |
+| Portfolio 2-4 properties | +10 | Growing, next purchase imminent |
+| Multi-city (3+ cities) | +8 | Multiple agent referral opportunities |
+
+**Transaction Signals**
+
+| Signal | Points | Why Agent Cares |
+|--------|--------|-----------------|
+| Purchased within 6 months | +15 | ACTIVELY buying right now |
+| Purchased within 6-12 months | +10 | Active buyer |
+| Purchased 12-24 months ago | +5 | May be ready for next |
+| High velocity (2+ in 24 months) | +12 | Frequent buyer, timing is everything |
+| Cash buyer | +10 | Fast close, no contingency — dream client |
+| Long hold + large portfolio (5yr, 5+ props) | +8 | Disposition/1031 candidate |
+
+**Enrichment Signals (from ATTOM, post-enrichment)**
+
+| Signal | Points | Why Agent Cares |
+|--------|--------|-----------------|
+| Active permits | +6 | Developer/rehabber, needs deal flow |
+| High permit value (>$100K) | +5 | Serious construction, developer profile |
+| REO/foreclosure purchase | +5 | Value investor, wants off-market deals |
+| High rent yield (>7%) | +4 | Income-focused, will buy more yield plays |
+| Adjacent properties | +6 | Assembly/development play |
+
+### Agent Tier Definitions
+
+| Tier | Score | Action |
+|------|-------|--------|
+| **Priority** | 45+ | Immediate outreach — phone + personalized email with portfolio reference |
+| **Opportunity** | 30-44 | Targeted email sequence with market insights for their areas |
+| **Watch List** | 15-29 | Market report drip — nurture until next transaction signal |
+| **Discard** | <15 | Insufficient transaction signals |
+
+### Agent Segments (Priority Order)
+
+1. **Serial Acquirer (10+)** — 10+ properties. Highest lifetime value. Multiple transactions per year possible.
+2. **Active Developer** — New construction + permits + LLC. Needs off-market land and distressed properties.
+3. **Out-of-State Investor** — Absentee, buying remotely. Needs local agent for acquisitions, inspections, market knowledge.
+4. **High-Velocity Buyer** — 2+ purchases in 24 months, 3+ properties. Will buy again soon. Timing is everything.
+5. **Portfolio Builder (5-9)** — Established and growing. Clear buying pattern to target.
+6. **Cash Buyer** — Pays cash + recent purchase. Fast close, no financing contingency.
+7. **Growing Investor (2-4)** — Early stage, actively building. Next purchase is the relationship starter.
+8. **Value Investor** — Buys REO/distressed, high yield. Wants off-market deal flow.
+9. **Long-Hold / Disposition Candidate** — 5+ year holds, large portfolio. May sell or 1031 exchange.
+10. **General Investor** — Investment property owner with basic signals.
+
+### Key Differences from LO Scoring
+
+| Factor | LO Score | Agent Score |
+|--------|----------|-------------|
+| Cash buyer | Cash-out refi candidate (+15) | Fast close, dream client (+10) |
+| Long hold, no refi | Equity to tap (+5) | Only if large portfolio — disposition signal (+8) |
+| Portfolio 10+ | High-value DSCR customer (+20) | Serial Acquirer — highest priority (+25) |
+| Out-of-state | Strong investor indicator (+15) | NEEDS local agent — strongest signal (+15) |
+| Recent purchase <6mo | Active buyer (+10) | Actively buying RIGHT NOW (+15) |
+| New construction | Not scored | Developer profile (+6) |
+| Permits | Not scored | Active developer signal (+6) |
+| Value $1M+ | Not scored separately | Premium commission (+12) |
+| RESPA compliance | Full financing intel shown | NO lender names, loan amounts, or rates |
+
+---
+
+## LO / Lending Channel Scoring Model (Original)
+
+### How This Works (LO Channel)
 
 Every investment property owner gets scored 0-100. The score determines their tier and outreach priority. ICP segments describe *why* someone needs a DSCR loan. Refi overlays describe *when* they need one. A single lead can have both a primary ICP and multiple refi signals.
 

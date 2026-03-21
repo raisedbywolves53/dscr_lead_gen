@@ -1,0 +1,169 @@
+{
+  "channel": "agent",
+  "channel_full": "Real Estate Agent / Broker",
+  "description": "Scores investors by likelihood to transact (buy or sell) and value of the agent relationship. Optimized for agents who want to represent investors in acquisitions, dispositions, or both.",
+
+  "property_signals": {
+    "no_homestead": {
+      "points": 5,
+      "description": "Confirms investment property, not primary residence"
+    },
+    "value_150k_500k": {
+      "points": 8,
+      "description": "Core investment range — high transaction volume"
+    },
+    "value_500k_1m": {
+      "points": 10,
+      "description": "Premium investment — higher commission per deal"
+    },
+    "value_1m_plus": {
+      "points": 12,
+      "description": "High-value property — significant commission opportunity"
+    },
+    "multi_family": {
+      "points": 8,
+      "description": "Multi-family 2-4 units — complex deal, higher value, repeat buyer",
+      "use_codes": ["02", "03", "04"],
+      "use_keywords": ["DUPLEX", "TRIPLEX", "QUAD", "MULTI-FAMILY", "MULTIFAMILY"]
+    },
+    "new_construction": {
+      "points": 6,
+      "description": "Built within last 3 years — possible builder/developer, high deal flow"
+    },
+    "high_land_ratio": {
+      "points": 5,
+      "description": "Land value >60% of total — tear-down/development potential"
+    }
+  },
+
+  "owner_signals": {
+    "absentee_out_of_state": {
+      "points": 15,
+      "description": "Out-of-state investor — NEEDS local agent representation for acquisitions, management, dispositions"
+    },
+    "absentee_in_state": {
+      "points": 8,
+      "description": "In-state but not local — may need local market agent"
+    },
+    "llc_corp_owned": {
+      "points": 5,
+      "description": "Entity ownership — sophisticated, repeat transactor"
+    },
+    "portfolio_10_plus": {
+      "points": 25,
+      "description": "Serial investor — highest relationship value, repeat buyer/seller, multi-market"
+    },
+    "portfolio_5_to_9": {
+      "points": 18,
+      "description": "Established portfolio — proven buyer, likely to transact again"
+    },
+    "portfolio_2_to_4": {
+      "points": 10,
+      "description": "Growing investor — actively building, next purchase imminent"
+    },
+    "multi_city": {
+      "points": 8,
+      "description": "Properties in 3+ cities — needs agents in multiple markets, referral opportunity"
+    }
+  },
+
+  "transaction_signals": {
+    "recent_purchase_0_6mo": {
+      "points": 15,
+      "description": "Purchased within last 6 months — ACTIVELY buying right now"
+    },
+    "recent_purchase_6_12mo": {
+      "points": 10,
+      "description": "Purchased within last 12 months — active buyer"
+    },
+    "recent_purchase_12_24mo": {
+      "points": 5,
+      "description": "Purchased 12-24 months ago — may be ready for next acquisition"
+    },
+    "high_velocity": {
+      "points": 12,
+      "description": "2+ acquisitions in last 24 months — high-frequency buyer"
+    },
+    "cash_buyer": {
+      "points": 10,
+      "description": "Pays cash — fast close, no financing contingency, agent dream client"
+    },
+    "long_hold_large_portfolio": {
+      "points": 8,
+      "description": "5+ years hold with 5+ properties — may be ready to sell/1031 exchange"
+    }
+  },
+
+  "enrichment_signals": {
+    "active_permits": {
+      "points": 6,
+      "description": "Recent building permits — active developer/rehabber, high deal flow"
+    },
+    "high_permit_value": {
+      "points": 5,
+      "description": "Permit value >$100K — serious construction/renovation, developer profile"
+    },
+    "reo_purchase": {
+      "points": 5,
+      "description": "Bought REO/foreclosure — value investor, bargain hunter, wants off-market deals"
+    },
+    "high_rent_yield": {
+      "points": 4,
+      "description": "Gross yield >7% — income-focused investor, will buy more yield plays"
+    },
+    "adjacent_properties": {
+      "points": 6,
+      "description": "Owns adjacent parcels — possible development/assembly play"
+    }
+  },
+
+  "tiers": {
+    "tier_1": {
+      "label": "Priority",
+      "min_score": 45,
+      "action": "Immediate outreach — phone + personalized email with portfolio reference"
+    },
+    "tier_2": {
+      "label": "Opportunity",
+      "min_score": 30,
+      "action": "Targeted email sequence with market insights for their areas"
+    },
+    "tier_3": {
+      "label": "Watch List",
+      "min_score": 15,
+      "action": "Add to market report drip — nurture until next transaction signal"
+    },
+    "discard": {
+      "label": "Discard",
+      "min_score": 0,
+      "action": "Insufficient transaction signals"
+    }
+  },
+
+  "agent_segments": {
+    "priority_order": [
+      "Serial Acquirer (10+)",
+      "Active Developer",
+      "Out-of-State Investor",
+      "High-Velocity Buyer",
+      "Portfolio Builder (5-9)",
+      "Cash Buyer",
+      "Growing Investor (2-4)",
+      "Value Investor",
+      "Long-Hold / Disposition Candidate",
+      "General Investor"
+    ],
+    "descriptions": {
+      "Serial Acquirer (10+)": "10+ properties, consistent buying pattern — highest lifetime value relationship",
+      "Active Developer": "Recent permits, new construction, high permit value — needs off-market land and distressed properties",
+      "Out-of-State Investor": "Absentee owner buying remotely — needs local agent for eyes on ground",
+      "High-Velocity Buyer": "2+ purchases in 24 months — timing is everything, likely buying again soon",
+      "Portfolio Builder (5-9)": "Established and growing — proven buyer, clear pattern to target",
+      "Cash Buyer": "Pays cash, fast close — most attractive buyer type for sellers",
+      "Growing Investor (2-4)": "Early stage, actively building — next purchase is the relationship starter",
+      "Value Investor": "Buys REO/distressed, high yield focus — wants off-market deal flow",
+      "Long-Hold / Disposition Candidate": "5+ year holds, large portfolio — may be ready to sell or 1031 exchange",
+      "General Investor": "Investment property owner with basic signals"
+    }
+  }
+}
