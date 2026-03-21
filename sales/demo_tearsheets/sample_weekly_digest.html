@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: 'Inter', Arial, sans-serif; color: #1C1917; max-width: 640px; margin: 0 auto; padding: 20px; }
+  .header { background: linear-gradient(135deg, #1b262c, #366F78); color: white; padding: 20px 24px; border-radius: 8px; margin-bottom: 20px; }
+  .header h1 { font-size: 18px; margin: 0 0 4px 0; }
+  .header p { font-size: 13px; opacity: 0.8; margin: 0; }
+  .summary { display: flex; gap: 12px; margin-bottom: 20px; }
+  .summary-card { background: #F5F5F4; border: 1px solid #E7E5E4; border-radius: 6px; padding: 12px 16px; flex: 1; text-align: center; }
+  .summary-card .num { font-size: 24px; font-weight: 700; color: #366F78; }
+  .summary-card .label { font-size: 11px; color: #78716C; text-transform: uppercase; }
+  .alert { border-left: 4px solid #366F78; background: #F5F5F4; border-radius: 0 6px 6px 0; padding: 12px 16px; margin-bottom: 10px; }
+  .alert.high { border-left-color: #DC2626; }
+  .alert.medium { border-left-color: #D97706; }
+  .alert-type { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #78716C; }
+  .alert-owner { font-size: 14px; font-weight: 600; color: #1C1917; margin: 2px 0; }
+  .alert-detail { font-size: 12px; color: #44403C; }
+  .alert-meta { font-size: 11px; color: #78716C; margin-top: 4px; }
+  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #E7E5E4; font-size: 11px; color: #78716C; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Investor Activity Alert — Wake County</h1>
+  <p>Period: baseline to 2026-03-21 &bull; 8 signals detected</p>
+</div>
+
+<div class="summary">
+  <div class="summary-card"><div class="num">1</div><div class="label">New Purchases</div></div>
+  <div class="summary-card"><div class="num">3</div><div class="label">New Investors</div></div>
+  <div class="summary-card"><div class="num">2</div><div class="label">Dispositions</div></div>
+  <div class="summary-card"><div class="num">2</div><div class="label">Portfolio Growth</div></div>
+</div>
+
+<div class="alert high">
+  <div class="alert-type">PORTFOLIO GROWTH</div>
+  <div class="alert-owner">KUMAR GORAKANTI, SHANKER GOPI GANNEY, PARIMALA</div>
+  <div class="alert-detail">Acquired 1 new property (portfolio: 3 → 5) — crossed 5-property threshold</div>
+  <div class="alert-meta">Growing Portfolio (2-4) &bull; Score: 25 &bull; MORRISVILLE|RALEIGH</div>
+</div>
+<div class="alert high">
+  <div class="alert-type">PORTFOLIO GROWTH</div>
+  <div class="alert-owner">BIENVILLE CARRE NC LLC</div>
+  <div class="alert-detail">Acquired 1 new property (portfolio: 4 → 5) — crossed 5-property threshold</div>
+  <div class="alert-meta">Self-Employed / LLC Investor &bull; Score: 40 &bull; RALEIGH|WAKE FOREST</div>
+</div>
+<div class="alert high">
+  <div class="alert-type">NEW PURCHASE</div>
+  <div class="alert-owner">ORITOM LLC GILADI INVESTMENTS LLC</div>
+  <div class="alert-detail">Acquired 1 new property (portfolio: 5 → 6)</div>
+  <div class="alert-meta">Portfolio Landlord (5+) &bull; Score: 45 &bull; RALEIGH</div>
+</div>
+<div class="alert medium">
+  <div class="alert-type">DISPOSITION</div>
+  <div class="alert-owner">COBB, DEBRA T TRUSTEE COBB, CARSON L JR TRUSTEE</div>
+  <div class="alert-detail">Sold 1 property (portfolio: 3 → 2)</div>
+  <div class="alert-meta">Self-Employed / LLC Investor &bull; Score: 30 &bull; RALEIGH</div>
+</div>
+<div class="alert medium">
+  <div class="alert-type">DISPOSITION</div>
+  <div class="alert-owner">BENNETT, DOUGLAS E BENNETT, DEBORAH R</div>
+  <div class="alert-detail">Sold 1 property (portfolio: 4 → 3)</div>
+  <div class="alert-meta">Growing Portfolio (2-4) &bull; Score: 25 &bull; RALEIGH</div>
+</div>
+<div class="alert medium">
+  <div class="alert-type">NEW INVESTOR</div>
+  <div class="alert-owner">SIMULATED INVESTOR 1</div>
+  <div class="alert-detail">New multi-property investor detected — 4 properties</div>
+  <div class="alert-meta">Growing Portfolio (2-4) &bull; Score: 38 &bull; RALEIGH</div>
+</div>
+<div class="alert medium">
+  <div class="alert-type">NEW INVESTOR</div>
+  <div class="alert-owner">SIMULATED INVESTOR 2</div>
+  <div class="alert-detail">New multi-property investor detected — 4 properties</div>
+  <div class="alert-meta">Growing Portfolio (2-4) &bull; Score: 48 &bull; RALEIGH</div>
+</div>
+<div class="alert ">
+  <div class="alert-type">NEW INVESTOR</div>
+  <div class="alert-owner">SIMULATED INVESTOR 3</div>
+  <div class="alert-detail">New multi-property investor detected — 2 properties</div>
+  <div class="alert-meta">Growing Portfolio (2-4) &bull; Score: 51 &bull; RALEIGH</div>
+</div>
+
+<div class="footer">
+  DSCR Lead Intelligence &bull; Stillmind Creative<br>
+  This is an automated alert. Data sourced from public property records.
+</div>
+
+</body>
+</html>
