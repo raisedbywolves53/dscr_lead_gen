@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor Intelligence Brief — ISAACS, FRANK &amp; ILONA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ocean: #0D9488;
+    --deep-ocean: #0F766E;
+    --seafoam: #99F6E4;
+    --gold: #B4873F;
+    --charcoal: #1C1917;
+    --stone: #44403C;
+    --pebble: #78716C;
+    --mist: #E7E5E4;
+    --cloud: #F5F5F4;
+    --white: #FAFAF9;
+    --sage: #16A34A;
+    --amber: #D97706;
+    --coral: #DC2626;
+  }
+
+  @page { size: letter; margin: 0.5in; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--charcoal);
+    background: var(--white);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--ocean); padding-bottom: 16px; margin-bottom: 20px; }
+  .header-left h1 { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--charcoal); letter-spacing: -0.025em; }
+  .header-left .segment { display: inline-block; background: var(--ocean); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-right { text-align: right; }
+  .header-right .brand { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--pebble); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right .date { font-size: 11px; color: var(--pebble); margin-top: 2px; }
+  .score-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--seafoam); color: var(--deep-ocean); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 6px; margin-top: 8px; }
+
+  .signal-banner { background: linear-gradient(135deg, var(--deep-ocean), var(--ocean)); color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+  .signal-banner h2 { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .signal-banner p { font-size: 13px; opacity: 0.92; line-height: 1.5; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 12px 14px; }
+  .stat-card .label { font-size: 10px; font-weight: 600; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; color: var(--charcoal); }
+  .stat-card .subtext { font-size: 11px; color: var(--stone); margin-top: 2px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--mist); }
+
+  .prop-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .prop-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px; border-bottom: 2px solid var(--mist); }
+  .prop-table td { padding: 6px 8px; border-bottom: 1px solid var(--mist); vertical-align: top; }
+  .prop-table tr:last-child td { border-bottom: none; }
+  .prop-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .prop-table tr.highlight { background: rgba(13, 148, 136, 0.06); }
+
+  .tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 3px; margin: 1px 2px; }
+  .tag-hot { background: #FEE2E2; color: #991B1B; }
+  .tag-signal { background: #FEF3C7; color: #92400E; }
+  .tag-info { background: #E0F2FE; color: #075985; }
+  .tag-whale { background: #EDE9FE; color: #5B21B6; }
+
+  .approach-box { background: var(--cloud); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 16px; }
+  .approach-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .approach-box p { font-size: 12px; color: var(--stone); line-height: 1.6; }
+  .approach-box .script { font-style: italic; color: var(--charcoal); background: white; border-radius: 4px; padding: 8px 12px; margin-top: 8px; border: 1px solid var(--mist); font-size: 12px; line-height: 1.5; }
+
+  .deep-dive { background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 14px 16px; }
+  .deep-dive .dd-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 12px; }
+  .deep-dive .dd-row:last-child { border-bottom: none; }
+  .deep-dive .dd-label { color: var(--pebble); font-size: 11px; }
+  .deep-dive .dd-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 12px; }
+
+  .broker-insight { background: #FDF4FF; border: 1px solid #E9D5FF; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .broker-insight h3 { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: #7C3AED; margin-bottom: 6px; }
+  .broker-insight p { font-size: 12px; color: var(--stone); line-height: 1.6; }
+
+  .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--mist); display: flex; justify-content: space-between; font-size: 10px; color: var(--pebble); }
+  .footer .confidential { font-weight: 600; color: var(--stone); }
+
+  @media print {
+    body { padding: 0; font-size: 11px; }
+    .signal-banner, .stat-card, .tag, .score-badge, .approach-box, .broker-insight, .tag-whale { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>ISAACS, FRANK &amp; ILONA</h1>
+    <span class="segment">Serial Acquirer (10+)</span>
+    <div class="score-badge">Agent Score: 63 &bull; Tier 1 Priority</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="brand">Investor Intelligence Brief</div>
+    <div class="date">Wake County, NC &bull; Generated Mar 2026</div>
+  </div>
+</div>
+
+<!-- Signal Banner -->
+<div class="signal-banner">
+  <h2>&#127907; The Whale &mdash; 31 Properties, $16.9M Portfolio Across 6 Cities</h2>
+  <p>Steady acquirer for 24 years. Which of your agents works Apex? Cary? Wake Forest? This is not one relationship &mdash; it's six. Personal investor (not LLC-structured) with holdings in Raleigh (14), Apex (5), Cary (2), Wake Forest (2), Garner (2), Knightdale (1), and more. Most recent purchase May 2025 at $328K. Property range $268K to $1.08M.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Properties</div>
+    <div class="value">31</div>
+    <div class="subtext">Wake County &bull; 6+ cities</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">$16.9M</div>
+    <div class="subtext">Total assessed</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Investing Since</div>
+    <div class="value">24 yrs</div>
+    <div class="subtext">~1.1 acquisitions/year</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Last Purchase</div>
+    <div class="value">May '25</div>
+    <div class="subtext">$328,000</div>
+  </div>
+</div>
+
+<!-- Broker Insight -->
+<div class="broker-insight">
+  <h3>Broker Insight &mdash; Why This Lead Matters for Northside Realty</h3>
+  <p>Every city this investor owns in is a potential agent assignment. An investor with 14 properties in Raleigh, 5 in Apex, 2 in Cary, 2 in Wake Forest, and 2 in Garner is not one relationship &mdash; it's a referral opportunity for multiple agents on your team. Which of your agents knows the Apex market? Who covers Wake Forest? This single lead could activate your entire brokerage.</p>
+</div>
+
+<div class="two-col">
+  <div>
+    <!-- Acquisition Pattern -->
+    <div class="section">
+      <div class="section-title">Acquisition Pattern</div>
+      <table class="prop-table">
+        <tr><td class="mono" style="color:var(--pebble)">Velocity</td><td><strong>~1.1 purchases/year</strong> over 24 years</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Style</td><td>Steady, consistent &mdash; not a bursty buyer</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Price Range</td><td>$268K &ndash; $1.08M (diversified)</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Entity</td><td>Individual names &bull; Personal investor</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Geography</td><td>Raleigh, Apex, Cary, Wake Forest, Garner, Knightdale</td></tr>
+      </table>
+    </div>
+
+    <!-- Signals -->
+    <div class="section">
+      <div class="section-title">Key Signals</div>
+      <span class="tag tag-whale">WHALE &mdash; 31 Properties</span>
+      <span class="tag tag-hot">$16.9M Portfolio</span>
+      <span class="tag tag-signal">Active (May '25)</span>
+      <span class="tag tag-signal">24-Year Track Record</span>
+      <span class="tag tag-info">6+ City Spread</span>
+      <span class="tag tag-info">Personal Investor (Not LLC)</span>
+      <span class="tag tag-info">Diversified Price Range</span>
+    </div>
+  </div>
+
+  <div>
+    <!-- Sample Property Deep Dive -->
+    <div class="section">
+      <div class="section-title">Property Deep Dive &mdash; 10521 Brookside Reserve Rd</div>
+      <div class="deep-dive">
+        <div class="dd-row"><span class="dd-label">AVM Estimate</span><span class="dd-value">$310,452</span></div>
+        <div class="dd-row"><span class="dd-label">Rent Estimate</span><span class="dd-value">$1,808/mo</span></div>
+        <div class="dd-row"><span class="dd-label">Gross Yield</span><span class="dd-value" style="color:var(--sage)">7.0%</span></div>
+        <div class="dd-row"><span class="dd-label">Location</span><span class="dd-value">Wake Forest, NC</span></div>
+        <div class="dd-row"><span class="dd-label">Year Built</span><span class="dd-value">2025</span></div>
+        <div class="dd-row"><span class="dd-label">Type / Size</span><span class="dd-value">SFR &bull; New construction</span></div>
+        <div class="dd-row"><span class="dd-label">Permits</span><span class="dd-value">9 permits on file</span></div>
+      </div>
+    </div>
+
+    <!-- Geographic Breakdown -->
+    <div class="section">
+      <div class="section-title">Geographic Breakdown</div>
+      <table class="prop-table">
+        <tr><td><strong>Raleigh</strong></td><td class="mono">14 properties</td></tr>
+        <tr><td><strong>Apex</strong></td><td class="mono">5 properties</td></tr>
+        <tr><td><strong>Cary</strong></td><td class="mono">2 properties</td></tr>
+        <tr><td><strong>Wake Forest</strong></td><td class="mono">2 properties</td></tr>
+        <tr><td><strong>Garner</strong></td><td class="mono">2 properties</td></tr>
+        <tr><td><strong>Knightdale + Other</strong></td><td class="mono">6 properties</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Top 15 Properties -->
+<div class="section">
+  <div class="section-title">Portfolio &mdash; Top 15 by Value (of 31 total)</div>
+  <table class="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>City</th>
+        <th style="text-align:right">Assessed Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td>Property 1</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$1,080,000</td>
+        <td><span class="tag tag-hot">Highest Value</span></td>
+      </tr>
+      <tr>
+        <td>Property 2</td>
+        <td>Cary</td>
+        <td class="mono" style="text-align:right">$985,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 3</td>
+        <td>Apex</td>
+        <td class="mono" style="text-align:right">$890,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 4</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$820,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 5</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$750,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 6</td>
+        <td>Apex</td>
+        <td class="mono" style="text-align:right">$680,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 7</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$625,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 8</td>
+        <td>Wake Forest</td>
+        <td class="mono" style="text-align:right">$580,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 9</td>
+        <td>Cary</td>
+        <td class="mono" style="text-align:right">$560,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 10</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$540,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 11</td>
+        <td>Apex</td>
+        <td class="mono" style="text-align:right">$510,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 12</td>
+        <td>Garner</td>
+        <td class="mono" style="text-align:right">$485,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 13</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$460,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 14</td>
+        <td>Knightdale</td>
+        <td class="mono" style="text-align:right">$430,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>10521 Brookside Reserve Rd</td>
+        <td>Wake Forest</td>
+        <td class="mono" style="text-align:right">$310,452</td>
+        <td><span class="tag tag-signal">ATTOM Deep Dive</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px;color:var(--pebble);margin-top:6px;font-style:italic">&hellip;and 16 more properties across Wake County</p>
+</div>
+
+<!-- Equity & Buying Power -->
+<div class="section">
+  <div class="section-title">Equity &amp; Buying Power</div>
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card">
+      <div class="label">Est. Equity</div>
+      <div class="value">$6.76M</div>
+      <div class="subtext">Conservative (40% equity ratio)</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Property Range</div>
+      <div class="value">$268K&ndash;$1.08M</div>
+      <div class="subtext">Highly diversified</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Avg Property</div>
+      <div class="value">$546K</div>
+      <div class="subtext">$16.9M / 31 properties</div>
+    </div>
+  </div>
+</div>
+
+<!-- Approach -->
+<div class="approach-box">
+  <h3>Recommended Approach</h3>
+  <p>A 24-year investor with 31 properties is sophisticated and experienced. Don't pitch &mdash; show respect for their track record and ask where they're expanding. The multi-city spread means you can match different agents to different markets.</p>
+  <div class="script">"Mr. Isaacs, I noticed you've built an impressive portfolio across Wake County &mdash; properties in Raleigh, Apex, Cary, Wake Forest, and beyond. I work with established investors who are looking at their next move, and I'd love to understand where you're focused next."</div>
+</div>
+
+<div class="footer">
+  <span class="confidential">SAMPLE &mdash; CONFIDENTIAL</span>
+  <span>DSCR Lead Intelligence &bull; Stillmind Creative</span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor Intelligence Brief &mdash; MOYER, JONATHAN ECK, KELLY</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ocean: #0D9488; --deep-ocean: #0F766E; --seafoam: #99F6E4;
+    --gold: #B4873F; --charcoal: #1C1917; --stone: #44403C;
+    --pebble: #78716C; --mist: #E7E5E4; --cloud: #F5F5F4;
+    --white: #FAFAF9; --sage: #16A34A; --amber: #D97706; --coral: #DC2626;
+  }
+  @page { size: letter; margin: 0.5in; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif; color: var(--charcoal);
+    background: var(--white); max-width: 8.5in; margin: 0 auto;
+    padding: 24px; font-size: 13px; line-height: 1.5;
+  }
+  .header { display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 3px solid var(--ocean); padding-bottom: 16px; margin-bottom: 20px; }
+  .header-left h1 { font-family: 'DM Sans', sans-serif; font-size: 22px;
+    font-weight: 700; color: var(--charcoal); letter-spacing: -0.025em; }
+  .header-left .segment { display: inline-block; background: var(--ocean); color: white;
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px;
+    margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-right { text-align: right; }
+  .header-right .brand { font-family: 'DM Sans', sans-serif; font-size: 11px;
+    color: var(--pebble); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right .date { font-size: 11px; color: var(--pebble); margin-top: 2px; }
+  .score-badge { display: inline-flex; align-items: center; gap: 6px;
+    background: var(--seafoam); color: var(--deep-ocean);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;
+    padding: 4px 12px; border-radius: 6px; margin-top: 8px; }
+  .signal-banner { background: linear-gradient(135deg, var(--deep-ocean), var(--ocean));
+    color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+  .signal-banner h2 { font-family: 'DM Sans', sans-serif; font-size: 15px;
+    font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .signal-banner p { font-size: 13px; opacity: 0.92; line-height: 1.5; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 12px 14px; }
+  .stat-card .label { font-size: 10px; font-weight: 600; color: var(--pebble);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 18px;
+    font-weight: 500; color: var(--charcoal); }
+  .stat-card .subtext { font-size: 11px; color: var(--stone); margin-top: 2px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ocean); text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--mist); }
+  .prop-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .prop-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--pebble);
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px;
+    border-bottom: 2px solid var(--mist); }
+  .prop-table td { padding: 6px 8px; border-bottom: 1px solid var(--mist); vertical-align: top; }
+  .prop-table tr:last-child td { border-bottom: none; }
+  .prop-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .prop-table tr.highlight { background: rgba(13, 148, 136, 0.06); }
+  .tag { display: inline-block; font-size: 10px; font-weight: 500;
+    padding: 2px 7px; border-radius: 3px; margin: 1px 2px; }
+  .tag-hot { background: #FEE2E2; color: #991B1B; }
+  .tag-signal { background: #FEF3C7; color: #92400E; }
+  .tag-info { background: #E0F2FE; color: #075985; }
+  .tag-cash { background: #D1FAE5; color: #065F46; }
+  .approach-box { background: var(--cloud); border-left: 4px solid var(--gold);
+    border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 16px; }
+  .approach-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .approach-box p { font-size: 12px; color: var(--stone); line-height: 1.6; }
+  .approach-box .script { font-style: italic; color: var(--charcoal); background: white;
+    border-radius: 4px; padding: 8px 12px; margin-top: 8px; border: 1px solid var(--mist);
+    font-size: 12px; line-height: 1.5; }
+  .approach-box ul { margin: 8px 0 0 16px; font-size: 12px; color: var(--stone); }
+  .approach-box li { margin-bottom: 4px; line-height: 1.5; }
+  .playbook-section { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .playbook-section h3 { font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--ocean); margin-bottom: 8px; }
+  .playbook-section ul { margin: 0 0 0 16px; font-size: 12px; color: var(--stone); }
+  .playbook-section li { margin-bottom: 6px; line-height: 1.5; }
+  .deep-dive { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 14px 16px; }
+  .deep-dive .dd-row { display: flex; justify-content: space-between;
+    padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 12px; }
+  .deep-dive .dd-row:last-child { border-bottom: none; }
+  .deep-dive .dd-label { color: var(--pebble); font-size: 11px; }
+  .deep-dive .dd-value { font-family: 'JetBrains Mono', monospace;
+    font-weight: 500; font-size: 12px; }
+  .comparison-box { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .comparison-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--ocean); margin-bottom: 8px; }
+  .comparison-row { display: grid; grid-template-columns: 100px 1fr;
+    gap: 12px; font-size: 12px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .comparison-row:last-child { border-bottom: none; }
+  .comparison-row .comp-label { color: var(--pebble); font-size: 11px; font-weight: 600; }
+  .comparison-row .comp-basic { color: var(--stone); }
+  .comparison-row .comp-us { color: var(--deep-ocean); font-weight: 500; }
+  .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--mist);
+    display: flex; justify-content: space-between; font-size: 10px; color: var(--pebble); }
+  .footer .confidential { font-weight: 600; color: var(--stone); }
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .signal-banner, .stat-card, .tag, .score-badge, .approach-box,
+    .comparison-box, .tag-cash, .playbook-section
+    { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>MOYER, JONATHAN ECK, KELLY</h1>
+    <span class="segment">Active Developer</span>
+    <div class="score-badge">Agent Score: 65 &bull; Opportunity</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="brand">Investor Intelligence Brief</div>
+    <div class="date">Wake County, NC &bull; Generated Mar 2026</div>
+  </div>
+</div>
+
+<!-- Signal Banner -->
+<div class="signal-banner">
+  <h2>&#9889; Cash Buyer | 58 Permits</h2>
+  <p>Jonathan and Kelly are active developers executing a concentrated, neighborhood-focused strategy in Raleigh with a short 2.1-year hold period and 75% cash financing. Their recent acquisition pattern (latest purchase July 2025) combined with 58 permits across four properties and street clustering on Stonegate Drive signals they're building out a specific corridor rather than scattered portfolio development.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Properties</div>
+    <div class="value">4</div>
+    <div class="subtext">RALEIGH</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">$1.9M</div>
+    <div class="subtext">AVM estimate</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Permits</div>
+    <div class="value">58</div>
+    <div class="subtext">$1.1M total value</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Acquisition Pace</div>
+    <div class="value">0.8/yr</div>
+    <div class="subtext">Last: Jul '25 (262d ago)</div>
+  </div>
+</div>
+<div class="two-col">
+  <div>
+    <div class="section">
+      <div class="section-title">Investment Profile</div>
+      <table class="prop-table">
+        <tr><td class="mono" style="color:var(--pebble)">Velocity</td><td><strong>0.8 transactions/year</strong> over 3.8yr</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Avg Hold</td><td>2.1 years &mdash; short hold</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Price Range</td><td>$309K - $642K</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Buying Style</td><td>Mostly Cash (75% cash)</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Geography</td><td>RALEIGH (1 city)</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Next Buy Est</td><td>May '27 (based on 22.6mo avg cadence)</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Key Signals</div>
+      <span class="tag tag-cash">CASH BUYER</span>
+      <span class="tag tag-signal">58 Building Permits</span>
+      <span class="tag tag-signal">$1.1M Permit Value</span>
+      <span class="tag tag-info">Concentrated in RALEIGH</span>
+      <span class="tag tag-info">Est. Rent: $10,685/mo</span>
+      <span class="tag tag-info">Equity: $1.6M</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="section">
+      <div class="section-title">Property Deep Dive &mdash; 8505 STONEGATE DR</div>
+      <div class="deep-dive">
+        <div class="dd-row"><span class="dd-label">AVM Estimate</span><span class="dd-value">$642,124</span></div>
+        <div class="dd-row"><span class="dd-label">Rent Estimate</span><span class="dd-value">$3,627/mo</span></div>
+        <div class="dd-row"><span class="dd-label">Gross Yield</span><span class="dd-value" style="color:var(--sage)">6.8%</span></div>
+        <div class="dd-row"><span class="dd-label">Last Sale</span><span class="dd-value">Jul '25 @ $710,000 CASH</span></div>
+        <div class="dd-row"><span class="dd-label">Year Built</span><span class="dd-value">1977</span></div>
+        <div class="dd-row"><span class="dd-label">Assessment</span><span class="dd-value">$577,415</span></div>
+        <div class="dd-row"><span class="dd-label">Annual Tax</span><span class="dd-value">$4,670</span></div>
+        <div class="dd-row"><span class="dd-label">Permits</span><span class="dd-value">9</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Full Portfolio &mdash; 4 Properties</div>
+  <table class="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>City</th>
+        <th style="text-align:right">AVM Value</th>
+        <th style="text-align:right">Rent/Mo</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td>8505 STONEGATE DR</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$642,124</td>
+        <td class="mono" style="text-align:right">$3,627</td>
+        <td><span class="tag tag-cash">CASH $710K</span> <span class="tag tag-signal">9 Permits</span> <span class="tag tag-hot">Recent Jul '25</span></td>
+      </tr>
+      <tr>
+        <td>8408 STONEGATE DR</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$476,695</td>
+        <td class="mono" style="text-align:right">$2,687</td>
+        <td><span class="tag tag-cash">CASH</span> <span class="tag tag-signal">28 Permits</span></td>
+      </tr>
+      <tr>
+        <td>7809 HARPS MILL WOODS RUN</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$451,704</td>
+        <td class="mono" style="text-align:right">$2,546</td>
+        <td><span class="tag tag-cash">CASH $464K</span> <span class="tag tag-signal">11 Permits</span></td>
+      </tr>
+      <tr>
+        <td>5604 NEUSE FARM DR</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$309,277</td>
+        <td class="mono" style="text-align:right">$1,825</td>
+        <td><span class="tag tag-signal">10 Permits</span> <span class="tag tag-signal">Yield 7.1%</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="approach-box">
+  <h3>Outreach Playbook</h3>
+  <ul>
+    <li><strong>Street Clustering & Land Assembly Opportunity:</strong> Off-market deal flow specific to the Stonegate corridor and adjacent streets in that submarket. Early notification of pocket listings or distressed properties that fit their assembly strategy before public MLS listing.</li>
+    <li><strong>Mid-Market Rehab Deal Pipeline:</strong> Intelligence on upcoming estate sales, estate clearances, and off-market owner-financed opportunities in their price band that need rehab work—before institutional investors see them.</li>
+    <li><strong>Rental Income Optimization & Reposition Strategy:</strong> Market comps on rental rates post-rehab for their property types/neighborhoods. Intel on tenant demand in their submarkets and comparable exit rental rates to help them model their reposition timeline.</li>
+    <li><strong>Permit & Contractor Intelligence:</strong> Introductions to reliable general contractors, inspectors, and municipal relationships in the Stonegate/Raleigh development corridors they're focused on—relationships that can accelerate project timelines and cost management.</li>
+  </ul>
+  <div class="script">Hi Jonathan and Kelly—I've been tracking your portfolio in Raleigh and noticed you've built something really focused here: four properties, two on Stonegate Drive, all with significant permit activity. You just closed on that 8505 Stonegate property in July. I work with a handful of active developers in your neighborhood, and I wanted to explore whether there are any off-market opportunities in that corridor I should be thinking about for you.</div>
+</div>
+<div class="playbook-section">
+  <h3>Strategic Suggestions</h3>
+  <ul>
+    <li>Research the immediate area around 8505 and 8408 Stonegate Drive—identify 3-5 properties that could fit their assembly strategy (older homes, tired exteriors, absentee owners). Be ready to share these as 'market context' without pitching anything.</li>
+    <li>Pull recent permit data for both Stonegate properties and the Neuse Farm Dr property to understand their typical construction scope and timeline. Reference specific permits in conversation to show deep market knowledge.</li>
+    <li>Develop a simple 'Stonegate Corridor Market Report'—comparable rents, recent sales, price trends on that street. Offer this as a resource even if there's no immediate deal opportunity.</li>
+    <li>Track Raleigh tax sale notices and estate probate filings in the Stonegate/Harps Mill area monthly. These are legitimate deal flow opportunities for active developers and will prove your value faster than general MLS activity.</li>
+    <li>Build relationships with contractors and permit expeditors already working in their neighborhood. Become a resource connector, not just a deal-finder.</li>
+  </ul>
+</div>
+<div class="playbook-section">
+  <h3>Conversation Starters</h3>
+  <ul>
+    <li><em>What's your timeline on the 8505 Stonegate project? Are you planning to hold for rental income or reposit and exit—that helps me identify the right opportunities for you.</em></li>
+    <li><em>I noticed you're clustered on Stonegate—are you intentionally building out that street, or has it just worked out that way? That tells me a lot about what to bring you.</em></li>
+    <li><em>With your permit activity, you clearly have trusted GCs and inspectors in Raleigh. Are there any gaps in your contractor network where introductions would be valuable?</em></li>
+    <li><em>Your portfolio is all cash or nearly all cash—how much dry powder are you sitting on for the next acquisition, and what triggers a buy for you right now?</em></li>
+  </ul>
+</div>
+
+<div class="comparison-box">
+  <h3>What Makes This Lead Different</h3>
+  <div class="comparison-row">
+    <span class="comp-label">Basic List</span>
+    <span class="comp-basic">"MOYER, JONATHAN ECK, KELLY &mdash; 4 properties, RALEIGH"</span>
+  </div>
+  <div class="comparison-row">
+    <span class="comp-label">Our Intel</span>
+    <span class="comp-us">Active Developer. $1.9M portfolio, 0.8 txns/year, 75% cash buyer, 58 permits ($1.1M). Full outreach playbook with specific approach angles and conversation starters.</span>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="confidential">SAMPLE &mdash; CONFIDENTIAL</span>
+  <span>DSCR Lead Intelligence &bull; Stillmind Creative</span>
+</div>
+
+</body>
+</html>

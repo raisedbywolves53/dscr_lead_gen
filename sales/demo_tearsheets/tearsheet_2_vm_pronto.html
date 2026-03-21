@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor Intelligence Brief — VM PRONTO LLC</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ocean: #0D9488;
+    --deep-ocean: #0F766E;
+    --seafoam: #99F6E4;
+    --gold: #B4873F;
+    --charcoal: #1C1917;
+    --stone: #44403C;
+    --pebble: #78716C;
+    --mist: #E7E5E4;
+    --cloud: #F5F5F4;
+    --white: #FAFAF9;
+    --sage: #16A34A;
+    --amber: #D97706;
+    --coral: #DC2626;
+  }
+
+  @page { size: letter; margin: 0.5in; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--charcoal);
+    background: var(--white);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--ocean); padding-bottom: 16px; margin-bottom: 20px; }
+  .header-left h1 { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--charcoal); letter-spacing: -0.025em; }
+  .header-left .segment { display: inline-block; background: var(--ocean); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-right { text-align: right; }
+  .header-right .brand { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--pebble); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right .date { font-size: 11px; color: var(--pebble); margin-top: 2px; }
+  .score-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--seafoam); color: var(--deep-ocean); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 6px; margin-top: 8px; }
+
+  .signal-banner { background: linear-gradient(135deg, var(--deep-ocean), var(--ocean)); color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+  .signal-banner h2 { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .signal-banner p { font-size: 13px; opacity: 0.92; line-height: 1.5; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 12px 14px; }
+  .stat-card .label { font-size: 10px; font-weight: 600; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; color: var(--charcoal); }
+  .stat-card .subtext { font-size: 11px; color: var(--stone); margin-top: 2px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--mist); }
+
+  .prop-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .prop-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px; border-bottom: 2px solid var(--mist); }
+  .prop-table td { padding: 6px 8px; border-bottom: 1px solid var(--mist); vertical-align: top; }
+  .prop-table tr:last-child td { border-bottom: none; }
+  .prop-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .prop-table tr.highlight { background: rgba(13, 148, 136, 0.06); }
+
+  .tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 3px; margin: 1px 2px; }
+  .tag-hot { background: #FEE2E2; color: #991B1B; }
+  .tag-signal { background: #FEF3C7; color: #92400E; }
+  .tag-info { background: #E0F2FE; color: #075985; }
+
+  .approach-box { background: var(--cloud); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 16px; }
+  .approach-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .approach-box p { font-size: 12px; color: var(--stone); line-height: 1.6; }
+  .approach-box .script { font-style: italic; color: var(--charcoal); background: white; border-radius: 4px; padding: 8px 12px; margin-top: 8px; border: 1px solid var(--mist); font-size: 12px; line-height: 1.5; }
+
+  .deep-dive { background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 14px 16px; }
+  .deep-dive .dd-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 12px; }
+  .deep-dive .dd-row:last-child { border-bottom: none; }
+  .deep-dive .dd-label { color: var(--pebble); font-size: 11px; }
+  .deep-dive .dd-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 12px; }
+
+  .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--mist); display: flex; justify-content: space-between; font-size: 10px; color: var(--pebble); }
+  .footer .confidential { font-weight: 600; color: var(--stone); }
+
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .signal-banner, .stat-card, .tag, .score-badge, .approach-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>VM PRONTO LLC</h1>
+    <span class="segment">Serial Acquirer (10+)</span>
+    <div class="score-badge">Agent Score: 73 &bull; Tier 1 Priority</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="brand">Investor Intelligence Brief</div>
+    <div class="date">Wake County, NC &bull; Generated Mar 2026</div>
+  </div>
+</div>
+
+<!-- Signal Banner -->
+<div class="signal-banner">
+  <h2>&#9889; Out-of-State Serial Acquirer &mdash; Needs Local Agent</h2>
+  <p>16 properties concentrated in Zebulon with active buying pattern. Absentee LLC purchasing remotely needs eyes on the ground. 9 of 16 properties clustered in Zebulon (8 on Brisk Dr/Gourd St alone), with additional holdings in Raleigh, Fuquay-Varina, and Garner. Acquiring ~1.7 properties/year since 2021 &mdash; most recent purchase Aug 2025 at $420K.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Properties</div>
+    <div class="value">16</div>
+    <div class="subtext">Wake County</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">$5.53M</div>
+    <div class="subtext">Total assessed</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Avg Property</div>
+    <div class="value">$346K</div>
+    <div class="subtext">SFR focused</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Last Purchase</div>
+    <div class="value">Aug '25</div>
+    <div class="subtext">$420,000 &bull; 639 Ashe Lake Way</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div>
+    <!-- Acquisition Pattern -->
+    <div class="section">
+      <div class="section-title">Acquisition Pattern</div>
+      <table class="prop-table">
+        <tr><td class="mono" style="color:var(--pebble)">Velocity</td><td><strong>~1.7 purchases/year</strong> since 2021</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Concentration</td><td>9 of 16 in Zebulon (56%)</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Cluster</td><td>8 properties on Brisk Dr / Gourd St</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Entity</td><td>LLC &bull; Out-of-state &bull; Absentee</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Geography</td><td>Zebulon, Raleigh, Fuquay-Varina, Garner</td></tr>
+      </table>
+    </div>
+
+    <!-- Signals -->
+    <div class="section">
+      <div class="section-title">Key Signals</div>
+      <span class="tag tag-hot">Out-of-State Absentee</span>
+      <span class="tag tag-hot">Serial Acquirer (16)</span>
+      <span class="tag tag-signal">Active Buyer (Aug '25)</span>
+      <span class="tag tag-signal">Geographic Cluster</span>
+      <span class="tag tag-info">LLC Entity</span>
+      <span class="tag tag-info">Needs Local Representation</span>
+    </div>
+  </div>
+
+  <div>
+    <!-- Sample Property Deep Dive -->
+    <div class="section">
+      <div class="section-title">Property Deep Dive &mdash; 639 Ashe Lake Way</div>
+      <div class="deep-dive">
+        <div class="dd-row"><span class="dd-label">AVM Estimate</span><span class="dd-value">$380,688</span></div>
+        <div class="dd-row"><span class="dd-label">Rent Estimate</span><span class="dd-value">$2,137/mo</span></div>
+        <div class="dd-row"><span class="dd-label">Gross Yield</span><span class="dd-value" style="color:var(--sage)">6.7%</span></div>
+        <div class="dd-row"><span class="dd-label">Last Sale</span><span class="dd-value">Aug 2025 @ $420,000</span></div>
+        <div class="dd-row"><span class="dd-label">Year Built</span><span class="dd-value">2010</span></div>
+        <div class="dd-row"><span class="dd-label">Type / Size</span><span class="dd-value">SFR &bull; 2,060 sqft &bull; 3 bath</span></div>
+        <div class="dd-row"><span class="dd-label">Permits</span><span class="dd-value">6 permits on file</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full Portfolio -->
+<div class="section">
+  <div class="section-title">Full Portfolio &mdash; 16 Properties</div>
+  <table class="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>City</th>
+        <th style="text-align:right">Assessed Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td>639 Ashe Lake Way</td>
+        <td>Fuquay-Varina</td>
+        <td class="mono" style="text-align:right">$420,000</td>
+        <td><span class="tag tag-hot">Most Recent (Aug '25)</span></td>
+      </tr>
+      <tr>
+        <td>200 Brisk Dr</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$345,000</td>
+        <td><span class="tag tag-info">Brisk Dr Cluster</span></td>
+      </tr>
+      <tr>
+        <td>204 Brisk Dr</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$345,000</td>
+        <td><span class="tag tag-info">Brisk Dr Cluster</span></td>
+      </tr>
+      <tr>
+        <td>208 Brisk Dr</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$340,000</td>
+        <td><span class="tag tag-info">Brisk Dr Cluster</span></td>
+      </tr>
+      <tr>
+        <td>212 Brisk Dr</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$340,000</td>
+        <td><span class="tag tag-info">Brisk Dr Cluster</span></td>
+      </tr>
+      <tr>
+        <td>216 Brisk Dr</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$338,000</td>
+        <td><span class="tag tag-info">Brisk Dr Cluster</span></td>
+      </tr>
+      <tr>
+        <td>100 Gourd St</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$330,000</td>
+        <td><span class="tag tag-info">Zebulon Cluster</span></td>
+      </tr>
+      <tr>
+        <td>104 Gourd St</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$330,000</td>
+        <td><span class="tag tag-info">Zebulon Cluster</span></td>
+      </tr>
+      <tr>
+        <td>108 Gourd St</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$328,000</td>
+        <td><span class="tag tag-info">Zebulon Cluster</span></td>
+      </tr>
+      <tr>
+        <td>Property 10</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$365,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 11</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$358,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 12</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$352,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 13</td>
+        <td>Garner</td>
+        <td class="mono" style="text-align:right">$340,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 14</td>
+        <td>Garner</td>
+        <td class="mono" style="text-align:right">$335,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 15</td>
+        <td>Zebulon</td>
+        <td class="mono" style="text-align:right">$325,000</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Property 16</td>
+        <td>Fuquay-Varina</td>
+        <td class="mono" style="text-align:right">$320,000</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Equity & Buying Power -->
+<div class="section">
+  <div class="section-title">Equity &amp; Buying Power</div>
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card">
+      <div class="label">Est. Equity</div>
+      <div class="value">$2.21M</div>
+      <div class="subtext">Conservative (40% equity ratio)</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Acquisition Rate</div>
+      <div class="value">1.7/yr</div>
+      <div class="subtext">Consistent since 2021</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Zebulon Concentration</div>
+      <div class="value">56%</div>
+      <div class="subtext">9 of 16 properties</div>
+    </div>
+  </div>
+</div>
+
+<!-- Approach -->
+<div class="approach-box">
+  <h3>Recommended Approach</h3>
+  <p>This is a classic out-of-state absentee investor who needs local representation. They're buying consistently (~1.7/year) and concentrating in Zebulon &mdash; specifically the Brisk Dr corridor. The key angle: they need someone on the ground who knows this submarket.</p>
+  <div class="script">"I noticed you own 16 investment properties in Wake County, most of them concentrated around the Brisk Dr corridor in Zebulon. I specialize in that market and I'm seeing inventory that would fit your portfolio. As an out-of-state owner, would it help to have someone local who knows these neighborhoods keeping an eye out for your next acquisition?"</div>
+</div>
+
+<div class="footer">
+  <span class="confidential">SAMPLE &mdash; CONFIDENTIAL</span>
+  <span>DSCR Lead Intelligence &bull; Stillmind Creative</span>
+</div>
+
+</body>
+</html>

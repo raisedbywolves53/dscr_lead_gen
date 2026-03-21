@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wake County Market Universe — Stillmind Creative</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ocean: #0D9488;
+    --deep-ocean: #0F766E;
+    --seafoam: #99F6E4;
+    --gold: #B4873F;
+    --charcoal: #1C1917;
+    --stone: #44403C;
+    --pebble: #78716C;
+    --mist: #E7E5E4;
+    --cloud: #F5F5F4;
+    --white: #FAFAF9;
+    --sage: #16A34A;
+    --amber: #D97706;
+    --coral: #DC2626;
+  }
+
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--charcoal);
+    background: var(--white);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 28px 32px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid var(--ocean);
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+  }
+  .header-left h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--charcoal);
+    letter-spacing: -0.025em;
+  }
+  .header-left .subtitle {
+    font-size: 13px;
+    color: var(--pebble);
+    margin-top: 2px;
+  }
+  .header-right {
+    text-align: right;
+  }
+  .header-right .brand {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ocean);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .header-right .date {
+    font-size: 11px;
+    color: var(--pebble);
+    margin-top: 2px;
+  }
+  .header-right .conf {
+    font-size: 9px;
+    color: var(--coral);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--charcoal) 0%, #292524 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .hero .hero-number {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--seafoam);
+    line-height: 1.1;
+  }
+  .hero .hero-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #D6D3D1;
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+  .hero .hero-sub {
+    font-size: 12px;
+    color: #A8A29E;
+    margin-top: 10px;
+  }
+  .hero .hero-sub span {
+    color: var(--seafoam);
+    font-weight: 600;
+  }
+
+  /* ── Stat Cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--cloud);
+    border-radius: 8px;
+    padding: 16px 18px;
+    text-align: center;
+  }
+  .stat-card .stat-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--charcoal);
+    letter-spacing: -0.02em;
+  }
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--pebble);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  /* ── Section headers ── */
+  .section-header {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--charcoal);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--mist);
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Tier Breakdown ── */
+  .tier-section {
+    margin-bottom: 24px;
+  }
+  .tier-row {
+    display: grid;
+    grid-template-columns: 58px 150px 80px 48px 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mist);
+  }
+  .tier-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  .tier-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--stone);
+  }
+  .tier-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: right;
+  }
+  .tier-pct {
+    font-size: 11px;
+    color: var(--pebble);
+    text-align: right;
+  }
+  .tier-bar-bg {
+    background: var(--mist);
+    border-radius: 3px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .tier-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  /* ── Two-column layout ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Segment / City bars ── */
+  .seg-row {
+    display: grid;
+    grid-template-columns: 170px 1fr 70px;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0efee;
+  }
+  .seg-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--stone);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .seg-bar-bg {
+    background: var(--mist);
+    border-radius: 3px;
+    height: 7px;
+    overflow: hidden;
+  }
+  .seg-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--ocean);
+  }
+  .seg-bar.city-bar {
+    background: var(--gold);
+  }
+  .seg-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-align: right;
+    color: var(--stone);
+  }
+
+  /* ── Portfolio Grid ── */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .portfolio-card {
+    background: var(--cloud);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    border-left: 4px solid var(--ocean);
+  }
+  .portfolio-card .pf-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--deep-ocean);
+  }
+  .portfolio-card .pf-label {
+    font-size: 11px;
+    color: var(--pebble);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  /* ── CTA Section ── */
+  .cta-section {
+    background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+    border-radius: 10px;
+    padding: 28px 32px;
+    color: white;
+    margin-top: 8px;
+  }
+  .cta-section h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+  .cta-section p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #CCFBF1;
+    margin-bottom: 10px;
+  }
+  .cta-section .highlight {
+    color: white;
+    font-weight: 600;
+  }
+  .cta-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 0 0;
+  }
+  .cta-bullets li {
+    font-size: 13px;
+    color: #CCFBF1;
+    padding: 4px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .cta-bullets li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: var(--seafoam);
+    font-weight: 700;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--mist);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--pebble);
+  }
+
+  @media print {
+    body { padding: 0; }
+    .cta-section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>Wake County Market Universe</h1>
+    <div class="subtitle">Investment Property Intelligence &mdash; Raleigh-Cary Metro</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="date">Prepared March 2026</div>
+    <div class="conf">Prepared for Northside Realty</div>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-number">312,569</div>
+  <div class="hero-label">Qualified Investor Profiles in Wake County</div>
+  <div class="hero-sub">Scored from <span>360,873</span> total property records &mdash; 48,304 filtered out as non-investor or owner-occupied</div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-value">16,521</div>
+    <div class="stat-label">Tier 1 &mdash; Hot Leads</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">37,717</div>
+    <div class="stat-label">Purchased 2024&ndash;2026</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">48,711</div>
+    <div class="stat-label">LLC / Entity Owned</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">17,632</div>
+    <div class="stat-label">Absentee Owners</div>
+  </div>
+</div>
+
+<!-- Tier Breakdown -->
+<div class="tier-section">
+  <div class="section-header">Lead Tier Distribution</div>
+  
+        <div class="tier-row">
+          <div class="tier-badge" style="background:#DC2626">Hot</div>
+          <div class="tier-label">Tier 1 — Hot</div>
+          <div class="tier-count">16,521</div>
+          <div class="tier-pct">5.3%</div>
+          <div class="tier-bar-bg"><div class="tier-bar" style="width:5.3%;background:#DC2626"></div></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-badge" style="background:#D97706">Warm</div>
+          <div class="tier-label">Tier 2 — Warm</div>
+          <div class="tier-count">32,795</div>
+          <div class="tier-pct">10.5%</div>
+          <div class="tier-bar-bg"><div class="tier-bar" style="width:10.5%;background:#D97706"></div></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-badge" style="background:#0D9488">Nurture</div>
+          <div class="tier-label">Tier 3 — Nurture</div>
+          <div class="tier-count">263,253</div>
+          <div class="tier-pct">84.2%</div>
+          <div class="tier-bar-bg"><div class="tier-bar" style="width:84.2%;background:#0D9488"></div></div>
+        </div>
+</div>
+
+<!-- Two-column: Segments + Cities -->
+<div class="two-col">
+  <div>
+    <div class="section-header">Investor Segments</div>
+    
+        <div class="seg-row">
+          <div class="seg-name">Long-Hold Equity</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:100%"></div></div>
+          <div class="seg-count">155,583</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">General Investor</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:32%"></div></div>
+          <div class="seg-count">49,038</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Self-Employed / LLC Investor</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:21%"></div></div>
+          <div class="seg-count">31,898</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">First-Time Investor</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:19%"></div></div>
+          <div class="seg-count">29,681</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Growing Portfolio (2-4)</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:12%"></div></div>
+          <div class="seg-count">18,776</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Portfolio Landlord (5+)</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:11%"></div></div>
+          <div class="seg-count">16,514</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Out-of-State Investor</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:7%"></div></div>
+          <div class="seg-count">10,258</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Foreign National Investor</div>
+          <div class="seg-bar-bg"><div class="seg-bar" style="width:1%"></div></div>
+          <div class="seg-count">821</div>
+        </div>
+  </div>
+  <div>
+    <div class="section-header">Top Cities by Qualified Leads</div>
+    
+        <div class="seg-row">
+          <div class="seg-name">Raleigh</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:100%"></div></div>
+          <div class="seg-count">106,157</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Cary</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:38%"></div></div>
+          <div class="seg-count">40,806</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Apex</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:20%"></div></div>
+          <div class="seg-count">21,421</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Fuquay-Varina</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:15%"></div></div>
+          <div class="seg-count">16,267</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Wake Forest</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:15%"></div></div>
+          <div class="seg-count">15,752</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Holly Springs</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:13%"></div></div>
+          <div class="seg-count">14,050</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Garner</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:13%"></div></div>
+          <div class="seg-count">13,404</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Wendell</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:7%"></div></div>
+          <div class="seg-count">7,091</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Knightdale</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:6%"></div></div>
+          <div class="seg-count">6,700</div>
+        </div>
+        <div class="seg-row">
+          <div class="seg-name">Morrisville</div>
+          <div class="seg-bar-bg"><div class="seg-bar city-bar" style="width:6%"></div></div>
+          <div class="seg-count">6,086</div>
+        </div>
+  </div>
+</div>
+
+<!-- Portfolio Depth -->
+<div class="section-header">Multi-Property Investors</div>
+<div class="portfolio-grid">
+  <div class="portfolio-card">
+    <div class="pf-value">44,390</div>
+    <div class="pf-label">Own 2+ Properties</div>
+  </div>
+  <div class="portfolio-card">
+    <div class="pf-value">16,514</div>
+    <div class="pf-label">Own 5+ Properties</div>
+  </div>
+  <div class="portfolio-card">
+    <div class="pf-value">11,653</div>
+    <div class="pf-label">Own 10+ Properties</div>
+  </div>
+</div>
+
+<!-- CTA: What This Means -->
+<div class="cta-section">
+  <h2>What This Means for Northside Realty</h2>
+  <p>
+    Wake County has <span class="highlight">312,569 verified investment property owners</span> &mdash;
+    and <span class="highlight">16,521 are Tier 1 hot leads</span> with active portfolios,
+    LLC structures, and recent transaction activity. These are investors who are buying, refinancing, and growing right now.
+  </p>
+  <p>
+    For a brokerage with 100+ agents, this is a territory-wide investor map. Instead of cold-calling blind lists,
+    your agents get scored, segmented profiles &mdash; each one tagged by opportunity type, portfolio depth, and activity signals.
+  </p>
+  <ul class="cta-bullets">
+    <li><span class="highlight">16,514 portfolio landlords</span> (5+ properties) &mdash; listing and buyer-side opportunities at scale</li>
+    <li><span class="highlight">37,717 recent buyers</span> (2024&ndash;2026) &mdash; actively deploying capital in your market right now</li>
+    <li><span class="highlight">48,711 LLC/entity investors</span> &mdash; sophisticated operators who transact repeatedly</li>
+    <li>Every profile enrichable with contact info, mortgage details, rental estimates, and portfolio mapping</li>
+  </ul>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div>Stillmind Creative &mdash; Investor Intelligence Platform</div>
+  <div>Data: Wake County Tax Records, NC OneMap &bull; Scored via ICP Pipeline v3</div>
+</div>
+
+</body>
+</html>

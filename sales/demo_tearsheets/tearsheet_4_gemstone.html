@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor Intelligence Brief — GEMSTONE HOMES LLC</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ocean: #0D9488;
+    --deep-ocean: #0F766E;
+    --seafoam: #99F6E4;
+    --gold: #B4873F;
+    --charcoal: #1C1917;
+    --stone: #44403C;
+    --pebble: #78716C;
+    --mist: #E7E5E4;
+    --cloud: #F5F5F4;
+    --white: #FAFAF9;
+    --sage: #16A34A;
+    --amber: #D97706;
+    --coral: #DC2626;
+  }
+
+  @page { size: letter; margin: 0.5in; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--charcoal);
+    background: var(--white);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--ocean); padding-bottom: 16px; margin-bottom: 20px; }
+  .header-left h1 { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: var(--charcoal); letter-spacing: -0.025em; }
+  .header-left .segment { display: inline-block; background: var(--ocean); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-right { text-align: right; }
+  .header-right .brand { font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--pebble); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right .date { font-size: 11px; color: var(--pebble); margin-top: 2px; }
+  .score-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--seafoam); color: var(--deep-ocean); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 6px; margin-top: 8px; }
+
+  .signal-banner { background: linear-gradient(135deg, var(--deep-ocean), var(--ocean)); color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+  .signal-banner h2 { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .signal-banner p { font-size: 13px; opacity: 0.92; line-height: 1.5; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 12px 14px; }
+  .stat-card .label { font-size: 10px; font-weight: 600; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; color: var(--charcoal); }
+  .stat-card .subtext { font-size: 11px; color: var(--stone); margin-top: 2px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--mist); }
+
+  .prop-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .prop-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--pebble); text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px; border-bottom: 2px solid var(--mist); }
+  .prop-table td { padding: 6px 8px; border-bottom: 1px solid var(--mist); vertical-align: top; }
+  .prop-table tr:last-child td { border-bottom: none; }
+  .prop-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .prop-table tr.highlight { background: rgba(13, 148, 136, 0.06); }
+
+  .tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 3px; margin: 1px 2px; }
+  .tag-hot { background: #FEE2E2; color: #991B1B; }
+  .tag-signal { background: #FEF3C7; color: #92400E; }
+  .tag-info { background: #E0F2FE; color: #075985; }
+  .tag-reo { background: #FEE2E2; color: #991B1B; }
+
+  .approach-box { background: var(--cloud); border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 16px; }
+  .approach-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .approach-box p { font-size: 12px; color: var(--stone); line-height: 1.6; }
+  .approach-box .script { font-style: italic; color: var(--charcoal); background: white; border-radius: 4px; padding: 8px 12px; margin-top: 8px; border: 1px solid var(--mist); font-size: 12px; line-height: 1.5; }
+
+  .deep-dive { background: var(--cloud); border: 1px solid var(--mist); border-radius: 8px; padding: 14px 16px; }
+  .deep-dive .dd-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 12px; }
+  .deep-dive .dd-row:last-child { border-bottom: none; }
+  .deep-dive .dd-label { color: var(--pebble); font-size: 11px; }
+  .deep-dive .dd-value { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-size: 12px; }
+
+  .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--mist); display: flex; justify-content: space-between; font-size: 10px; color: var(--pebble); }
+  .footer .confidential { font-weight: 600; color: var(--stone); }
+
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .signal-banner, .stat-card, .tag, .score-badge, .approach-box, .tag-reo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>GEMSTONE HOMES LLC</h1>
+    <span class="segment">Value Investor</span>
+    <div class="score-badge">Agent Score: 54 &bull; Tier 1 Priority</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="brand">Investor Intelligence Brief</div>
+    <div class="date">Wake County, NC &bull; Generated Mar 2026</div>
+  </div>
+</div>
+
+<!-- Signal Banner -->
+<div class="signal-banner">
+  <h2>&#9889; Value Investor &mdash; REO Buyer with $3.3M Portfolio</h2>
+  <p>Bought bank-owned property at below market (Nov 2025, $353K). Two $1M+ properties suggest a mixed strategy: bargain acquisitions + premium holds. Local operator concentrated in Fuquay-Varina. Commercial financing in place signals sophistication. Mailing address in same town as properties &mdash; hands-on operator.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Properties</div>
+    <div class="value">4</div>
+    <div class="subtext">Fuquay-Varina focused</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">$3.33M</div>
+    <div class="subtext">Total assessed</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Last Purchase</div>
+    <div class="value">Nov '25</div>
+    <div class="subtext">$353,000 &bull; REO / Bank-Owned</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Financing</div>
+    <div class="value">Commercial</div>
+    <div class="subtext">Sophisticated borrower</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div>
+    <!-- Acquisition Pattern -->
+    <div class="section">
+      <div class="section-title">Acquisition Pattern</div>
+      <table class="prop-table">
+        <tr><td class="mono" style="color:var(--pebble)">Strategy</td><td><strong>Mixed: Value-add + Premium holds</strong></td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">REO Buyer</td><td>Purchased bank-owned property below market</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Concentration</td><td>3 of 4 properties in Fuquay-Varina</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Range</td><td>$353K REO &ndash; $1M+ premium</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Entity</td><td>LLC &bull; Commercial financing</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Mailing</td><td>206 Raleigh St, Fuquay-Varina</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Operator</td><td>Local &bull; Same town as properties</td></tr>
+      </table>
+    </div>
+
+    <!-- Signals -->
+    <div class="section">
+      <div class="section-title">Key Signals</div>
+      <span class="tag tag-reo">REO BUYER &mdash; Below Market</span>
+      <span class="tag tag-hot">$3.3M Portfolio</span>
+      <span class="tag tag-signal">Two $1M+ Properties</span>
+      <span class="tag tag-signal">Commercial Financing</span>
+      <span class="tag tag-info">Local Operator</span>
+      <span class="tag tag-info">Fuquay-Varina Concentrated</span>
+      <span class="tag tag-info">Mixed Strategy</span>
+    </div>
+  </div>
+
+  <div>
+    <!-- Sample Property Deep Dive -->
+    <div class="section">
+      <div class="section-title">Property Deep Dive &mdash; 602 S Main St, Fuquay-Varina</div>
+      <div class="deep-dive">
+        <div class="dd-row"><span class="dd-label">AVM Estimate</span><span class="dd-value">$264,285</span></div>
+        <div class="dd-row"><span class="dd-label">Rent Estimate</span><span class="dd-value">$1,519/mo</span></div>
+        <div class="dd-row"><span class="dd-label">Gross Yield</span><span class="dd-value" style="color:var(--sage)">6.9%</span></div>
+        <div class="dd-row"><span class="dd-label">Last Sale</span><span class="dd-value">Nov 2025 @ $353,000</span></div>
+        <div class="dd-row"><span class="dd-label">Sale Type</span><span class="dd-value" style="color:var(--coral)">REO / Bank-Owned</span></div>
+        <div class="dd-row"><span class="dd-label">Year Built</span><span class="dd-value">1940</span></div>
+        <div class="dd-row"><span class="dd-label">Type / Size</span><span class="dd-value">SFR &bull; 1,783 sqft &bull; 1 bath</span></div>
+        <div class="dd-row"><span class="dd-label">Permits</span><span class="dd-value">1 permit (electrical, 2006)</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full Portfolio -->
+<div class="section">
+  <div class="section-title">Full Portfolio &mdash; 4 Properties</div>
+  <table class="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>City</th>
+        <th style="text-align:right">Assessed Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Cobbler View Way (Unit A)</td>
+        <td>Fuquay-Varina</td>
+        <td class="mono" style="text-align:right">$1,050,000+</td>
+        <td><span class="tag tag-hot">Premium Hold</span></td>
+      </tr>
+      <tr>
+        <td>Cobbler View Way (Unit B)</td>
+        <td>Fuquay-Varina</td>
+        <td class="mono" style="text-align:right">$1,050,000+</td>
+        <td><span class="tag tag-hot">Premium Hold</span></td>
+      </tr>
+      <tr class="highlight">
+        <td>602 S Main St</td>
+        <td>Fuquay-Varina</td>
+        <td class="mono" style="text-align:right">$353,000</td>
+        <td><span class="tag tag-reo">REO Purchase (Nov '25)</span></td>
+      </tr>
+      <tr>
+        <td>Property 4</td>
+        <td>Wake County</td>
+        <td class="mono" style="text-align:right">$877,696</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Equity & Buying Power -->
+<div class="section">
+  <div class="section-title">Equity &amp; Buying Power</div>
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card">
+      <div class="label">Est. Equity</div>
+      <div class="value">$1.33M</div>
+      <div class="subtext">Conservative (40% equity ratio)</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">REO Discount</div>
+      <div class="value">~$89K</div>
+      <div class="subtext">Paid $353K vs $264K AVM*</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Premium Holdings</div>
+      <div class="value">$2.1M+</div>
+      <div class="subtext">2 properties on Cobbler View</div>
+    </div>
+  </div>
+  <p style="font-size:10px;color:var(--pebble);margin-top:-8px">*REO purchases often reflect a higher purchase price that includes rehab budget or lot value above current AVM.</p>
+</div>
+
+<!-- Approach -->
+<div class="approach-box">
+  <h3>Recommended Approach</h3>
+  <p>This investor buys distressed/bank-owned properties AND holds premium assets &mdash; a sophisticated dual strategy. They're local to Fuquay-Varina and hands-on. Approach with distressed inventory and off-market deals in their backyard.</p>
+  <div class="script">"I see you recently picked up a property on S Main St &mdash; nice buy. I work with investors in the Fuquay-Varina market and I'm tracking several distressed and off-market properties that might fit your acquisition strategy. Worth a conversation?"</div>
+</div>
+
+<div class="footer">
+  <span class="confidential">SAMPLE &mdash; CONFIDENTIAL</span>
+  <span>DSCR Lead Intelligence &bull; Stillmind Creative</span>
+</div>
+
+</body>
+</html>

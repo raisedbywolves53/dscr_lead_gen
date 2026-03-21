@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor Intelligence Brief &mdash; YERAMSETTY, SRINIVASA RAO GUNTI, KRISHNA KUMARI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ocean: #0D9488; --deep-ocean: #0F766E; --seafoam: #99F6E4;
+    --gold: #B4873F; --charcoal: #1C1917; --stone: #44403C;
+    --pebble: #78716C; --mist: #E7E5E4; --cloud: #F5F5F4;
+    --white: #FAFAF9; --sage: #16A34A; --amber: #D97706; --coral: #DC2626;
+  }
+  @page { size: letter; margin: 0.5in; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif; color: var(--charcoal);
+    background: var(--white); max-width: 8.5in; margin: 0 auto;
+    padding: 24px; font-size: 13px; line-height: 1.5;
+  }
+  .header { display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 3px solid var(--ocean); padding-bottom: 16px; margin-bottom: 20px; }
+  .header-left h1 { font-family: 'DM Sans', sans-serif; font-size: 22px;
+    font-weight: 700; color: var(--charcoal); letter-spacing: -0.025em; }
+  .header-left .segment { display: inline-block; background: var(--ocean); color: white;
+    font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px;
+    margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-right { text-align: right; }
+  .header-right .brand { font-family: 'DM Sans', sans-serif; font-size: 11px;
+    color: var(--pebble); letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right .date { font-size: 11px; color: var(--pebble); margin-top: 2px; }
+  .score-badge { display: inline-flex; align-items: center; gap: 6px;
+    background: var(--seafoam); color: var(--deep-ocean);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;
+    padding: 4px 12px; border-radius: 6px; margin-top: 8px; }
+  .signal-banner { background: linear-gradient(135deg, var(--deep-ocean), var(--ocean));
+    color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }
+  .signal-banner h2 { font-family: 'DM Sans', sans-serif; font-size: 15px;
+    font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .signal-banner p { font-size: 13px; opacity: 0.92; line-height: 1.5; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 12px 14px; }
+  .stat-card .label { font-size: 10px; font-weight: 600; color: var(--pebble);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-card .value { font-family: 'JetBrains Mono', monospace; font-size: 18px;
+    font-weight: 500; color: var(--charcoal); }
+  .stat-card .subtext { font-size: 11px; color: var(--stone); margin-top: 2px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .section { margin-bottom: 16px; }
+  .section-title { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--ocean); text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--mist); }
+  .prop-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .prop-table th { text-align: left; font-size: 10px; font-weight: 600; color: var(--pebble);
+    text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px;
+    border-bottom: 2px solid var(--mist); }
+  .prop-table td { padding: 6px 8px; border-bottom: 1px solid var(--mist); vertical-align: top; }
+  .prop-table tr:last-child td { border-bottom: none; }
+  .prop-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .prop-table tr.highlight { background: rgba(13, 148, 136, 0.06); }
+  .tag { display: inline-block; font-size: 10px; font-weight: 500;
+    padding: 2px 7px; border-radius: 3px; margin: 1px 2px; }
+  .tag-hot { background: #FEE2E2; color: #991B1B; }
+  .tag-signal { background: #FEF3C7; color: #92400E; }
+  .tag-info { background: #E0F2FE; color: #075985; }
+  .tag-cash { background: #D1FAE5; color: #065F46; }
+  .approach-box { background: var(--cloud); border-left: 4px solid var(--gold);
+    border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 16px; }
+  .approach-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .approach-box p { font-size: 12px; color: var(--stone); line-height: 1.6; }
+  .approach-box .script { font-style: italic; color: var(--charcoal); background: white;
+    border-radius: 4px; padding: 8px 12px; margin-top: 8px; border: 1px solid var(--mist);
+    font-size: 12px; line-height: 1.5; }
+  .approach-box ul { margin: 8px 0 0 16px; font-size: 12px; color: var(--stone); }
+  .approach-box li { margin-bottom: 4px; line-height: 1.5; }
+  .playbook-section { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .playbook-section h3 { font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--ocean); margin-bottom: 8px; }
+  .playbook-section ul { margin: 0 0 0 16px; font-size: 12px; color: var(--stone); }
+  .playbook-section li { margin-bottom: 6px; line-height: 1.5; }
+  .deep-dive { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 14px 16px; }
+  .deep-dive .dd-row { display: flex; justify-content: space-between;
+    padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 12px; }
+  .deep-dive .dd-row:last-child { border-bottom: none; }
+  .deep-dive .dd-label { color: var(--pebble); font-size: 11px; }
+  .deep-dive .dd-value { font-family: 'JetBrains Mono', monospace;
+    font-weight: 500; font-size: 12px; }
+  .comparison-box { background: var(--cloud); border: 1px solid var(--mist);
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .comparison-box h3 { font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; color: var(--ocean); margin-bottom: 8px; }
+  .comparison-row { display: grid; grid-template-columns: 100px 1fr;
+    gap: 12px; font-size: 12px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .comparison-row:last-child { border-bottom: none; }
+  .comparison-row .comp-label { color: var(--pebble); font-size: 11px; font-weight: 600; }
+  .comparison-row .comp-basic { color: var(--stone); }
+  .comparison-row .comp-us { color: var(--deep-ocean); font-weight: 500; }
+  .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--mist);
+    display: flex; justify-content: space-between; font-size: 10px; color: var(--pebble); }
+  .footer .confidential { font-weight: 600; color: var(--stone); }
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .signal-banner, .stat-card, .tag, .score-badge, .approach-box,
+    .comparison-box, .tag-cash, .playbook-section
+    { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>YERAMSETTY, SRINIVASA RAO GUNTI, KRISHNA KUMARI</h1>
+    <span class="segment">Active Developer</span>
+    <div class="score-badge">Agent Score: 44 &bull; Opportunity</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="brand">Investor Intelligence Brief</div>
+    <div class="date">Wake County, NC &bull; Generated Mar 2026</div>
+  </div>
+</div>
+
+<!-- Signal Banner -->
+<div class="signal-banner">
+  <h2>&#9889; 13 Permits | 1.0 Txns/Year</h2>
+  <p>This investor is an active developer executing a deliberate street clustering strategy on Caddis Boulevard in Raleigh, acquiring three contiguous properties (4966, 4970, 4972) all purchased on the same date in January 2025, all built in 2024, and all generating ~$2,050/month in rental income. The pattern suggests land assembly or neighborhood buildout intent rather than opportunistic buying—with a 1.2-year average hold and $289K price point, this is a buy-rehab-rent-or-exit model.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Properties</div>
+    <div class="value">3</div>
+    <div class="subtext">RALEIGH</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">$869K</div>
+    <div class="subtext">AVM estimate</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Permits</div>
+    <div class="value">13</div>
+    <div class="subtext">N/A total value</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Acquisition Pace</div>
+    <div class="value">1.0/yr</div>
+    <div class="subtext">Last: Jan '25 (424d ago)</div>
+  </div>
+</div>
+<div class="two-col">
+  <div>
+    <div class="section">
+      <div class="section-title">Investment Profile</div>
+      <table class="prop-table">
+        <tr><td class="mono" style="color:var(--pebble)">Velocity</td><td><strong>1.0 transactions/year</strong> over 0.1yr</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Avg Hold</td><td>1.2 years &mdash; short hold</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Price Range</td><td>$288K - $290K</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Buying Style</td><td>Mostly Financed (0% cash)</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Geography</td><td>RALEIGH (1 city)</td></tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Key Signals</div>
+      <span class="tag tag-signal">13 Building Permits</span>
+      <span class="tag tag-info">Concentrated in RALEIGH</span>
+      <span class="tag tag-info">Est. Rent: $6,154/mo</span>
+      <span class="tag tag-info">Equity: $157K</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="section">
+      <div class="section-title">Property Deep Dive &mdash; 4966 CADDIS BND</div>
+      <div class="deep-dive">
+        <div class="dd-row"><span class="dd-label">AVM Estimate</span><span class="dd-value">$290,460</span></div>
+        <div class="dd-row"><span class="dd-label">Rent Estimate</span><span class="dd-value">$2,057/mo</span></div>
+        <div class="dd-row"><span class="dd-label">Gross Yield</span><span class="dd-value" style="color:var(--sage)">8.5%</span></div>
+        <div class="dd-row"><span class="dd-label">Last Sale</span><span class="dd-value">Jan '25 @ $317,000</span></div>
+        <div class="dd-row"><span class="dd-label">Year Built</span><span class="dd-value">2024</span></div>
+        <div class="dd-row"><span class="dd-label">Assessment</span><span class="dd-value">$305,505</span></div>
+        <div class="dd-row"><span class="dd-label">Annual Tax</span><span class="dd-value">$2,642</span></div>
+        <div class="dd-row"><span class="dd-label">Permits</span><span class="dd-value">4</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Full Portfolio &mdash; 3 Properties</div>
+  <table class="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>City</th>
+        <th style="text-align:right">AVM Value</th>
+        <th style="text-align:right">Rent/Mo</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td>4966 CADDIS BND</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$290,460</td>
+        <td class="mono" style="text-align:right">$2,057</td>
+        <td><span class="tag tag-signal">Yield 8.5%</span> <span class="tag tag-hot">Recent Jan '25</span></td>
+      </tr>
+      <tr>
+        <td>4970 CADDIS BND</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$290,163</td>
+        <td class="mono" style="text-align:right">$2,055</td>
+        <td><span class="tag tag-signal">Yield 8.5%</span> <span class="tag tag-hot">Recent Jan '25</span></td>
+      </tr>
+      <tr>
+        <td>4972 CADDIS BND</td>
+        <td>RALEIGH</td>
+        <td class="mono" style="text-align:right">$288,270</td>
+        <td class="mono" style="text-align:right">$2,042</td>
+        <td><span class="tag tag-signal">5 Permits</span> <span class="tag tag-signal">Yield 8.5%</span> <span class="tag tag-hot">Recent Jan '25</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="approach-box">
+  <h3>Outreach Playbook</h3>
+  <ul>
+    <li><strong>Street Assembly Intelligence:</strong> Early intelligence on off-market opportunities on or near Caddis Boulevard—adjacent parcels, pocket listings, or properties likely to trade soon. Position yourself as their eyes on the ground for completing the cluster.</li>
+    <li><strong>Build-to-Rent Pipeline Partner:</strong> Market data on comparable rental rates in emerging Raleigh neighborhoods, vendor/contractor networks for rapid rehab execution, and insight into which neighborhoods support the $288-290K price point with $2,000+/month rent potential.</li>
+    <li><strong>Geographic Expansion Catalyst:</strong> Intelligence on other Raleigh neighborhoods with similar demographic/rental dynamics to Caddis—areas where the same buy-build-rent formula could work. Help them identify the next cluster location.</li>
+    <li><strong>Permit & Development Compliance:</strong> Relationships with local permitting officials, builders, and inspectors. Guidance on which neighborhoods have faster permit approval cycles or more investor-friendly zoning—information that directly impacts project timelines and profitability.</li>
+  </ul>
+  <div class="script">I've been tracking development activity on Caddis Boulevard and noticed you closed on three contiguous properties there in January—all new construction, all generating solid rental income. That's a really intentional play. I'd love to understand your vision for that street and whether you're looking to expand that cluster or replicate the model elsewhere in Raleigh.</div>
+</div>
+<div class="playbook-section">
+  <h3>Strategic Suggestions</h3>
+  <ul>
+    <li>Research comparable neighborhoods in Raleigh where the same profile exists: new/rehabbed properties in the $288-290K range with $2,000+/month rental potential. Identify 2-3 neighborhoods with similar demographics to Caddis Boulevard and bring that analysis cold (not asking, informing).</li>
+    <li>Map all current properties in the Caddis Boulevard area that might represent next acquisition targets—vacant lots, aging homes eligible for rehab, distressed sales. Present this as 'completing the cluster' intel, not a sales pitch.</li>
+    <li>Build a short vendor/contractor roster specific to Raleigh fast-track rehab work and permit acceleration. Have this ready to share—it signals you understand their timeline-driven model.</li>
+    <li>Track permit filing activity in Raleigh neighborhoods. When new permits show up near the investor's properties, that's a natural reason to reconnect with market intelligence.</li>
+    <li>Calculate and track monthly cash flow trends on their three Caddis properties as comps season progresses. This gives you a legitimate quarterly touchpoint ('Your Caddis portfolio is tracking to $6,200/month by Q2').</li>
+  </ul>
+</div>
+<div class="playbook-section">
+  <h3>Conversation Starters</h3>
+  <ul>
+    <li><em>The three Caddis properties you picked up are all new construction from 2024. Was the goal to acquire finished product or are you planning additional rehab/value-add work on them?</em></li>
+    <li><em>You've pulled 13 permits across these three addresses. Are those primarily for finishing/compliance work, or are you planning tenant improvements or additional development?</em></li>
+    <li><em>With three properties clustered on one street, what does the next 12-18 months look like—are you holding and operating these, or is this assembly for a larger play?</em></li>
+    <li><em>I'm seeing some pockets in [adjacent Raleigh neighborhood] with similar property profiles and rental comps to what you're getting on Caddis. Has expansion to other neighborhoods in Raleigh been on your radar, or are you deepening the current cluster?</em></li>
+  </ul>
+</div>
+
+<div class="comparison-box">
+  <h3>What Makes This Lead Different</h3>
+  <div class="comparison-row">
+    <span class="comp-label">Basic List</span>
+    <span class="comp-basic">"YERAMSETTY, SRINIVASA RAO GUNTI, KRISHNA KUMARI &mdash; 3 properties, RALEIGH"</span>
+  </div>
+  <div class="comparison-row">
+    <span class="comp-label">Our Intel</span>
+    <span class="comp-us">Active Developer. $869K portfolio, 1.0 txns/year, 13 permits (N/A). Full outreach playbook with specific approach angles and conversation starters.</span>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="confidential">SAMPLE &mdash; CONFIDENTIAL</span>
+  <span>DSCR Lead Intelligence &bull; Stillmind Creative</span>
+</div>
+
+</body>
+</html>

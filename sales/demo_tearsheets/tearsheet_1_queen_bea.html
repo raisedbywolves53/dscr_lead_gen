@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investor Intelligence Brief — QUEEN BEA LLC</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ocean: #0D9488;
+    --deep-ocean: #0F766E;
+    --seafoam: #99F6E4;
+    --gold: #B4873F;
+    --charcoal: #1C1917;
+    --stone: #44403C;
+    --pebble: #78716C;
+    --mist: #E7E5E4;
+    --cloud: #F5F5F4;
+    --white: #FAFAF9;
+    --sage: #16A34A;
+    --amber: #D97706;
+    --coral: #DC2626;
+  }
+
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--charcoal);
+    background: var(--white);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid var(--ocean);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .header-left h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--charcoal);
+    letter-spacing: -0.025em;
+  }
+
+  .header-left .segment {
+    display: inline-block;
+    background: var(--ocean);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    text-align: right;
+  }
+
+  .header-right .brand {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: var(--pebble);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .header-right .date {
+    font-size: 11px;
+    color: var(--pebble);
+    margin-top: 2px;
+  }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--seafoam);
+    color: var(--deep-ocean);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+
+  /* Signal Banner */
+  .signal-banner {
+    background: linear-gradient(135deg, var(--deep-ocean), var(--ocean));
+    color: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+
+  .signal-banner h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .signal-banner p {
+    font-size: 13px;
+    opacity: 0.92;
+    line-height: 1.5;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--cloud);
+    border: 1px solid var(--mist);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+
+  .stat-card .label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--pebble);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+
+  .stat-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+
+  .stat-card .subtext {
+    font-size: 11px;
+    color: var(--stone);
+    margin-top: 2px;
+  }
+
+  /* Two column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .section {
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ocean);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--mist);
+  }
+
+  /* Property Table */
+  .prop-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .prop-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--pebble);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 6px 8px;
+    border-bottom: 2px solid var(--mist);
+  }
+
+  .prop-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--mist);
+    vertical-align: top;
+  }
+
+  .prop-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .prop-table .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* Highlight row */
+  .prop-table tr.highlight {
+    background: rgba(13, 148, 136, 0.06);
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin: 1px 2px;
+  }
+  .tag-hot { background: #FEE2E2; color: #991B1B; }
+  .tag-signal { background: #FEF3C7; color: #92400E; }
+  .tag-info { background: #E0F2FE; color: #075985; }
+  .tag-cash { background: #D1FAE5; color: #065F46; }
+
+  /* Approach box */
+  .approach-box {
+    background: var(--cloud);
+    border-left: 4px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+  }
+
+  .approach-box h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .approach-box p {
+    font-size: 12px;
+    color: var(--stone);
+    line-height: 1.6;
+  }
+
+  .approach-box .script {
+    font-style: italic;
+    color: var(--charcoal);
+    background: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border: 1px solid var(--mist);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* Comparison box */
+  .comparison-box {
+    background: var(--cloud);
+    border: 1px solid var(--mist);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+  }
+
+  .comparison-box h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ocean);
+    margin-bottom: 8px;
+  }
+
+  .comparison-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 1fr;
+    gap: 12px;
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .comparison-row:last-child { border-bottom: none; }
+
+  .comparison-row .comp-label {
+    color: var(--pebble);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .comparison-row .comp-basic {
+    color: var(--stone);
+  }
+
+  .comparison-row .comp-us {
+    color: var(--deep-ocean);
+    font-weight: 500;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid var(--mist);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--pebble);
+  }
+
+  .footer .confidential {
+    font-weight: 600;
+    color: var(--stone);
+  }
+
+  /* Deep dive section */
+  .deep-dive {
+    background: var(--cloud);
+    border: 1px solid var(--mist);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .deep-dive .dd-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-size: 12px;
+  }
+
+  .deep-dive .dd-row:last-child {
+    border-bottom: none;
+  }
+
+  .deep-dive .dd-label {
+    color: var(--pebble);
+    font-size: 11px;
+  }
+
+  .deep-dive .dd-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 12px;
+  }
+
+  @media print {
+    body { padding: 0; font-size: 12px; }
+    .signal-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .stat-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .score-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .approach-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .comparison-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tag-cash { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>QUEEN BEA LLC</h1>
+    <span class="segment">Active Developer</span>
+    <div class="score-badge">Agent Score: 65 &bull; Tier 1 Priority</div>
+  </div>
+  <div class="header-right">
+    <div class="brand">Stillmind Creative</div>
+    <div class="brand">Investor Intelligence Brief</div>
+    <div class="date">Wake County, NC &bull; Generated Mar 2026</div>
+  </div>
+</div>
+
+<!-- Signal Banner -->
+<div class="signal-banner">
+  <h2>&#9889; Cash-Buying Developer Building From Scratch</h2>
+  <p>Queen Bea LLC paid <strong>$505K cash</strong> for 1410 Joe Louis Ave and is building a new single-family dwelling from the ground up &mdash; 11 permits including new SFR construction, electrical, plumbing, stormwater, and fencing ($647K total permit value). Two adjacent E Lenoir St parcels ($1.58M combined) suggest a development assembly play. Local operator, 0.6-year average hold, fast close with no financing contingency.</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">Properties</div>
+    <div class="value">4</div>
+    <div class="subtext">Wake County</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">$2.45M</div>
+    <div class="subtext">Total assessed</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Permit Value</div>
+    <div class="value">$647K</div>
+    <div class="subtext">11 permits &bull; New construction</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Last Purchase</div>
+    <div class="value">Aug '25</div>
+    <div class="subtext">$505,000 &bull; CASH</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div>
+    <!-- Acquisition Pattern -->
+    <div class="section">
+      <div class="section-title">Acquisition Pattern</div>
+      <table class="prop-table">
+        <tr><td class="mono" style="color:var(--pebble)">Velocity</td><td><strong>4 properties in ~2 months</strong></td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Avg Hold</td><td>0.6 years &mdash; rapid deployer</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Price Range</td><td>$419K &ndash; $789K</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Buying Style</td><td>Cash buyer &bull; Fast, concentrated bursts</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Deed Type</td><td>Warranty Deed (WD) &mdash; clean purchase</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Entity</td><td>LLC &bull; No homestead &bull; Local operator</td></tr>
+        <tr><td class="mono" style="color:var(--pebble)">Mailing</td><td>949 Cross Link Rd, Raleigh 27610</td></tr>
+      </table>
+    </div>
+
+    <!-- Signals -->
+    <div class="section">
+      <div class="section-title">Key Signals</div>
+      <span class="tag tag-cash">CASH BUYER &mdash; $505K</span>
+      <span class="tag tag-hot">Developer &mdash; Building SFR</span>
+      <span class="tag tag-signal">$647K Permit Value</span>
+      <span class="tag tag-signal">11 Building Permits</span>
+      <span class="tag tag-info">Local Operator</span>
+      <span class="tag tag-info">Adjacent Parcels ($1.58M)</span>
+      <span class="tag tag-info">0.6yr Hold &mdash; Rapid Deployer</span>
+      <span class="tag tag-signal">Gross Yield 7.5%</span>
+    </div>
+  </div>
+
+  <div>
+    <!-- Sample Property Deep Dive -->
+    <div class="section">
+      <div class="section-title">Property Deep Dive &mdash; 1410 Joe Louis Ave, Raleigh</div>
+      <div class="deep-dive">
+        <div class="dd-row"><span class="dd-label">AVM Estimate</span><span class="dd-value">$460,409</span></div>
+        <div class="dd-row"><span class="dd-label">Rent Estimate</span><span class="dd-value">$2,860/mo</span></div>
+        <div class="dd-row"><span class="dd-label">Gross Yield</span><span class="dd-value" style="color:var(--sage)">7.5%</span></div>
+        <div class="dd-row"><span class="dd-label">Last Sale</span><span class="dd-value">Aug 2025 @ $505,000 CASH</span></div>
+        <div class="dd-row"><span class="dd-label">Year Built</span><span class="dd-value">2024</span></div>
+        <div class="dd-row"><span class="dd-label">Type / Size</span><span class="dd-value">SFR &bull; 1,534 sqft &bull; 3 bath</span></div>
+        <div class="dd-row"><span class="dd-label">Assessment</span><span class="dd-value">$455,531 (land: $100K)</span></div>
+        <div class="dd-row"><span class="dd-label">Land Ratio</span><span class="dd-value">22%</span></div>
+        <div class="dd-row"><span class="dd-label">Permits</span><span class="dd-value">11 &bull; New SFR, elec, plumb, storm</span></div>
+        <div class="dd-row"><span class="dd-label">Permit Detail</span><span class="dd-value" style="font-size:10px;font-family:'Inter',sans-serif">New SFR &mdash; Joe Louis Park Lot 184, rear covered porch, vented crawl</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full Portfolio -->
+<div class="section">
+  <div class="section-title">Full Portfolio &mdash; 4 Properties</div>
+  <table class="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>City</th>
+        <th style="text-align:right">Assessed Value</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td>1410 Joe Louis Ave</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$455,531</td>
+        <td><span class="tag tag-cash">CASH $505K</span> <span class="tag tag-hot">New SFR Build</span></td>
+      </tr>
+      <tr>
+        <td>215 Seventh St</td>
+        <td>Wake Forest</td>
+        <td class="mono" style="text-align:right">$419,215</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>1322 E Lenoir St</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$789,009</td>
+        <td><span class="tag tag-info">Adjacent to 1318 &mdash; Assembly</span></td>
+      </tr>
+      <tr>
+        <td>1318 E Lenoir St</td>
+        <td>Raleigh</td>
+        <td class="mono" style="text-align:right">$789,009</td>
+        <td><span class="tag tag-info">Adjacent to 1322 &mdash; Assembly</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Equity & Buying Power -->
+<div class="section">
+  <div class="section-title">Equity &amp; Buying Power</div>
+  <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card">
+      <div class="label">Cash Buyer</div>
+      <div class="value" style="color:var(--sage)">Yes</div>
+      <div class="subtext">No financing contingency</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Adjacent Assembly</div>
+      <div class="value">$1.58M</div>
+      <div class="subtext">1318 + 1322 E Lenoir St</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Avg Hold Period</div>
+      <div class="value">0.6 yr</div>
+      <div class="subtext">Builder-seller or rapid deployer</div>
+    </div>
+  </div>
+</div>
+
+<!-- Approach -->
+<div class="approach-box">
+  <h3>Recommended Approach</h3>
+  <p>This is an active developer building new construction and assembling adjacent parcels. Cash buyer means fast close, no financing delays. Local operator who manages their own projects. Approach with off-market land and development opportunities.</p>
+  <div class="script">"I see you're building new construction in the Joe Louis Park area &mdash; I work with investors who are actively developing in Wake County and I'm tracking several vacant lots and off-market properties that could fit your next project."</div>
+</div>
+
+<!-- What Makes This Lead Different -->
+<div class="comparison-box">
+  <h3>What Makes This Lead Different</h3>
+  <div class="comparison-row">
+    <span class="comp-label">Basic List</span>
+    <span class="comp-basic">"Queen Bea LLC &mdash; 4 properties, Raleigh NC"</span>
+    <span class="comp-us"></span>
+  </div>
+  <div class="comparison-row">
+    <span class="comp-label">Our Intel</span>
+    <span class="comp-us">Cash buyer building from scratch ($647K permits), assembling adjacent parcels ($1.58M), local operator at 949 Cross Link Rd, 0.6yr hold = rapid deployer. You know exactly what to say.</span>
+    <span class="comp-us"></span>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="confidential">SAMPLE &mdash; CONFIDENTIAL</span>
+  <span>DSCR Lead Intelligence &bull; Stillmind Creative</span>
+</div>
+
+</body>
+</html>
