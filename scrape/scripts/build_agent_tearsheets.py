@@ -74,7 +74,8 @@ def _safe(val, default=""):
     return default if s in ("", "nan", "None", "NaT") else s
 
 
-def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> str:
+def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict,
+                    agent_history: dict = None) -> str:
     """Build a complete HTML tearsheet for one investor."""
 
     name = profile.get("investor_name", "Unknown")
@@ -191,7 +192,7 @@ def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> 
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   :root {{
-    --ocean: #0D9488; --deep-ocean: #0F766E; --seafoam: #99F6E4;
+    --ocean: #366F78; --deep-ocean: #1b262c; --seafoam: #d4e8eb;
     --gold: #B4873F; --charcoal: #1C1917; --stone: #44403C;
     --pebble: #78716C; --mist: #E7E5E4; --cloud: #F5F5F4;
     --white: #FAFAF9; --sage: #16A34A; --amber: #D97706; --coral: #DC2626;
@@ -221,7 +222,7 @@ def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> 
     color: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; }}
   .signal-banner h2 {{ font-family: 'DM Sans', sans-serif; font-size: 15px;
     font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }}
-  .signal-banner p {{ font-size: 13px; opacity: 0.92; line-height: 1.5; }}
+  .signal-banner p {{ font-size: 12px; opacity: 0.92; line-height: 1.4; max-width: 90%; }}
   .stats-grid {{ display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 12px; margin-bottom: 20px; }}
   .stat-card {{ background: var(--cloud); border: 1px solid var(--mist);
@@ -314,7 +315,7 @@ def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> 
 <!-- Signal Banner -->
 <div class="signal-banner">
   <h2>&#9889; {signal_headline}</h2>
-  <p>{behavior}</p>
+  <p>{behavior[:200].rsplit(' ', 1)[0] + '.' if len(behavior) > 200 else behavior}</p>
 </div>
 
 <!-- Stats -->
@@ -462,8 +463,10 @@ def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> 
         html += '<div class="approach-box">\n'
         html += '  <h3>Outreach Playbook</h3>\n'
         html += '  <ul>\n'
-        for angle in angles[:4]:
-            html += f'    <li><strong>{angle.get("angle", "")}:</strong> {angle.get("what_to_offer", "")}</li>\n'
+        for angle in angles[:3]:
+            offer = angle.get("what_to_offer", "")
+            offer_short = offer[:120].rsplit(' ', 1)[0] if len(offer) > 120 else offer
+            html += f'    <li><strong>{angle.get("angle", "")}</strong> &mdash; {offer_short}</li>\n'
         html += '  </ul>\n'
         if opening:
             html += f'  <div class="script">{opening}</div>\n'
@@ -474,8 +477,9 @@ def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> 
         html += '<div class="playbook-section">\n'
         html += '  <h3>Strategic Suggestions</h3>\n'
         html += '  <ul>\n'
-        for s in suggestions[:5]:
-            html += f'    <li>{s}</li>\n'
+        for s in suggestions[:3]:
+            s_short = s[:150].rsplit(' ', 1)[0] if len(s) > 150 else s
+            html += f'    <li>{s_short}</li>\n'
         html += '  </ul>\n'
         html += '</div>\n'
 
@@ -484,9 +488,52 @@ def build_tearsheet(profile: dict, properties: pd.DataFrame, playbook: dict) -> 
         html += '<div class="playbook-section">\n'
         html += '  <h3>Conversation Starters</h3>\n'
         html += '  <ul>\n'
-        for s in starters[:4]:
-            html += f'    <li><em>{s}</em></li>\n'
+        for s in starters[:3]:
+            s_short = s[:120].rsplit(' ', 1)[0] if len(s) > 120 else s
+            html += f'    <li><em>{s_short}</em></li>\n'
         html += '  </ul>\n'
+        html += '</div>\n'
+
+    # Agent Representation History (from Step 10)
+    if agent_history:
+        loyalty = agent_history.get("agent_loyalty", "unknown")
+        loyalty_detail = agent_history.get("agent_loyalty_detail", "")
+        unique_agents = agent_history.get("unique_agents", [])
+        unique_brokerages = agent_history.get("unique_brokerages", [])
+
+        if loyalty == "builder_direct":
+            loyalty_color = "var(--sage)"
+            loyalty_label = "No Agent Relationship"
+            loyalty_icon = "&#10003;"
+        elif loyalty == "mixed":
+            loyalty_color = "var(--sage)"
+            loyalty_label = "Open to New Representation"
+            loyalty_icon = "&#10003;"
+        elif loyalty == "loyal":
+            loyalty_color = "var(--coral)"
+            loyalty_label = "Existing Agent Relationship"
+            loyalty_icon = "&#10007;"
+        else:
+            loyalty_color = "var(--pebble)"
+            loyalty_label = "Agent History Unknown"
+            loyalty_icon = "?"
+
+        html += f"""
+<div class="playbook-section">
+  <h3>Agent Representation History</h3>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <span style="font-size:18px;color:{loyalty_color};font-weight:700;">{loyalty_icon}</span>
+    <span style="font-size:14px;font-weight:600;color:{loyalty_color};">{loyalty_label}</span>
+  </div>
+  <p style="font-size:12px;color:var(--stone);margin-bottom:8px;">{loyalty_detail}</p>
+"""
+        if unique_agents:
+            html += '  <ul style="font-size:12px;color:var(--stone);margin:0 0 0 16px;">\n'
+            for i, agent in enumerate(unique_agents):
+                brok = unique_brokerages[i] if i < len(unique_brokerages) else ""
+                brok_text = f" ({brok})" if brok else ""
+                html += f'    <li>{agent}{brok_text}</li>\n'
+            html += '  </ul>\n'
         html += '</div>\n'
 
     # What Makes This Lead Different
@@ -555,6 +602,18 @@ def main():
         if name:
             playbooks[name] = pb
 
+    # Load agent history if available
+    agent_history_path = DEMO_DIR / f"agent_history_{args.market}.json"
+    agent_histories = {}
+    if agent_history_path.exists():
+        with open(agent_history_path) as f:
+            ah_list = json.load(f)
+        for ah in ah_list:
+            name = ah.get("investor_name", "")
+            if name:
+                agent_histories[name] = ah
+        print(f"  Agent history loaded: {len(agent_histories)} investors")
+
     # Filter investors
     if args.investors:
         investor_names = [n.strip() for n in args.investors.split("|")]
@@ -572,11 +631,12 @@ def main():
         profile = profile_row.iloc[0].to_dict()
         investor_props = properties_df[properties_df["owner_name"] == investor_name]
         playbook = playbooks.get(investor_name, {})
+        agent_history = agent_histories.get(investor_name)
 
         if not playbook:
             print(f"  WARNING: No playbook for {investor_name}")
 
-        html = build_tearsheet(profile, investor_props, playbook)
+        html = build_tearsheet(profile, investor_props, playbook, agent_history)
 
         # Generate filename
         safe_name = investor_name.lower().replace(" ", "_").replace(",", "")

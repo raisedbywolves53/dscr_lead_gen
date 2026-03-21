@@ -41,7 +41,7 @@ def compute_stats():
     for label, key_fragment, color in [
         ("Tier 1 — Hot", "Hot", "#DC2626"),
         ("Tier 2 — Warm", "Warm", "#D97706"),
-        ("Tier 3 — Nurture", "Nurture", "#0D9488"),
+        ("Tier 3 — Nurture", "Nurture", "#366F78"),
     ]:
         matches = [k for k in tier_counts.index if key_fragment in k]
         count = int(tier_counts[matches[0]]) if matches else 0
@@ -143,9 +143,9 @@ def build_html(stats):
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
   :root {{
-    --ocean: #0D9488;
-    --deep-ocean: #0F766E;
-    --seafoam: #99F6E4;
+    --ocean: #366F78;
+    --deep-ocean: #1b262c;
+    --seafoam: #d4e8eb;
     --gold: #B4873F;
     --charcoal: #1C1917;
     --stone: #44403C;
@@ -420,7 +420,7 @@ def build_html(stats):
 
   /* ── CTA Section ── */
   .cta-section {{
-    background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+    background: linear-gradient(135deg, #1b262c 0%, #366F78 100%);
     border-radius: 10px;
     padding: 28px 32px;
     color: white;
