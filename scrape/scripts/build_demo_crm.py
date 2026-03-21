@@ -24,15 +24,22 @@ RALEIGH_CITIES = [
 INSTITUTIONAL_NAMES = [
     "OPENDOOR", "INVITATION HOMES", "AMERICAN HOMES 4 RENT",
     "PROGRESS RESIDENTIAL", "CERBERUS", "PRETIUM", "FIRSTKEY",
-    "TRICON", "AMHERST", "STARWOOD", "COLONY",
+    "TRICON", "AMHERST", "STARWOOD", "COLONY", "TOLL SOUTHEAST",
+    "TOLL BROTHERS", "LENNAR", "PULTE", "MERITAGE", "NVR ",
+    "D.R. HORTON", "DRB GROUP", "RYAN HOMES",
 ]
 
-INSTITUTIONAL_PATTERNS = ["TRUST I", "TRUST II", "TRUST III", "TRUST IV"]
+INSTITUTIONAL_PATTERNS = [
+    "TRUST I", "TRUST II", "TRUST III", "TRUST IV",
+    "LIMITED PARTNERSHIP", " LP ", " LP,",
+    "FUND 20", "PURCHASING FUND", "ASSET COMPANY",
+    "CAPITAL PARTNERS", "CAPITAL FUND",
+]
 
 TOP_N = 100
 
 # ── Styles ──────────────────────────────────────────────────────────────────
-TEAL = PatternFill(start_color="008080", end_color="008080", fill_type="solid")
+TEAL = PatternFill(start_color="366F78", end_color="366F78", fill_type="solid")
 LIGHT_GRAY = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
 WHITE = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
 HEADER_FONT = Font(bold=True, color="FFFFFF", size=11)
@@ -46,13 +53,24 @@ WRAP_CENTER = Alignment(wrap_text=True, vertical="top", horizontal="center")
 
 def is_institutional(name: str) -> bool:
     """Return True if owner name matches institutional buyer patterns."""
-    upper = name.upper()
+    upper = name.upper().strip()
     for inst in INSTITUTIONAL_NAMES:
         if inst in upper:
             return True
     for pat in INSTITUTIONAL_PATTERNS:
         if pat in upper:
             return True
+    # Catch names ending in LP (limited partnership)
+    if upper.endswith(" LP") or upper.endswith(" LP."):
+        return True
+    # Catch generic holdings/asset/fund patterns
+    if any(kw in upper for kw in ["HOLDINGS 20", "ASSETS ", "ASTER LP",
+                                   "SMARTRESI", "HUDSON SFR", "BLUE HILLS NORTH",
+                                   "SPE PHX", "SPE ", "SFR PROPERTY",
+                                   "BORROWER", "PORTFOLIO 20", "CONREX",
+                                   "MILE HIGH", "OPERATING CO", "FREO ",
+                                   "ACQUISITION", "RESI FUND"]):
+        return True
     return False
 
 
@@ -101,9 +119,9 @@ def build_lead_data(df: pd.DataFrame) -> pd.DataFrame:
         cash_buyer=("is_cash_buyer", lambda x: "Yes" if any(v == "True" for v in x) else "No"),
     )
 
-    # Only multi-property investors (2+)
-    grouped = grouped[grouped["properties"] >= 2].copy()
-    print(f"  Multi-property investors (2+): {len(grouped):,}")
+    # Only multi-property investors (2-15) — cap at 15 to exclude institutional scale
+    grouped = grouped[(grouped["properties"] >= 2) & (grouped["properties"] <= 15)].copy()
+    print(f"  Multi-property investors (2-15): {len(grouped):,}")
 
     # Sort by score descending, take top N
     grouped = grouped.sort_values("score", ascending=False).head(TOP_N).reset_index(drop=True)
