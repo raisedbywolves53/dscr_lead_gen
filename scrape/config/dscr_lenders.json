@@ -1,0 +1,89 @@
+{
+  "_description": "Known DSCR / non-QM lenders for prepayment penalty targeting. Match against attom_lender_name.",
+  "_tiers": {
+    "tier1": "Pure-play DSCR / bridge lenders — near 100% probability of PPP",
+    "tier2": "Major non-QM lenders — DSCR is 30-60% of volume",
+    "tier3": "Banks/lenders with known DSCR programs — lower confidence"
+  },
+  "_sources": [
+    "Scotsman Guide 2025 Top DSCR Rankings",
+    "Scotsman Guide 2025 Top Non-QM Lenders",
+    "Griffin Funding, Defy Mortgage, Zeitro best-of lists 2026"
+  ],
+  "tier1_dscr_bridge": [
+    "VISIO",
+    "KIAVI",
+    "LIMA ONE",
+    "EASY STREET",
+    "RCN CAPITAL",
+    "CIVIC FINANCIAL",
+    "COREVEST",
+    "ANCHOR LOANS",
+    "GENESIS CAPITAL",
+    "NEW SILVER",
+    "LENDING HOME",
+    "GROUNDFLOOR",
+    "FUND THAT FLIP",
+    "RENOVO FINANCIAL",
+    "TEMPLE VIEW CAPITAL",
+    "VELOCITY MORTGAGE",
+    "TOORAK CAPITAL",
+    "RIDGE STREET",
+    "CONSTITUTION LENDING",
+    "MOFIN LENDING",
+    "HAUS LENDING",
+    "RCLENDING",
+    "LENDINGONE",
+    "BROADMARK REALTY",
+    "PATCH OF LAND",
+    "AMERICAN HERITAGE LENDING",
+    "CONSTRUCTIVE LOANS",
+    "PINEWOOD FINANCIAL",
+    "LENDBASE",
+    "NEXGEN LENDING"
+  ],
+  "tier2_nonqm_major": [
+    "ANGEL OAK",
+    "A&D MORTGAGE",
+    "DEFY MORTGAGE",
+    "GRIFFIN FUNDING",
+    "LENDSURE",
+    "NEWFI",
+    "VERUS MORTGAGE",
+    "ATHAS CAPITAL",
+    "OAKTREE FUNDING",
+    "IMPAC MORTGAGE",
+    "CALIBER HOME LOANS",
+    "STEARNS LENDING",
+    "FLAGSTAR",
+    "CARRINGTON MORTGAGE",
+    "SPROUT MORTGAGE",
+    "ACRA LENDING"
+  ],
+  "tier3_dscr_programs": [
+    "NORTH AMERICAN SAVINGS BANK",
+    "NASB",
+    "NEW AMERICAN FUNDING",
+    "NATIONS DIRECT",
+    "BLUESTONE",
+    "JMAC LENDING",
+    "LENDMIRE",
+    "CROSSCOUNTRY MORTGAGE"
+  ],
+  "prepayment_penalty_structures": {
+    "_note": "Standard DSCR PPP structures. Used to estimate expiration from origination date.",
+    "dominant": {
+      "name": "5-4-3-2-1 stepdown",
+      "years": 5,
+      "schedule_pct": [5, 4, 3, 2, 1],
+      "prevalence": "~50% of DSCR originations"
+    },
+    "common": [
+      {"name": "3-2-1 stepdown", "years": 3, "schedule_pct": [3, 2, 1], "prevalence": "~25%"},
+      {"name": "4-3-2-1 stepdown", "years": 4, "schedule_pct": [4, 3, 2, 1], "prevalence": "~10%"},
+      {"name": "2-1 stepdown", "years": 2, "schedule_pct": [2, 1], "prevalence": "~5%"},
+      {"name": "No penalty", "years": 0, "schedule_pct": [], "prevalence": "~10% (rate premium)"}
+    ],
+    "assumption_for_scoring": "Default to 5-year penalty when lender is tier1, 3-year when tier2"
+  }
+}
