@@ -36,10 +36,9 @@ A data product company that produces enriched investor intelligence dossiers fro
 
 | Doc | Role |
 |-----|------|
-| `DSCR_Business_Plan_DRAFT.md` | **THE business plan** — grounded in actual pipeline data, correct pricing, correct markets |
-| `HANDOFF_20260319.md` | Session handoff — every number, decision, and next step from March 19 pivot |
-| `LAUNCH_BLUEPRINT.md` | Phased implementation roadmap (being updated to match canonical) |
-| `DSCR_PnL_Model.xlsx` | P&L spreadsheet — both pricing models, editable blue inputs |
+| `docs/business/DSCR_Business_Plan_DRAFT.md` | **THE business plan** — grounded in actual pipeline data, correct pricing, correct markets |
+| `docs/business/DSCR_PnL_Model.xlsx` | P&L spreadsheet — both pricing models, editable blue inputs |
+| `archive/outdated_docs/HANDOFF_20260319.md` | Session handoff from March 19 pivot (reference only, partially outdated) |
 
 ## Doc Structure
 
@@ -100,7 +99,19 @@ INTELLIGENCE (Steps 10-20)
 15 Network Mapping           (state-agnostic)
 16 ATTOM Enrichment          (state-agnostic: 7 endpoints)
 20 Build Dossier             (state-agnostic)
+─────────────────────────────────────────────
+TARGETING (Steps 21-22)
+21 Market Monitor            (state-agnostic)
+22 PPP Targeting             (state-agnostic: HMDA + lender classification)
 ```
+
+### Step 22: Prepayment Penalty Targeting (NEW — April 2026)
+Identifies DSCR borrowers approaching prepayment penalty expiration.
+- **Two models:** HMDA definitive (free federal data, 2.4M loans) + inference (54-lender classification)
+- **Config:** `scrape/config/dscr_lenders.json` — curated DSCR lender database
+- **Script:** `scrape/scripts/22_prepayment_penalty_targeting.py`
+- **Deliverable:** `scrape/scripts/build_ppp_deliverable.py` — branded Excel workbook
+- **Data:** `scrape/data/hmda/` (HMDA downloads, ~900MB, gitignored) + `scrape/data/ppp_targeting/`
 
 ---
 

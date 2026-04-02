@@ -4,6 +4,7 @@
 
 # OS
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # Editors
@@ -31,10 +32,13 @@ archive/pipeline_v1/output/
 archive/pipeline_v1/pipeline/data/
 archive/pipeline_v1/pipeline/output/
 
+# Raw source data (large zips, not generated)
+raw_data/
+
 # Keep data structure in git via .gitkeep
 !scrape/data/**/.gitkeep
 
-# Sales demo + demo input data (synced across machines via LFS)
+# Sales demo + demo input data
 !scrape/data/demo/
 !scrape/data/demo/dscr_sales_demo.xlsx
 !scrape/data/filtered/
@@ -42,20 +46,22 @@ archive/pipeline_v1/pipeline/output/
 !scrape/data/mvp/
 !scrape/data/mvp/*.csv
 
+# Large files
+*.zip
+*.parquet
+
 # Images (reference screenshots, not code)
 *.jpg
 *.png
 *.jpeg
+# Exception: brand assets
+!scrape/assets/logo.png
+
+# Office lock files
+.~lock.*
+~$*
 
 # Generated sales assets (rebuild from scripts)
 sales/internal/cost_model.xlsx
 sales/deck/dscr_pitchbook.pptx
 sales/deck/node_modules/
-
-# Large files
-*.zip
-*.parquet
-
-# OS files
-.DS_Store
-**/.DS_Store

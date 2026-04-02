@@ -56,7 +56,9 @@ scrape/
 │   ├── build_dossier_pdf.py          # PDF tear sheet generator
 │   ├── build_workbook.py             # Excel workbook builder
 │   ├── build_compliance_sheet.py     # Compliance documentation
-│   └── sunbiz_showcase_lookup.py     # SunBiz lookup for showcase leads
+│   ├── sunbiz_showcase_lookup.py     # SunBiz lookup for showcase leads
+│   ├── 22_prepayment_penalty_targeting.py  # PPP expiration targeting (HMDA + inference)
+│   └── build_ppp_deliverable.py      # PPP deliverable Excel (branded, client-facing)
 ├── data/
 │   ├── raw/                           # Downloaded source files
 │   ├── parsed/                        # Standardized CSVs
@@ -68,11 +70,15 @@ scrape/
 │   ├── mvp/                           # Pilot 500 master (FL)
 │   ├── demo/                          # Showcase lead enrichment output
 │   ├── validated/                     # After contact validation
-│   └── campaign_ready/               # Final export for outreach
+│   ├── campaign_ready/               # Final export for outreach
+│   ├── hmda/                          # HMDA LAR downloads (~900MB, gitignored)
+│   ├── ppp_targeting/                 # PPP scoring output
+│   └── deliverables/                  # Client-facing Excel workbooks
 └── config/
     ├── counties.json                  # Target county URLs and data formats
     ├── scoring_weights.json           # FL ICP scoring weights
-    └── nc_scoring_weights.json        # NC ICP scoring weights
+    ├── nc_scoring_weights.json        # NC ICP scoring weights
+    └── dscr_lenders.json              # 54 known DSCR/non-QM lenders (3 tiers)
 ```
 
 ## Data Sources
